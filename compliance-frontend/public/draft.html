@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Compliance Management — Drafting Studio</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="assets/styles.css">
+</head>
+
+<body class="logged-out">
+  <div id="layoutMount"></div>
+
+  <template id="partnerPages">
+    <div id="p_draft" class="page active">
+      <div class="grid">
+        <div class="col-12 card">
+          <div class="cardHeader">
+            <div>
+              <h3 class="title">Mail Drafting Studio</h3>
+              <p class="sub">
+                Draft subject/body, insert variables, and copy-paste safely into XLSX import fields.
+                Default mode uses <span class="kbd">\n</span> tokens so Excel won’t break rows.
+              </p>
+            </div>
+          </div>
+
+          <div class="cardBody">
+            <div class="draftToolbar">
+              <div class="draftLeft">
+                <div class="draftVarMenu">
+                  <button class="btn" id="btnVarMenu" type="button">+ Add Variable</button>
+
+                  <div class="varDropdown" id="varDropdown">
+                    <input class="varSearch" id="varSearch" placeholder="Search variables...">
+                    <div id="varList"></div>
+                    <div class="sub" style="margin-top:8px">
+                      Click a variable to insert at cursor of the focused field (Subject/Body).
+                    </div>
+                  </div>
+                </div>
+
+                <span class="chip">
+                  Insert mode:
+                  <select id="draftNewlineMode" style="width:auto;padding:6px 8px;border-radius:10px">
+                    <option value="TOKEN" selected>\n tokens</option>
+                    <option value="REAL">Real new lines</option>
+                  </select>
+                </span>
+
+                <span class="chip">
+                  Tip: <span class="kbd">Enter</span> inserts <span class="kbd">\n</span> tokens.
+                  Use <span class="kbd">Shift</span>+<span class="kbd">Enter</span> for real newline.
+                </span>
+              </div>
+
+              <div style="display:flex; gap:10px; flex-wrap:wrap">
+                <button class="btn primary" id="btnDraftCopyForImport" type="button">Copy Body (for Import)</button>
+                <button class="btn" id="btnDraftCopySubject" type="button">Copy Subject</button>
+                <button class="btn" id="btnDraftCopyBodyRaw" type="button">Copy Body (raw)</button>
+              </div>
+            </div>
+
+            <div class="grid">
+              <div class="col-12">
+                <div class="label">Subject</div>
+                <input id="draftSubject" placeholder="Example: We started {{taskTitle}} for {{clientName}}">
+              </div>
+
+              <div class="col-12">
+                <div class="label">Body</div>
+                <div class="draftEditor">
+                  <textarea id="draftBody" rows="12" placeholder="Type your email body here..."></textarea>
+                  <div class="sub" style="margin-top:10px">
+                    “Copy Body (for Import)” converts line breaks into <b>\n</b> tokens so you can paste into a single XLSX cell.
+                  </div>
+                </div>
+              </div>
+
+              <div class="col-12">
+                <div class="label">Preview (sample values)</div>
+                <div class="card" style="padding:12px">
+                  <div class="sub" id="draftPreview" style="white-space:pre-wrap"></div>
+                </div>
+                <div class="sub" style="margin-top:8px">Variables will remain as-is if not replaced.</div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+  </template>
+
+  <template id="workerPages">
+    <div id="w_tasks" class="page active">
+      <div class="grid">
+        <div class="col-12 card">
+          <div class="cardHeader"><div><h3 class="title">My Tasks</h3><p class="sub">Click row to open drawer</p></div></div>
+          <div class="cardBody">
+            <div class="tableWrap">
+              <table>
+                <thead><tr><th>Alert</th><th>Client</th><th>Title</th><th>Series</th><th>Start</th><th>Due</th><th>Status</th></tr></thead>
+                <tbody id="workerTasks"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </template>
+
+  <script>
+    window.APP_PAGE = "draft";
+    window.DEFAULT_PAGE_ID = "p_draft";
+  </script>
+
+  <script defer src="assets/layout.js"></script>
+
+  <script defer src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script defer src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+  <script defer src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+
+  <script defer src="assets/app.js"></script>
+</body>
+</html>

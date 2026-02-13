@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Compliance Management — Dashboard</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="assets/styles.css">
+</head>
+
+<body class="logged-out">
+  <div id="layoutMount"></div>
+
+  <!-- Partner content for this page -->
+  <template id="partnerPages">
+    <div id="p_dashboard" class="page active">
+      <div class="grid">
+        <div class="col-12 card">
+          <div class="cardHeader">
+            <div><h3 class="title">KPIs</h3><p class="sub">Based on loaded tasks (Firestore live).</p></div>
+          </div>
+          <div class="cardBody">
+            <div class="grid">
+              <div class="col-4 card"><div class="cardBody"><div class="label">Total</div><div class="kpi" id="kTotal">0</div></div></div>
+              <div class="col-4 card"><div class="cardBody"><div class="label">Upcoming 7d</div><div class="kpi" id="k7">0</div></div></div>
+              <div class="col-4 card"><div class="cardBody"><div class="label">Upcoming 15d</div><div class="kpi" id="k15">0</div></div></div>
+              <div class="col-4 card"><div class="cardBody"><div class="label">Upcoming 30d</div><div class="kpi" id="k30">0</div></div></div>
+              <div class="col-4 card"><div class="cardBody"><div class="label">Overdue</div><div class="kpi" id="kOverdue">0</div></div></div>
+              <div class="col-4 card"><div class="cardBody"><div class="label">Approval Pending</div><div class="kpi" id="kAppr">0</div></div></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-12 card">
+          <div class="cardHeader">
+            <div><h3 class="title">Quick Alerts</h3><p class="sub">Click a row to open drawer.</p></div>
+            <button class="btn small" id="btnOpenTasksFromDash" type="button">Open Tasks</button>
+          </div>
+          <div class="cardBody">
+            <div class="tableWrap">
+              <table>
+                <thead><tr><th>Alert</th><th>Client</th><th>Title</th><th>Start</th><th>Due</th><th>Status</th></tr></thead>
+                <tbody id="dashAlerts"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </template>
+
+  <!-- Worker content (same on all pages) -->
+  <template id="workerPages">
+    <div id="w_tasks" class="page active">
+      <div class="grid">
+        <div class="col-12 card">
+          <div class="cardHeader"><div><h3 class="title">My Tasks</h3><p class="sub">Click row to open drawer</p></div></div>
+          <div class="cardBody">
+            <div class="tableWrap">
+              <table>
+                <thead><tr><th>Alert</th><th>Client</th><th>Title</th><th>Series</th><th>Start</th><th>Due</th><th>Status</th></tr></thead>
+                <tbody id="workerTasks"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </template>
+
+  <script>
+    window.APP_PAGE = "dashboard";
+    window.DEFAULT_PAGE_ID = "p_dashboard";
+  </script>
+
+  <script defer src="assets/layout.js"></script>
+
+  <script defer src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script defer src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+  <script defer src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+
+  <script defer src="assets/app.js"></script>
+</body>
+</html>

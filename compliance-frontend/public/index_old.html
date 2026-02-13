@@ -1,0 +1,3635 @@
+<!-- index.html (PART 1/3) --><!doctype html><html lang="en"> <head> <meta charset="utf-8"/> <meta name="viewport" content="width=device-width,initial-scale=1"/> <title>Compliance Management</title> <link rel="preconnect" href="https://fonts.googleapis.com"> <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin> <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"> <style> /* ================================ Windows 11 Palette ================================ */ :root { --radius-sm: 6px; --radius-md: 12px; --radius-lg: 18px; --radius-xl: 24px; --primary: #0078D4; --primary-hover: #006cc1; --primary-soft: rgba(0, 120, 212, 0.1); --bg-app: #f3f3f3; --bg-card: rgba(255, 255, 255, 0.7); --bg-card-hover: rgba(255, 255, 255, 0.85); --text-main: #1b1b1b; --text-muted: #5d5d5d; --border-subtle: rgba(0, 0, 0, 0.06); --border-highlight: rgba(255, 255, 255, 0.6); --shadow-sm: 0 2px 4px rgba(0,0,0,0.04); --shadow-md: 0 8px 16px rgba(0,0,0,0.06); --shadow-glass: 0 8px 32px 0 rgba(31, 38, 135, 0.07); --backdrop-blur: blur(20px); --noise: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.05'/%3E%3C/svg%3E"); } /* Compatibility aliases */ :root{ --radius: var(--radius-lg); --sidebarW: 290px; --sidebarWCollapsed: 78px; --headerH: 72px; --bg0: var(--bg-app); --bg1: color-mix(in srgb, var(--bg-app) 92%, #ffffff); --panel: var(--bg-card); --panel2: rgba(255,255,255,.62); --panelSolid: rgba(255,255,255,.92); --text: var(--text-main); --muted: var(--text-muted); --border: var(--border-subtle); --shadow: var(--shadow-md); --shadow2: var(--shadow-sm); --grad: linear-gradient(135deg, var(--primary), #5aa7ff 55%, #64d2ff); --bgDecor: var(--noise), radial-gradient(900px 520px at 12% 10%, rgba(0,120,212,.14), transparent 55%), radial-gradient(900px 520px at 88% 15%, rgba(0,120,212,.10), transparent 55%), radial-gradient(900px 520px at 40% 92%, rgba(100,210,255,.10), transparent 60%); --danger:#ef4444; --warning:#f59e0b; --ok:#16a34a; --headerBg: var(--bg-card); --headerBorder: var(--border-subtle); --sidebarBg: var(--bg-card); --sidebarBorder: var(--border-subtle); --inputBg: rgba(255,255,255,.85); --inputBorder: rgba(0,0,0,.10); --inputFocus: var(--primary-soft); } body.dark-mode{ --bg-app: #0f0f10; --bg-card: rgba(25, 25, 28, 0.60); --bg-card-hover: rgba(25, 25, 28, 0.75); --text-main: #f4f4f5; --text-muted: #b6b6b6; --border-subtle: rgba(255,255,255,0.10); --border-highlight: rgba(255,255,255,0.16); --shadow-glass: 0 8px 32px 0 rgba(0,0,0,0.35); --panelSolid:#111114; --panel2: rgba(255,255,255,.06); --inputBg: rgba(255,255,255,.06); --inputBorder: rgba(255,255,255,.12); --bgDecor: var(--noise), radial-gradient(1200px 600px at 10% 10%, rgba(0,120,212,.22), transparent 55%), radial-gradient(1000px 500px at 90% 20%, rgba(90,167,255,.18), transparent 55%), radial-gradient(900px 500px at 40% 90%, rgba(100,210,255,.14), transparent 60%); } *{ box-sizing:border-box; } html,body{ height:100%; } body{ margin:0; font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; color: var(--text); background: var(--bgDecor), linear-gradient(180deg, var(--bg0), var(--bg1)); overflow-x:hidden; transition: background .25s ease, color .25s ease; } .appShell{ min-height: 100vh; display:flex; flex-direction:column; } header{ height: var(--headerH); position: sticky; top:0; z-index: 50; display:flex; align-items:center; justify-content:space-between; padding: 0 18px; border-bottom: 1px solid var(--headerBorder); backdrop-filter: blur(12px); background: var(--headerBg); } .brand{ display:flex; align-items:center; gap:12px; user-select:none; font-weight:900; letter-spacing:.2px; } .brandMark{ width:42px;height:42px;border-radius:14px;background: var(--grad); box-shadow: 0 10px 24px rgba(0,120,212,.18); } .brandTitle{ display:flex; flex-direction:column; line-height:1.1; } .brandTitle small{ font-weight:700; color: var(--muted); letter-spacing:.2px; } .headerRight{ display:flex; align-items:center; gap:10px; } .btn{ border: 1px solid var(--border); background: var(--panel2); color: var(--text); padding: 10px 12px; border-radius: 12px; cursor:pointer; transition: transform .12s ease, background .2s ease; font-weight: 800; } .btn:hover{ transform: translateY(-1px); background: var(--panel); } .btn.primary{ background: var(--grad); border-color: transparent; color: white; } .btn.small{ padding: 8px 10px; border-radius: 10px; font-size: 13px; } .btn.danger{ background: color-mix(in srgb, var(--danger) 85%, #0000); color: white; border-color: transparent; } .btn.ghost{ background: transparent; border-color: var(--border); } .btn:disabled{ opacity:.55; cursor:not-allowed; transform:none !important; } .iconBtn{ display:inline-flex; align-items:center; gap:10px; white-space:nowrap; } .icon{ width:34px;height:34px;border-radius:12px;display:grid;place-items:center; background: color-mix(in srgb, var(--panel) 70%, transparent); border: 1px solid var(--border); font-size: 16px; } .navIcon{ width:30px;height:30px;border-radius:12px;display:grid;place-items:center; border: 1px solid var(--border); background: color-mix(in srgb, var(--panel) 70%, transparent); } #topUser{ display:flex; align-items:center; gap:10px; font-weight:700; } .pillUser{ display:flex; align-items:center; gap:10px; padding: 10px 12px; border-radius:999px; background: var(--panel2); border: 1px solid var(--border); } .avatar{ width:36px;height:36px;border-radius:999px;background: color-mix(in srgb, var(--panel) 85%, transparent);display:grid;place-items:center;font-weight:900; } .layout{ display:flex; min-height: calc(100vh - var(--headerH)); } aside{ width: var(--sidebarW); padding: 14px; position: sticky; top: var(--headerH); height: calc(100vh - var(--headerH)); overflow:auto; transition: transform .25s ease, width .2s ease; border-right: 1px solid var(--sidebarBorder); } /* Collapsible sidebar */ body.sidebar-collapsed aside{ width: var(--sidebarWCollapsed); padding: 14px 10px; } body.sidebar-collapsed .navItem .navText, body.sidebar-collapsed .navHint, body.sidebar-collapsed .sidebarCard, body.sidebar-collapsed #navRoleHint { display:none !important; } body.sidebar-collapsed .navItem{ justify-content:center; padding: 12px 10px; } body.sidebar-collapsed .navItem .left{ justify-content:center; } body.sidebar-collapsed .navItem .right{ display:none; } .navGroup{ margin-top: 8px; display:flex; flex-direction:column; gap: 8px; } .navItem{ padding: 12px 12px; border-radius: 14px; cursor:pointer; border: 1px solid transparent; background: transparent; color: var(--muted); font-weight: 850; display:flex; align-items:center; justify-content:space-between; user-select:none; } .navItem .left{ display:flex; align-items:center; gap:10px; min-width: 0; } .navItem .navText{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; } .navItem:hover{ background: var(--panel2); color: var(--text); border-color: var(--border); } .navItem.active{ background: color-mix(in srgb, var(--primary) 18%, transparent); border-color: color-mix(in srgb, var(--primary) 35%, transparent); color: var(--text); } .navHint{ font-size: 12px; color: var(--muted); padding: 10px 10px 0; font-weight: 800; } .sidebarTopRow{ display:flex; align-items:center; justify-content:space-between; gap:10px; } .sidebarTopRow .hint{ font-size:12px; color:var(--muted); font-weight:900; } .sidebarCard{ margin-top: 12px; border-radius: 16px; border: 1px solid var(--border); background: var(--panel); box-shadow: var(--shadow2); overflow:hidden; } .sidebarCardHead{ padding: 12px 12px 10px; border-bottom: 1px solid color-mix(in srgb, var(--border) 70%, transparent); display:flex; justify-content:space-between; align-items:center; gap: 10px; } .sidebarCardHead .t{ font-weight: 950; } .sidebarCardBody{ padding: 12px; } main{ flex:1; padding: 18px; } body.logged-out aside{ display:none; } body.logged-out main{ padding: 22px 16px; display:flex; align-items:center; justify-content:center; min-height: calc(100vh - var(--headerH)); } body.logged-out .layout{ display:block; } body.logged-out #topUser{ display:none; } /* ===== Glass effect ===== */ .card, aside { background: var(--bg-card); backdrop-filter: var(--backdrop-blur); border: 1px solid var(--border-subtle); border-top: 1px solid var(--border-highlight); box-shadow: var(--shadow-glass); } .card{ border-radius: var(--radius); } .cardHeader{ padding: 16px 16px 0; display:flex; align-items:flex-start; justify-content:space-between; gap: 12px; } .cardBody{ padding: 16px; } .title{ margin:0; font-size: 18px; font-weight: 950; } .sub{ margin:6px 0 0; color: var(--muted); font-size: 13px; font-weight: 650; } .grid{ display:grid; grid-template-columns: repeat(12, 1fr); gap: 14px; } .col-12{ grid-column: span 12; } .col-6{ grid-column: span 6; } .col-4{ grid-column: span 4; } .col-3{ grid-column: span 3; } .col-2{ grid-column: span 2; } @media (max-width: 980px){ .col-6,.col-4,.col-3,.col-2{ grid-column: span 12; } } input, select, textarea{ width:100%; padding: 12px 12px; border-radius: 12px; border: 1px solid var(--inputBorder); background: var(--inputBg); color: var(--text); outline:none; font-size: 14px; font-weight: 650; } .label{ font-size: 12px; color: var(--muted); font-weight: 900; margin: 2px 0 6px; letter-spacing: .2px; } .tableWrap{ overflow:auto; border-radius: 14px; border: 1px solid var(--border); background: color-mix(in srgb, var(--panel2) 75%, transparent); } table{ width:100%; border-collapse: collapse; min-width: 980px; } th, td{ padding: 12px 12px; border-bottom: 1px solid color-mix(in srgb, var(--border) 70%, transparent); font-size: 13px; vertical-align: top; font-weight: 650; } th{ position: sticky; top: 0; background: color-mix(in srgb, var(--panelSolid) 92%, transparent); text-align:left; font-weight: 950; z-index: 1; } .pill{ display:inline-flex; align-items:center; padding: 4px 10px; border-radius: 999px; border: 1px solid color-mix(in srgb, var(--border) 85%, transparent); background: var(--panel2); font-size: 12px; font-weight: 950; } .pill.danger{ border-color: color-mix(in srgb, var(--danger) 55%, transparent); background: color-mix(in srgb, var(--danger) 18%, transparent); } .pill.warn{ border-color: color-mix(in srgb, var(--warning) 55%, transparent); background: color-mix(in srgb, var(--warning) 18%, transparent); } .pill.ok{ border-color: color-mix(in srgb, var(--ok) 55%, transparent); background: color-mix(in srgb, var(--ok) 18%, transparent); } /* Category color pills */ .pill.cat{ border-color: transparent; color:#0b1220; } .pill.cat.gst{ background: rgba(34,197,94,.25); } .pill.cat.tds{ background: rgba(59,130,246,.25); } .pill.cat.income_tax{ background: rgba(168,85,247,.25); } .pill.cat.roc{ background: rgba(245,158,11,.25); } .pill.cat.accounting{ background: rgba(20,184,166,.25); } .pill.cat.audit{ background: rgba(244,63,94,.20); } .pill.cat.other{ background: rgba(148,163,184,.25); } .kpi{ font-size: 28px; font-weight: 950; background: var(--grad); -webkit-background-clip:text; background-clip:text; color: transparent; } .hidden{ display:none !important; } .page{ display:none; } .page.active{ display:block; } #sidebarToggle{ display:none; } @media (max-width: 980px){ aside{ position: fixed; left:0; transform: translateX(-105%); z-index: 80; } body.sidebar-open aside{ transform: translateX(0); } #sidebarToggle{ display:inline-flex; } } /* Sidebar task list */ .taskList{ display:flex; flex-direction:column; gap:10px; } .taskItem{ padding: 10px 10px; border-radius: 14px; border: 1px solid var(--border); background: var(--panel2); cursor:pointer; } .taskItem .top{ display:flex; justify-content:space-between; gap: 8px; align-items:flex-start; } .taskItem .name{ font-weight: 950; font-size: 13px; line-height:1.25; } .taskItem .meta{ color: var(--muted); font-size: 12px; margin-top: 4px; font-weight: 700; } .badgeCount{ min-width: 24px; height: 24px; border-radius: 999px; display:grid; place-items:center; font-weight: 950; font-size: 12px; background: color-mix(in srgb, var(--primary) 18%, transparent); border: 1px solid color-mix(in srgb, var(--primary) 35%, transparent); } /* Calendar (month grid) */ .calTop{ display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; } .calTabs{ display:flex; gap:8px; flex-wrap:wrap; } .calGrid{ margin-top: 12px; display:grid; grid-template-columns: repeat(7, 1fr); gap: 10px; } .calDow{ font-size: 12px; color: var(--muted); font-weight: 900; padding: 8px 6px; text-align:center; } .calCell{ border: 1px solid var(--border); background: var(--panel2); border-radius: 14px; min-height: 92px; padding: 10px; cursor:pointer; position: relative; } .calCell.muted{ opacity: .55; } .calCell.today{ border-color: color-mix(in srgb, var(--primary) 55%, transparent); box-shadow: 0 0 0 4px color-mix(in srgb, var(--primary) 16%, transparent); } .calDayNum{ font-weight: 950; } .calDotRow{ position:absolute; left:10px; bottom:10px; right:10px; display:flex; align-items:center; justify-content:space-between; gap:10px; } .calDots{ display:flex; gap:6px; } .dot{ width: 8px; height: 8px; border-radius:999px; background: color-mix(in srgb, var(--muted) 50%, transparent); } .dot.warn{ background: var(--warning); } .dot.danger{ background: var(--danger); } .dot.ok{ background: var(--ok); } .calCount{ font-size: 12px; font-weight: 950; color: var(--muted); } /* Agenda list */ .agendaList{ display:flex; flex-direction:column; gap:10px; margin-top:12px; } .agendaItem{ padding:12px; border-radius:14px; border:1px solid var(--border); background: var(--panel2); cursor:pointer; } .agendaTop{ display:flex; justify-content:space-between; gap:10px; align-items:flex-start; } .agendaTitle{ font-weight:950; } .agendaMeta{ margin-top:6px; color: var(--muted); font-size:12px; font-weight:800; } /* Drawer */ .overlay{ position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 90; display:none; } .overlay.show{ display:block; } .drawer{ position: fixed; top: 0; right: 0; height: 100vh; width: min(720px, 94vw); background: var(--panelSolid); border-left: 1px solid var(--border); z-index: 100; transform: translateX(102%); transition: transform .2s ease; box-shadow: var(--shadow); display:flex; flex-direction:column; } body.dark-mode .drawer{ background: #0f172a; } .drawer.show{ transform: translateX(0); } .drawer.fullscreen { width: 100vw !important; max-width: none !important; border-left: none; } .drawerHead{ padding: 16px; border-bottom: 1px solid var(--border); display:flex; justify-content:space-between; gap: 10px; align-items:flex-start; } .drawerTitle{ font-weight: 950; font-size: 16px; } .drawerSub{ margin-top: 6px; color: var(--muted); font-size: 12px; font-weight: 700; } .drawerBody{ padding: 16px; overflow:auto; flex:1; } /* Toast */ .toast{ position: fixed; left: 50%; bottom: 18px; transform: translateX(-50%); background: rgba(17,24,39,.95); color: #fff; padding: 10px 14px; border-radius: 12px; font-weight: 800; font-size: 13px; z-index: 200; display:none; max-width: min(820px, 92vw); word-break: break-word; } .toast.show{ display:block; } a.link { color: var(--primary); font-weight: 900; text-decoration:none; } a.link:hover { text-decoration:underline; } .muted { color: var(--muted); } .hr { border:none;border-top:1px solid var(--border);margin:14px 0; } /* ===== Loading Overlay (global) ===== */ .loadingOverlay{ position: fixed; inset: 0; z-index: 1000; display: grid; place-items: center; background: rgba(0,0,0,.45); backdrop-filter: blur(3px); } .loadingCard{ width: min(420px, 92vw); border-radius: 16px; border: 1px solid var(--border); background: var(--panelSolid); box-shadow: var(--shadow); padding: 16px; display:flex; align-items:center; gap: 14px; } body.dark-mode .loadingCard{ background: #0f172a; } .loadingSpinner{ width: 34px; height: 34px; border-radius: 999px; border: 4px solid color-mix(in srgb, var(--primary) 25%, transparent); border-top-color: var(--primary); animation: spin 0.9s linear infinite; flex: 0 0 auto; } @keyframes spin{ to { transform: rotate(360deg); } } body.is-loading{ pointer-events: none; } body.is-loading .loadingOverlay{ pointer-events: all; } /* ===== Modal (OK required) ===== */ .modalOverlay{ position: fixed; inset:0; z-index: 1100; background: rgba(0,0,0,.52); display:none; } .modalOverlay.show{ display:grid; place-items:center; } .modal{ width: min(560px, 92vw); border-radius: 16px; border: 1px solid var(--border); background: var(--panelSolid); box-shadow: var(--shadow); overflow:hidden; } body.dark-mode .modal{ background: #0f172a; } .modalHead{ padding:14px 14px 10px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; gap:10px; align-items:flex-start; } .modalTitle{ font-weight:950; } .modalBody{ padding:14px; } .modalActions{ padding: 0 14px 14px; display:flex; gap:10px; justify-content:flex-end; flex-wrap:wrap; } /* ===== Skeleton loading ===== */ .skRow{ display:flex; flex-direction:column; gap:10px; } .skLine{ height: 12px; border-radius: 999px; background: linear-gradient(90deg, color-mix(in srgb, var(--panel2) 70%, transparent) 25%, color-mix(in srgb, var(--panel) 85%, transparent) 37%, color-mix(in srgb, var(--panel2) 70%, transparent) 63% ); background-size: 400% 100%; animation: shimmer 1.15s ease-in-out infinite; } @keyframes shimmer{ 0%{ background-position: 0% 0; } 100%{ background-position: 100% 0; } } /* Empty state (CSS-only illustration) */ .emptyState{ padding: 18px; border-radius: 16px; border: 1px dashed color-mix(in srgb, var(--border) 75%, transparent); background: color-mix(in srgb, var(--panel2) 75%, transparent); display:flex; gap:14px; align-items:flex-start; } .emptyArt{ width: 48px; height: 48px; border-radius: 16px; background: radial-gradient(circle at 30% 30%, rgba(0,120,212,.35), transparent 55%), radial-gradient(circle at 70% 70%, rgba(100,210,255,.28), transparent 55%), color-mix(in srgb, var(--panel) 75%, transparent); border: 1px solid var(--border); flex: 0 0 auto; } .emptyTitle{ font-weight: 950; margin:0; } .emptyText{ margin-top:6px; color: var(--muted); font-weight: 700; font-size: 13px; } /* Bulk bar */ .bulkBar{ position: sticky; top: calc(var(--headerH) + 10px); z-index: 30; margin-bottom: 12px; border-radius: 16px; border: 1px solid var(--border); background: color-mix(in srgb, var(--panelSolid) 86%, transparent); backdrop-filter: blur(10px); box-shadow: var(--shadow2); padding: 10px; display:none; gap: 10px; align-items:center; justify-content:space-between; flex-wrap:wrap; } .bulkBar.show{ display:flex; } .bulkLeft{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; } .chip{ display:inline-flex; align-items:center; gap:8px; padding: 8px 10px; border-radius: 999px; border: 1px solid var(--border); background: var(--panel2); font-weight: 900; font-size: 12px; color: var(--text); user-select:none; } /* Inline edit */ .cellEdit{ display:flex; gap:8px; align-items:center; } .cellEdit input{ padding:8px 10px; border-radius:10px; } .cellLink{ cursor:pointer; text-decoration: underline; text-decoration-style: dotted; text-underline-offset: 3px; } /* Confetti canvas */ #confettiCanvas{ position: fixed; inset:0; z-index: 1200; pointer-events:none; display:none; } /* Command palette (global search) */ .cmdkOverlay{ position:fixed; inset:0; z-index:1150; background: rgba(0,0,0,.52); display:none; } .cmdkOverlay.show{ display:grid; place-items:center; } .cmdk{ width: min(720px, 94vw); border-radius: 18px; border: 1px solid var(--border); background: var(--panelSolid); box-shadow: var(--shadow); overflow:hidden; } body.dark-mode .cmdk{ background: #0f172a; } .cmdkTop{ padding:12px; border-bottom:1px solid var(--border); display:flex; gap:10px; align-items:center; } .cmdkTop input{ flex:1; } .cmdkList{ max-height: 420px; overflow:auto; padding: 10px; } .cmdkItem{ padding: 10px; border-radius: 12px; border: 1px solid transparent; cursor:pointer; display:flex; justify-content:space-between; gap:10px; align-items:flex-start; } .cmdkItem:hover{ background: var(--panel2); border-color: var(--border); } .cmdkItem .t{ font-weight: 950; } .cmdkItem .m{ margin-top:6px; color: var(--muted); font-size: 12px; font-weight: 750; } /* Drafting Studio */ .draftToolbar{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; justify-content:space-between; margin-bottom: 10px; } .draftLeft{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; } .mono{ font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; } .draftVarMenu{ position: relative; display:inline-block; } .varDropdown{ position: absolute; top: 46px; left: 0; width: min(520px, 86vw); max-height: 360px; overflow:auto; border-radius: 14px; border: 1px solid var(--border); background: var(--panelSolid); box-shadow: var(--shadow); display:none; z-index: 1200; padding: 10px; } body.dark-mode .varDropdown{ background: #0f172a; } .varDropdown.show{ display:block; } .varSearch{ margin-bottom: 10px; } .varItem{ padding: 10px; border-radius: 12px; border: 1px solid transparent; cursor:pointer; background: transparent; } .varItem:hover{ border-color: var(--border); background: var(--panel2); } .varTop{ display:flex; justify-content:space-between; gap:10px; align-items:flex-start; } .varName{ font-weight: 950; font-size: 13px; } .varKey{ font-weight: 950; font-size: 12px; color: var(--primary); } .varDesc{ margin-top: 6px; color: var(--muted); font-size: 12px; font-weight: 650; line-height: 1.35; } .draftEditor{ border-radius: 16px; border: 1px solid var(--border); background: color-mix(in srgb, var(--panel2) 75%, transparent); padding: 12px; } .draftEditor textarea{ min-height: 220px; resize: vertical; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; line-height: 1.45; } .kbd{ font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; border: 1px solid var(--border); background: var(--panel2); border-radius: 8px; padding: 2px 6px; font-size: 12px; font-weight: 900; } </style></head><body class="logged-out"> <canvas id="confettiCanvas"></canvas><div class="appShell"> <header> <div class="brand"> <div class="brandMark"></div> <div class="brandTitle"> <div>Compliance Management</div> <small>Tasks • Calendar • Reminders</small> </div> </div>
+text
+
+<div class="headerRight">
+  <button class="btn iconBtn" id="themeToggle" type="button">
+    <span class="icon" id="themeIcon">☾</span>
+    <span id="themeLabel">Dark</span>
+  </button>
+
+  <button class="btn small" id="sidebarToggle" type="button">Menu</button>
+
+  <button class="btn small" id="sidebarCollapseBtn" type="button" title="Collapse sidebar">⟷</button>
+
+  <button class="btn small" id="btnCmdK" type="button" title="Search (Ctrl/Cmd + K)">Search</button>
+
+  <div id="topUser"></div>
+</div>
+</header> <div class="layout"> <aside id="sidebar"> <div class="sidebarTopRow"> <div class="hint" id="navRoleHint">Not signed in</div> </div>
+text
+
+  <div class="navGroup" id="navGroup">
+    <!-- Shared -->
+    <div class="navItem active" data-target="p_dashboard" id="navDash">
+      <div class="left"><div class="navIcon">⌂</div><div class="navText">Dashboard</div></div>
+      <div class="right"></div>
+    </div>
+
+    <div class="navItem" data-target="p_calendar" id="navCal">
+      <div class="left"><div class="navIcon">📅</div><div class="navText">Calendar</div></div>
+      <div class="right"></div>
+    </div>
+
+    <div class="navItem" data-target="p_tasks" id="navTasks">
+      <div class="left"><div class="navIcon">☑</div><div class="navText">Tasks</div></div>
+      <div class="right"></div>
+    </div>
+
+    <div class="navItem" data-target="p_create_task" id="navCreateTask">
+      <div class="left"><div class="navIcon">＋</div><div class="navText">Create Task</div></div>
+      <div class="right"></div>
+    </div>
+
+    <div class="navItem" data-target="p_import_export" id="navImportExport">
+      <div class="left"><div class="navIcon">⬆</div><div class="navText">Import / Export</div></div>
+      <div class="right"></div>
+    </div>
+
+    <div class="navItem" data-target="p_draft" id="navDraft">
+      <div class="left"><div class="navIcon">✉</div><div class="navText">Email Drafts</div></div>
+      <div class="right"></div>
+    </div>
+
+    <!-- Partner-only -->
+    <div class="navItem" data-target="p_clients" id="navClients">
+      <div class="left"><div class="navIcon">🏢</div><div class="navText">Clients</div></div>
+      <div class="right"></div>
+    </div>
+
+    <div class="navItem" data-target="p_team" id="navTeam">
+      <div class="left"><div class="navIcon">👥</div><div class="navText">Team</div></div>
+      <div class="right"></div>
+    </div>
+
+    <div class="navItem" data-target="p_settings" id="navSettings">
+      <div class="left"><div class="navIcon">⚙</div><div class="navText">Settings</div></div>
+      <div class="right"></div>
+    </div>
+
+    <div class="navItem" data-target="p_audit" id="navAudit">
+      <div class="left"><div class="navIcon">🧾</div><div class="navText">Activity</div></div>
+      <div class="right"></div>
+    </div>
+  </div>
+
+  <div class="sidebarCard hidden" id="tasksSidebarCard">
+    <div class="sidebarCardHead">
+      <div class="t">Needs Action</div>
+      <div class="badgeCount" id="sidebarTaskCount">0</div>
+    </div>
+    <div class="sidebarCardBody">
+      <div class="label">Show overdue + due within (days)</div>
+      <input id="sbDays" type="number" value="7" min="0">
+      <div class="sub" style="margin-top:8px">Click a task to open details.</div>
+      <div style="height:10px"></div>
+      <div class="taskList" id="sidebarTasks"></div>
+    </div>
+  </div>
+</aside>
+
+<main>
+  <!-- LOGIN -->
+  <section id="loginCard" class="card">
+    <div class="cardHeader">
+      <div>
+        <h3 class="title">Sign in</h3>
+        <p class="sub">Timezone: <b>Asia/Kolkata (IST)</b>. Dates are <b>DD-MM-YYYY</b>.</p>
+      </div>
+    </div>
+    <div class="cardBody">
+      <div class="label">Email</div>
+      <input id="email" type="email" placeholder="name@firm.com">
+
+      <div class="label" style="margin-top:10px">Password</div>
+      <input id="pass" type="password" placeholder="••••••••">
+
+      <div style="display:flex;gap:10px;margin-top:10px;flex-wrap:wrap">
+        <button class="btn primary" id="btnLogin" type="button">Login</button>
+        <button class="btn" id="btnSignup" type="button">Signup</button>
+        <button class="btn ghost" id="btnForgotPass" type="button">Forgot password</button>
+      </div>
+
+      <div class="sub" style="margin-top:12px">
+        Tip: Press <span class="kbd">Ctrl</span>+<span class="kbd">K</span> (or <span class="kbd">Cmd</span>+<span class="kbd">K</span>) to search.
+      </div>
+    </div>
+  </section>
+
+  <!-- APP UI (shared container) -->
+  <section id="appUI" class="hidden">
+
+    <!-- DASHBOARD -->
+    <div id="p_dashboard" class="page active">
+      <div class="grid">
+
+        <!-- Quick widgets -->
+        <div class="col-12 card">
+          <div class="cardHeader">
+            <div>
+              <h3 class="title">Today & Next 7 Days</h3>
+              <p class="sub">Your most important items—starting today, due today, and due soon.</p>
+            </div>
+            <div style="display:flex;gap:10px;flex-wrap:wrap">
+              <button class="btn small" id="btnGoToday" type="button">Today</button>
+              <button class="btn small" id="btnGoNext7" type="button">Next 7 days</button>
+            </div>
+          </div>
+          <div class="cardBody">
+            <div class="grid">
+              <div class="col-4 card">
+                <div class="cardBody">
+                  <div class="label">Starting today</div>
+                  <div class="kpi" id="kStartToday">0</div>
+                </div>
+              </div>
+              <div class="col-4 card">
+                <div class="cardBody">
+                  <div class="label">Due today</div>
+                  <div class="kpi" id="kDueToday">0</div>
+                </div>
+              </div>
+              <div class="col-4 card">
+                <div class="cardBody">
+                  <div class="label">Due in next 7 days</div>
+                  <div class="kpi" id="kDueNext7">0</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="hr"></div>
+
+            <div class="tableWrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Alert</th>
+                    <th>Client</th>
+                    <th>Task</th>
+                    <th>Start</th>
+                    <th>Due</th>
+                    <th>Status</th>
+                    <th>Assignee</th>
+                  </tr>
+                </thead>
+                <tbody id="dashTodayList"></tbody>
+              </table>
+            </div>
+
+            <div id="dashTodayEmpty" class="hidden" style="margin-top:12px">
+              <div class="emptyState">
+                <div class="emptyArt"></div>
+                <div>
+                  <div class="emptyTitle">No urgent tasks right now</div>
+                  <div class="emptyText">You’re clear for today. Check Tasks for the full list.</div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- KPIs -->
+        <div class="col-12 card">
+          <div class="cardHeader">
+            <div>
+              <h3 class="title">Overall Summary</h3>
+              <p class="sub">Counts are live and update automatically.</p>
+            </div>
+          </div>
+          <div class="cardBody">
+            <div class="grid">
+              <div class="col-4 card"><div class="cardBody"><div class="label">Total</div><div class="kpi" id="kTotal">0</div></div></div>
+              <div class="col-4 card"><div class="cardBody"><div class="label">Upcoming 7d</div><div class="kpi" id="k7">0</div></div></div>
+              <div class="col-4 card"><div class="cardBody"><div class="label">Upcoming 15d</div><div class="kpi" id="k15">0</div></div></div>
+              <div class="col-4 card"><div class="cardBody"><div class="label">Upcoming 30d</div><div class="kpi" id="k30">0</div></div></div>
+              <div class="col-4 card"><div class="cardBody"><div class="label">Overdue</div><div class="kpi" id="kOverdue">0</div></div></div>
+              <div class="col-4 card"><div class="cardBody"><div class="label">Waiting for approval</div><div class="kpi" id="kAppr">0</div></div></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Quick Alerts -->
+        <div class="col-12 card">
+          <div class="cardHeader">
+            <div><h3 class="title">Quick Alerts</h3><p class="sub">Click a row to open details.</p></div>
+            <button class="btn small" id="btnOpenTasksFromDash" type="button">Open Tasks</button>
+          </div>
+          <div class="cardBody">
+            <div class="tableWrap">
+              <table>
+                <thead><tr><th>Alert</th><th>Client</th><th>Task</th><th>Start</th><th>Due</th><th>Status</th></tr></thead>
+                <tbody id="dashAlerts"></tbody>
+              </table>
+            </div>
+
+            <div id="dashAlertsEmpty" class="hidden" style="margin-top:12px">
+              <div class="emptyState">
+                <div class="emptyArt"></div>
+                <div>
+                  <div class="emptyTitle">No alerts</div>
+                  <div class="emptyText">Nothing is overdue or due soon. Great time to plan ahead.</div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- index.html (PART 2/3) continues... -->
+
+    <!-- index.html (PART 2/3) -->
+text
+
+    <!-- CALENDAR -->
+    <div id="p_calendar" class="page">
+      <div class="grid">
+
+        <div class="col-12 card">
+          <div class="cardHeader">
+            <div>
+              <h3 class="title">Calendar</h3>
+              <p class="sub">View tasks by due date. Switch between Month / Week / Day / Agenda.</p>
+            </div>
+          </div>
+
+          <div class="cardBody">
+            <div class="calTop">
+              <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+                <button class="btn small" id="calPrev" type="button">Prev</button>
+                <button class="btn small" id="calToday" type="button">Today</button>
+                <button class="btn small" id="calNext" type="button">Next</button>
+                <div class="pill" id="calLabel">Month YYYY</div>
+              </div>
+
+              <div class="calTabs">
+                <button class="btn small ghost" id="btnCalMonth" type="button">Month</button>
+                <button class="btn small ghost" id="btnCalWeek" type="button">Week</button>
+                <button class="btn small ghost" id="btnCalDay" type="button">Day</button>
+                <button class="btn small ghost" id="btnCalAgenda" type="button">Agenda</button>
+              </div>
+            </div>
+
+            <!-- Month grid -->
+            <div id="calMonthWrap">
+              <div class="sub" style="margin-top:10px">Dots: overdue / due soon / done</div>
+              <div class="calGrid" id="calGrid"></div>
+            </div>
+
+            <!-- Week view -->
+            <div id="calWeekWrap" class="hidden" style="margin-top:12px">
+              <div class="grid">
+                <div class="col-12 card" style="background:transparent;box-shadow:none;border:none;padding:0">
+                  <div class="sub">Week view shows tasks due on each day.</div>
+                  <div class="grid" id="calWeekGrid" style="margin-top:12px"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Day view -->
+            <div id="calDayWrap" class="hidden" style="margin-top:12px">
+              <div class="sub">Day view shows tasks due on the selected date.</div>
+              <div class="agendaList" id="calDayList"></div>
+            </div>
+
+            <!-- Agenda view -->
+            <div id="calAgendaWrap" class="hidden" style="margin-top:12px">
+              <div class="sub">Agenda is a list sorted by due date.</div>
+              <div class="agendaList" id="calAgendaList"></div>
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- CLIENTS (partner-only; hidden for workers by JS) -->
+    <div id="p_clients" class="page">
+      <div class="grid">
+        <div class="col-12 card">
+          <div class="cardHeader">
+            <div>
+              <h3 class="title">Create Client</h3>
+              <p class="sub">Add a new client profile.</p>
+            </div>
+          </div>
+          <div class="cardBody">
+            <div class="grid">
+              <div class="col-6"><div class="label">Client name</div><input id="cName"></div>
+              <div class="col-6"><div class="label">PAN</div><input id="cPAN"></div>
+              <div class="col-6"><div class="label">GSTIN</div><input id="cGSTIN"></div>
+              <div class="col-6"><div class="label">CIN</div><input id="cCIN"></div>
+              <div class="col-6"><div class="label">Assessment Year</div><input id="cAY"></div>
+              <div class="col-6"><div class="label">Engagement Type</div><input id="cEng"></div>
+              <div class="col-12"><div class="label">Primary Email</div><input id="cEmail"></div>
+              <div class="col-6"><div class="label">CC Emails</div><input id="cCC" placeholder="a@x.com; b@y.com"></div>
+              <div class="col-6"><div class="label">BCC Emails</div><input id="cBCC" placeholder="a@x.com; b@y.com"></div>
+              <div class="col-12"><button class="btn primary" id="btnCreateClient" type="button">Create Client</button></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-12 card">
+          <div class="cardHeader">
+            <div><h3 class="title">Clients</h3><p class="sub">List of all clients.</p></div>
+          </div>
+          <div class="cardBody">
+            <div class="tableWrap">
+              <table>
+                <thead><tr><th>Name</th><th>Email</th><th>PAN</th><th>GSTIN</th><th>Engagement</th></tr></thead>
+                <tbody id="clientTable"></tbody>
+              </table>
+            </div>
+
+            <div id="clientsEmpty" class="hidden" style="margin-top:12px">
+              <div class="emptyState">
+                <div class="emptyArt"></div>
+                <div>
+                  <div class="emptyTitle">No clients yet</div>
+                  <div class="emptyText">Create your first client to begin adding tasks.</div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TASKS -->
+    <div id="p_tasks" class="page">
+      <div class="grid">
+
+        <!-- Bulk bar -->
+        <div class="col-12 bulkBar" id="bulkBar">
+          <div class="bulkLeft">
+            <span class="chip">Selected: <span id="bulkCount">0</span></span>
+            <button class="btn small" id="btnBulkClear" type="button">Clear</button>
+          </div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+            <select id="bulkStatus" style="width:auto">
+              <option value="">Change status…</option>
+              <option value="PENDING">PENDING</option>
+              <option value="IN_PROGRESS">IN_PROGRESS</option>
+              <option value="CLIENT_PENDING">CLIENT_PENDING</option>
+              <option value="APPROVAL_PENDING">APPROVAL_PENDING</option>
+              <option value="COMPLETED">COMPLETED</option>
+            </select>
+            <button class="btn small primary" id="btnBulkApplyStatus" type="button">Apply</button>
+
+            <input id="bulkAssignEmail" placeholder="Reassign to email" style="width:240px">
+            <button class="btn small" id="btnBulkReassign" type="button">Reassign</button>
+
+            <button class="btn small" id="btnBulkSnooze" type="button">Snooze</button>
+            <button class="btn small danger" id="btnBulkDelete" type="button">Delete</button>
+          </div>
+        </div>
+
+        <!-- Filters -->
+        <div class="col-12 card">
+          <div class="cardHeader">
+            <div>
+              <h3 class="title">Filters</h3>
+              <p class="sub">Filter across client, status, category, assignee, and due date ranges.</p>
+            </div>
+          </div>
+          <div class="cardBody">
+            <div class="grid">
+              <div class="col-3"><div class="label">Client</div><select id="filterClient"></select></div>
+
+              <div class="col-3">
+                <div class="label">Status</div>
+                <select id="filterStatus">
+                  <option value="">All</option>
+                  <option>PENDING</option><option>IN_PROGRESS</option><option>CLIENT_PENDING</option>
+                  <option>APPROVAL_PENDING</option><option>COMPLETED</option>
+                </select>
+              </div>
+
+              <div class="col-3">
+                <div class="label">Category</div>
+                <select id="filterCategory">
+                  <option value="">All</option>
+                  <option>GST</option><option>TDS</option><option>INCOME_TAX</option><option>ROC</option>
+                  <option>ACCOUNTING</option><option>AUDIT</option><option>OTHER</option>
+                </select>
+              </div>
+
+              <div class="col-3"><div class="label">Search</div><input id="filterSearch" placeholder="Search task or client"></div>
+
+              <div class="col-3"><div class="label">Due date (from)</div><input id="filterDueFrom" placeholder="DD-MM-YYYY"></div>
+              <div class="col-3"><div class="label">Due date (to)</div><input id="filterDueTo" placeholder="DD-MM-YYYY"></div>
+
+              <div class="col-3"><div class="label">Due on / before</div><input id="filterDueOnOrBefore" placeholder="DD-MM-YYYY"></div>
+              <div class="col-3"><div class="label">Due on / after</div><input id="filterDueOnOrAfter" placeholder="DD-MM-YYYY"></div>
+
+              <div class="col-3"><div class="label">Assignee (multi)</div><select id="filterAssignees" multiple style="min-height:120px"></select></div>
+
+              <div class="col-3">
+                <div class="label">Show</div>
+                <select id="filterMode">
+                  <option value="ALL">All tasks</option>
+                  <option value="NEEDS_ACTION">Overdue + due soon</option>
+                  <option value="TODAY">Starting today or due today</option>
+                  <option value="NEXT_7">Due next 7 days</option>
+                  <option value="APPROVAL">Waiting for approval</option>
+                  <option value="SNOOZED">Snoozed</option>
+                </select>
+                <div class="sub" style="margin-top:6px">For “Overdue + due soon”, choose days below.</div>
+              </div>
+
+              <div class="col-3"><div class="label">Overdue + due within (days)</div><input id="filterNeedDays" type="number" value="7" min="0"></div>
+
+              <div class="col-3">
+                <div class="label">Priority</div>
+                <select id="filterPriority">
+                  <option value="">All</option>
+                  <option value="HIGH">HIGH</option>
+                  <option value="MEDIUM">MEDIUM</option>
+                  <option value="LOW">LOW</option>
+                </select>
+              </div>
+
+              <div class="col-3">
+                <div class="label">Starred</div>
+                <select id="filterStarred">
+                  <option value="">All</option>
+                  <option value="ONLY">Only starred</option>
+                </select>
+              </div>
+
+              <div class="col-12" style="display:flex;gap:10px;flex-wrap:wrap">
+                <button class="btn" id="btnResetFilters" type="button">Reset</button>
+                <button class="btn small" id="btnClearDates" type="button">Clear Dates</button>
+                <button class="btn small" id="btnOpenAdvancedFilters" type="button">Advanced Filters (AND/OR)</button>
+                <button class="btn small ghost" id="btnPrintTasks" type="button">Print / Save PDF</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tasks table -->
+        <div class="col-12 card">
+          <div class="cardHeader">
+            <div><h3 class="title">Tasks</h3><p class="sub">Select multiple tasks to bulk edit. Click a task to open details.</p></div>
+          </div>
+          <div class="cardBody">
+
+            <!-- Skeleton (shown while loading) -->
+            <div id="tasksSkeleton" class="hidden">
+              <div class="skRow">
+                <div class="skLine" style="width:65%"></div>
+                <div class="skLine" style="width:92%"></div>
+                <div class="skLine" style="width:88%"></div>
+                <div class="skLine" style="width:95%"></div>
+                <div class="skLine" style="width:84%"></div>
+              </div>
+            </div>
+
+            <div id="tasksEmpty" class="hidden">
+              <div class="emptyState">
+                <div class="emptyArt"></div>
+                <div>
+                  <div class="emptyTitle">No tasks found</div>
+                  <div class="emptyText">Try changing filters or create a new task.</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="tableWrap" id="tasksTableWrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th style="width:44px"><input type="checkbox" id="chkAll"></th>
+                    <th>Alert</th>
+                    <th>Client</th>
+                    <th>Task</th>
+                    <th>Series</th>
+                    <th>Category</th>
+                    <th>Priority</th>
+                    <th>Start</th>
+                    <th>Due</th>
+                    <th>Status</th>
+                    <th>Assignee</th>
+                    <th style="width:70px">Star</th>
+                  </tr>
+                </thead>
+                <tbody id="partnerTasks"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- CREATE TASK (enabled for both partner and worker; JS restricts unsafe fields for worker) -->
+    <div id="p_create_task" class="page">
+      <div class="grid">
+        <div class="col-12 card">
+          <div class="cardHeader">
+            <div>
+              <h3 class="title">Create Task</h3>
+              <p class="sub">Create one task or a repeating series. Calendar event is created on the start date.</p>
+            </div>
+          </div>
+          <div class="cardBody">
+            <div class="grid">
+
+              <div class="col-6">
+                <div class="label">Client (choose from list)</div>
+                <select id="ctClientId"></select>
+                <div class="sub" style="margin-top:6px">If client is not in list, type the name below.</div>
+              </div>
+
+              <div class="col-6">
+                <div class="label">Client name (if not in list)</div>
+                <input id="ctClientName" placeholder="Client name">
+              </div>
+
+              <div class="col-6">
+                <div class="label">Client email (optional)</div>
+                <input id="ctClientEmail" placeholder="client@example.com">
+              </div>
+
+              <div class="col-6">
+                <div class="label">Assign to (email)</div>
+                <input id="ctAssignedToEmail" placeholder="worker@firm.com">
+                <div class="sub" style="margin-top:6px" id="ctAssignHint">Partners can assign to anyone. Workers will be assigned to themselves.</div>
+              </div>
+
+              <div class="col-12"><div class="label">Task title</div><input id="ctTitle" placeholder="Example: GSTR-3B Filing"></div>
+
+              <div class="col-3">
+                <div class="label">Category</div>
+                <select id="ctCategory">
+                  <option>GST</option><option>TDS</option><option>Income Tax</option><option>ROC</option>
+                  <option>Accounting</option><option>Audit</option><option>Other</option>
+                </select>
+              </div>
+
+              <div class="col-3">
+                <div class="label">Type</div>
+                <input id="ctType" list="typeSuggestions" placeholder="FILING / REVIEW / PAYMENT ...">
+                <datalist id="typeSuggestions">
+                  <option value="FILING"></option>
+                  <option value="REVIEW"></option>
+                  <option value="PAYMENT"></option>
+                  <option value="FOLLOW_UP"></option>
+                  <option value="CLIENT_PENDING"></option>
+                </datalist>
+              </div>
+
+              <div class="col-3">
+                <div class="label">Priority</div>
+                <select id="ctPriority">
+                  <option value="MEDIUM" selected>MEDIUM</option>
+                  <option value="HIGH">HIGH</option>
+                  <option value="LOW">LOW</option>
+                </select>
+              </div>
+
+              <div class="col-3"><div class="label">Due date</div><input id="ctDueDate" placeholder="DD-MM-YYYY"></div>
+
+              <div class="col-3"><div class="label">Start before due (days)</div><input id="ctTrigger" type="number" value="15" min="0"></div>
+
+              <div class="col-6">
+                <div class="label">Repeat</div>
+                <select id="ctRecurrence">
+                  <option value="AD_HOC">One-time</option>
+                  <option value="DAILY">Daily</option>
+                  <option value="WEEKLY">Weekly</option>
+                  <option value="BIWEEKLY">Every 2 weeks</option>
+                  <option value="MONTHLY">Monthly</option>
+                  <option value="BIMONTHLY">Every 2 months</option>
+                  <option value="QUARTERLY">Quarterly</option>
+                  <option value="HALF_YEARLY">Half-yearly</option>
+                  <option value="YEARLY">Yearly</option>
+                </select>
+              </div>
+
+              <div class="col-3"><div class="label">How many tasks</div><input id="ctGenerateCount" type="number" value="1" min="1"></div>
+
+              <div class="col-12"><div class="hr"></div></div>
+
+              <div class="col-12">
+                <h3 class="title" style="font-size:16px;margin:0">Client emails (optional)</h3>
+                <p class="sub">If you don’t set these, the client’s saved email is used.</p>
+              </div>
+
+              <div class="col-4"><div class="label">To</div><input id="ctClientTo" placeholder="client@abc.com; director@abc.com"></div>
+              <div class="col-4"><div class="label">CC</div><input id="ctClientCc" placeholder="staff@firm.com"></div>
+              <div class="col-4"><div class="label">BCC</div><input id="ctClientBcc" placeholder="partner@firm.com"></div>
+
+              <div class="col-6">
+                <label style="display:flex;gap:10px;align-items:center;font-weight:900">
+                  <input id="ctCcAssignee" type="checkbox" style="width:auto">
+                  CC assignee on start email
+                </label>
+              </div>
+
+              <div class="col-6">
+                <label style="display:flex;gap:10px;align-items:center;font-weight:900">
+                  <input id="ctCcManager" type="checkbox" style="width:auto">
+                  CC manager on start email
+                </label>
+              </div>
+
+              <div class="col-12"><div class="label">Start email subject</div><input id="ctStartSubject" placeholder="Example: We started {{taskTitle}}"></div>
+              <div class="col-12"><div class="label">Start email body</div><textarea id="ctStartBody" rows="6" placeholder="Write your message. Use {{clientName}}, {{taskTitle}}, {{startDate}}, {{dueDate}}, {{addToCalendarUrl}}"></textarea></div>
+
+              <div class="col-6">
+                <label style="display:flex;gap:10px;align-items:center;font-weight:900">
+                  <input id="ctSendCompletion" type="checkbox" style="width:auto" checked>
+                  Send completion email to client (when approved)
+                </label>
+                <div class="sub">Disable if you don’t want a completion email for this task.</div>
+              </div>
+
+              <div class="col-12"><div class="label">Completion email subject (optional)</div><input id="ctCompletionSubject" placeholder="Completed: {{taskTitle}}"></div>
+              <div class="col-12"><div class="label">Completion email body (optional)</div><textarea id="ctCompletionBody" rows="6" placeholder="You can use {{completedAt}} too"></textarea></div>
+
+              <div class="col-12" style="display:flex;gap:10px;flex-wrap:wrap">
+                <button class="btn primary" id="btnCreateTaskOne" type="button">Create</button>
+                <button class="btn" id="btnGoTasks" type="button">Go to Tasks</button>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- IMPORT / EXPORT (partner and worker; worker import may ask password in JS) -->
+    <div id="p_import_export" class="page">
+      <div class="grid">
+
+        <div class="col-12 card">
+          <div class="cardHeader">
+            <div>
+              <h3 class="title">Import from Excel</h3>
+              <p class="sub">Upload an Excel (.xlsx) file to create tasks.</p>
+            </div>
+          </div>
+          <div class="cardBody">
+            <div class="grid">
+              <div class="col-12">
+                <button class="btn" id="btnDownloadMyClientsXlsx" type="button">Download Client_Tasks_Import_Template (XLSX)</button>
+                <div class="sub" style="margin-top:8px">
+                  The template contains dropdowns for category and repeat settings.
+                </div>
+              </div>
+
+              <div class="col-12"><input type="file" id="xlsxFile" accept=".xlsx"></div>
+
+              <div class="col-6">
+                <div class="label">Import password (workers only)</div>
+                <input id="workerImportPassword" type="password" placeholder="Ask partner for password">
+                <div class="sub" style="margin-top:6px">Partners can import without a password.</div>
+              </div>
+
+              <div class="col-12" style="display:flex;gap:10px;flex-wrap:wrap">
+                <button class="btn primary" id="btnImportXlsx" type="button">Import XLSX</button>
+              </div>
+
+              <div class="col-12">
+                <div class="sub">
+                  If a task’s start date is today, the start email may be sent immediately. Otherwise, it’s sent automatically on the start date.
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-12 card">
+          <div class="cardHeader">
+            <div>
+              <h3 class="title">Export</h3>
+              <p class="sub">Download tasks and history.</p>
+            </div>
+          </div>
+          <div class="cardBody">
+            <div class="grid">
+              <div class="col-4"><div class="label">From</div><input id="exportFrom" value="01-01-2026"></div>
+              <div class="col-4"><div class="label">To</div><input id="exportTo" value="31-12-2026"></div>
+              <div class="col-4"><div class="label">Include history</div>
+                <select id="exportIncludeAudit">
+                  <option value="true">true</option>
+                  <option value="false">false</option>
+                </select>
+              </div>
+
+              <div class="col-12" style="display:flex;gap:10px;flex-wrap:wrap">
+                <button class="btn primary" id="btnExportFirmRange" type="button">Download Export (XLSX)</button>
+                <button class="btn" id="btnExportNext7" type="button">Next 7 days</button>
+                <button class="btn" id="btnExportNext15" type="button">Next 15 days</button>
+                <button class="btn" id="btnExportNext30" type="button">Next 30 days</button>
+                <button class="btn" id="btnExportOverdue" type="button">Overdue</button>
+                <button class="btn" id="btnExportApproval" type="button">Waiting for approval</button>
+                <button class="btn ghost" id="btnExportPdf" type="button">Save PDF (current view)</button>
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- DRAFTING STUDIO (enabled for both roles) -->
+    <div id="p_draft" class="page">
+      <div class="grid">
+        <div class="col-12 card">
+          <div class="cardHeader">
+            <div>
+              <h3 class="title">Email Drafts</h3>
+              <p class="sub">
+                Draft your email messages here, then copy-paste into the task form or Excel template.
+                This tool keeps your formatting safe for Excel.
+              </p>
+            </div>
+          </div>
+
+          <div class="cardBody">
+            <div class="draftToolbar">
+              <div class="draftLeft">
+                <div class="draftVarMenu">
+                  <button class="btn" id="btnVarMenu" type="button">Insert a field</button>
+
+                  <div class="varDropdown" id="varDropdown">
+                    <input class="varSearch" id="varSearch" placeholder="Search fields...">
+                    <div id="varList"></div>
+                    <div class="sub" style="margin-top:8px">
+                      Tip: Click a field to insert it at the cursor.
+                    </div>
+                  </div>
+                </div>
+
+                <span class="chip">
+                  Excel mode:
+                  <select id="draftNewlineMode" style="width:auto;padding:6px 8px;border-radius:10px">
+                    <option value="TOKEN" selected>Keep in one cell</option>
+                    <option value="REAL">Use real lines</option>
+                  </select>
+                </span>
+              </div>
+
+              <div style="display:flex; gap:10px; flex-wrap:wrap">
+                <button class="btn primary" id="btnDraftCopyForImport" type="button">Copy Body (for Excel)</button>
+                <button class="btn" id="btnDraftCopySubject" type="button">Copy Subject</button>
+                <button class="btn" id="btnDraftCopyBodyRaw" type="button">Copy Body (raw)</button>
+              </div>
+            </div>
+
+            <div class="grid">
+              <div class="col-12">
+                <div class="label">Subject</div>
+                <input id="draftSubject" placeholder="Example: We started {{taskTitle}} for {{clientName}}">
+              </div>
+
+              <div class="col-12">
+                <div class="label">Body</div>
+                <div class="draftEditor">
+                  <textarea id="draftBody" rows="12" placeholder="Type your email body here..."></textarea>
+                  <div class="sub" style="margin-top:10px">
+                    “Copy Body (for Excel)” keeps all lines inside a single Excel cell.
+                  </div>
+                </div>
+              </div>
+
+              <div class="col-12">
+                <div class="label">Preview</div>
+                <div class="card" style="padding:12px">
+                  <div class="sub" id="draftPreview" style="white-space:pre-wrap"></div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TEAM (partner-only; hidden for workers by JS) -->
+    <div id="p_team" class="page">
+      <div class="grid">
+        <div class="col-12 card">
+          <div class="cardHeader">
+            <div><h3 class="title">Team</h3><p class="sub">Manage roles, names, and reporting lines.</p></div>
+            <button class="btn small" id="btnReloadTeam" type="button">Reload</button>
+          </div>
+          <div class="cardBody">
+            <div class="sub">
+              Roles: <b>PARTNER</b>, <b>MANAGER</b>, <b>WORKER</b>. Managers can be notified when needed.
+            </div>
+            <div style="height:10px"></div>
+            <div class="tableWrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>User</th><th>Name</th><th>Role</th><th>Active</th><th>Manager Email</th><th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="teamTable"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SETTINGS (partner-only; hidden for workers by JS) -->
+    <div id="p_settings" class="page">
+      <div class="grid">
+
+        <div class="col-12 card">
+          <div class="cardHeader">
+            <div><h3 class="title">Calendar Settings</h3><p class="sub">Controls the time window for calendar events.</p></div>
+            <button class="btn small" id="btnReloadCalSettings" type="button">Reload</button>
+          </div>
+          <div class="cardBody">
+            <div class="grid">
+              <div class="col-4"><div class="label">Start hour (0–23)</div><input id="calSetStartHH" type="number" min="0" max="23"></div>
+              <div class="col-4"><div class="label">End hour (0–23)</div><input id="calSetEndHH" type="number" min="0" max="23"></div>
+              <div class="col-4"><div class="label">Time zone</div><input id="calSetTz" value="Asia/Kolkata"></div>
+              <div class="col-12"><button class="btn primary" id="btnSaveCalSettings" type="button">Save Calendar Settings</button></div>
+              <div class="col-12"><div class="sub">These settings affect task creation, imports, series rebuild, edits and completion updates.</div></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-12 card">
+          <div class="cardHeader">
+            <div><h3 class="title">Daily Digest</h3><p class="sub">Configure who receives daily summary emails.</p></div>
+            <button class="btn small" id="btnReloadSettings" type="button">Reload</button>
+          </div>
+          <div class="cardBody">
+            <div class="grid">
+              <div class="col-6">
+                <div class="label">Internal emails</div>
+                <textarea id="setDailyEmails" rows="4" placeholder="a@firm.com; b@firm.com"></textarea>
+              </div>
+              <div class="col-3"><div class="label">Window days</div><input id="setDailyWindowDays" type="number" value="30"></div>
+              <div class="col-3"><div class="label">Send to assignees</div>
+                <select id="setSendToAssignees"><option value="true">true</option><option value="false">false</option></select>
+              </div>
+              <div class="col-12"><div class="label">Last run</div><input id="setLastRun" disabled></div>
+              <div class="col-12"><button class="btn primary" id="btnSaveSettings" type="button">Save Digest Settings</button></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-12 card">
+          <div class="cardHeader">
+            <div><h3 class="title">Worker Import Password</h3><p class="sub">Set a password to allow workers to import Excel files.</p></div>
+          </div>
+          <div class="cardBody">
+            <div class="grid">
+              <div class="col-6"><div class="label">New password</div><input id="setWorkerImportPass" type="password" placeholder="Leave empty to remove"></div>
+              <div class="col-6"><div class="label">Confirm</div><input id="setWorkerImportPass2" type="password" placeholder="Repeat password"></div>
+              <div class="col-12" style="display:flex;gap:10px;flex-wrap:wrap">
+                <button class="btn primary" id="btnSaveWorkerImportPass" type="button">Save</button>
+                <button class="btn danger" id="btnRemoveWorkerImportPass" type="button">Remove</button>
+              </div>
+              <div class="col-12"><div class="sub">Partners can always import. Workers must enter this password.</div></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-12 card">
+          <div class="cardHeader">
+            <div><h3 class="title">Your Account</h3><p class="sub">Change your password.</p></div>
+          </div>
+          <div class="cardBody">
+            <div class="grid">
+              <div class="col-6"><div class="label">New password</div><input id="myNewPass" type="password"></div>
+              <div class="col-6"><div class="label">Confirm</div><input id="myNewPass2" type="password"></div>
+              <div class="col-12"><button class="btn primary" id="btnChangePass" type="button">Change Password</button></div>
+              <div class="col-12"><div class="sub">If this fails, log out and log in again, then retry.</div></div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ACTIVITY (partner-only; hidden for workers) -->
+    <div id="p_audit" class="page">
+      <div class="grid">
+        <div class="col-12 card">
+          <div class="cardHeader"><div><h3 class="title">Activity</h3><p class="sub">Recent actions in the system.</p></div></div>
+          <div class="cardBody">
+            <div class="tableWrap" style="max-height:520px;">
+              <table>
+                <thead><tr><th>Time</th><th>Action</th><th>By</th><th>Details</th></tr></thead>
+                <tbody id="auditTable"></tbody>
+              </table>
+            </div>
+
+            <div id="auditEmpty" class="hidden" style="margin-top:12px">
+              <div class="emptyState">
+                <div class="emptyArt"></div>
+                <div>
+                  <div class="emptyTitle">No activity yet</div>
+                  <div class="emptyText">Actions will show up here as you work.</div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </section>
+
+</main>
+</div> </div><!-- Drawer --><div class="overlay" id="overlay"></div> <div class="drawer" id="drawer"> <div class="drawerHead"> <div> <div class="drawerTitle" id="dTitle">Task</div> <div class="drawerSub" id="dSub">—</div> </div>
+text
+
+<div style="display:flex;gap:10px">
+  <button class="btn small" id="btnPrintTask" title="Print / Save PDF">Print</button>
+  <button class="btn small" id="btnExpandDrawer" title="Toggle Fullscreen">⤢</button>
+  <button class="btn small" id="btnCloseDrawer">Close</button>
+</div>
+</div> <div class="drawerBody">
+text
+
+<div class="card" style="padding:12px;margin-bottom:12px">
+  <div class="label">Quick Info</div>
+  <div id="dInfo" class="sub"></div>
+
+  <div style="margin-top:10px;display:flex;gap:10px;flex-wrap:wrap">
+    <a class="btn small" id="btnOpenCalEvent" target="_blank" rel="noopener">Open Calendar Event</a>
+    <a class="btn small" id="btnAddToMyCal" target="_blank" rel="noopener">Add to My Calendar</a>
+    <button class="btn small" id="btnStarTask" type="button">Star</button>
+    <button class="btn small" id="btnSnoozeTask" type="button">Snooze</button>
+  </div>
+
+  <div class="sub" style="margin-top:8px">
+    Calendar: one event is created on the start date. Due date is shown in the event notes.
+  </div>
+</div>
+
+<div class="card" style="padding:12px;margin-bottom:12px">
+  <div class="label">Update Status</div>
+  <select id="uStatus"></select>
+
+  <div class="label" style="margin-top:10px">Status note</div>
+  <textarea id="uStatusNote" rows="3" placeholder="Add a short note (optional)"></textarea>
+
+  <div class="label" style="margin-top:10px">Delay reason</div>
+  <select id="uDelayReason">
+    <option value="">(none)</option>
+    <option value="CLIENT_DELAY">CLIENT_DELAY</option>
+    <option value="INTERNAL_DELAY">INTERNAL_DELAY</option>
+  </select>
+
+  <div class="label" style="margin-top:10px">Delay details</div>
+  <textarea id="uDelayNotes" rows="3"></textarea>
+
+  <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:10px">
+    <button class="btn primary" id="btnSaveTaskStatus" type="button">Save Status</button>
+    <button class="btn" id="btnUploadDoc" type="button">Upload Document</button>
+    <button class="btn danger" id="btnDeleteOne" type="button">Delete Task</button>
+  </div>
+</div>
+
+<div class="card" style="padding:12px;margin-bottom:12px" id="partnerOnlyBox">
+  <div class="label">Edit Details</div>
+
+  <label style="display:flex;gap:10px;align-items:center;font-weight:900">
+    <input id="uApplyToSeries" type="checkbox" style="width:auto">
+    Apply changes to all tasks in the series
+  </label>
+
+  <div class="label" style="margin-top:10px">Title</div>
+  <input id="uTitle">
+
+  <div class="grid" style="margin-top:10px">
+    <div class="col-6">
+      <div class="label">Category</div>
+      <select id="uCategory">
+        <option>GST</option><option>TDS</option><option>Income Tax</option><option>ROC</option>
+        <option>Accounting</option><option>Audit</option><option>Other</option>
+      </select>
+    </div>
+    <div class="col-6">
+      <div class="label">Type</div>
+      <input id="uType" list="typeSuggestions2">
+      <datalist id="typeSuggestions2">
+        <option value="FILING"></option>
+        <option value="REVIEW"></option>
+        <option value="PAYMENT"></option>
+        <option value="FOLLOW_UP"></option>
+        <option value="CLIENT_PENDING"></option>
+      </datalist>
+    </div>
+  </div>
+
+  <div class="grid" style="margin-top:10px">
+    <div class="col-6">
+      <div class="label">Priority</div>
+      <select id="uPriority">
+        <option value="MEDIUM" selected>MEDIUM</option>
+        <option value="HIGH">HIGH</option>
+        <option value="LOW">LOW</option>
+      </select>
+    </div>
+    <div class="col-6">
+      <div class="label">Snoozed until</div>
+      <input id="uSnoozedUntil" placeholder="DD-MM-YYYY (optional)">
+    </div>
+  </div>
+
+  <div class="grid" style="margin-top:10px">
+    <div class="col-6">
+      <div class="label">Start before due (days)</div>
+      <input id="uTrigger" type="number" min="0">
+    </div>
+    <div class="col-6">
+      <div class="label">Assign to (email)</div>
+      <input id="uAssignedToEmail">
+    </div>
+  </div>
+
+  <div class="label" style="margin-top:10px">Due date (one task only)</div>
+  <input id="uDueDateDmy" placeholder="DD-MM-YYYY">
+
+  <div class="hr"></div>
+
+  <div class="label">Client email settings</div>
+
+  <div class="grid" style="margin-top:10px">
+    <div class="col-4"><div class="label">To</div><input id="uClientTo"></div>
+    <div class="col-4"><div class="label">CC</div><input id="uClientCc"></div>
+    <div class="col-4"><div class="label">BCC</div><input id="uClientBcc"></div>
+
+    <div class="col-6">
+      <label style="display:flex;gap:10px;align-items:center;font-weight:900">
+        <input id="uCcAssignee" type="checkbox" style="width:auto">
+        CC assignee on start email
+      </label>
+    </div>
+    <div class="col-6">
+      <label style="display:flex;gap:10px;align-items:center;font-weight:900">
+        <input id="uCcManager" type="checkbox" style="width:auto">
+        CC manager on start email
+      </label>
+    </div>
+
+    <div class="col-6">
+      <label style="display:flex;gap:10px;align-items:center;font-weight:900">
+        <input id="uSendCompletion" type="checkbox" style="width:auto">
+        Send completion email to client
+      </label>
+    </div>
+  </div>
+
+  <div class="label" style="margin-top:10px">Start email subject</div>
+  <input id="uClientStartSubject">
+  <div class="label" style="margin-top:10px">Start email body</div>
+  <textarea id="uClientStartBody" rows="5"></textarea>
+
+  <div class="label" style="margin-top:10px">Completion email subject</div>
+  <input id="uClientCompletionSubject">
+  <div class="label" style="margin-top:10px">Completion email body</div>
+  <textarea id="uClientCompletionBody" rows="5"></textarea>
+
+  <div class="sub" style="margin-top:8px">
+    Available fields: {{clientName}} {{taskTitle}} {{startDate}} {{dueDate}} {{addToCalendarUrl}} {{completedAt}}
+  </div>
+
+  <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:10px">
+    <button class="btn primary" id="btnSaveTaskDetails" type="button">Save Details</button>
+    <button class="btn danger" id="btnDeleteSeries" type="button">Delete Series</button>
+  </div>
+
+  <div class="hr"></div>
+
+  <div class="label">Series Tools</div>
+  <div class="sub">Only available when this task is part of a series.</div>
+
+  <div class="grid" style="margin-top:10px">
+    <div class="col-6">
+      <div class="label">Add more tasks to series</div>
+      <input id="srAddCount" type="number" value="1" min="1">
+    </div>
+    <div class="col-6" style="display:flex;align-items:flex-end">
+      <button class="btn" id="btnSeriesRebuild" type="button">Add</button>
+    </div>
+
+    <div class="col-6">
+      <div class="label">Reassign series</div>
+      <input id="srAssignEmail" placeholder="worker@firm.com">
+    </div>
+    <div class="col-6" style="display:flex;align-items:flex-end">
+      <button class="btn" id="btnSeriesReassign" type="button">Reassign</button>
+    </div>
+  </div>
+
+</div>
+
+<!-- Comments -->
+<div class="card" style="padding:12px;margin-bottom:12px">
+  <div class="label">Comments</div>
+  <div class="sub" style="margin-top:6px">Discuss progress and share notes with your team.</div>
+  <div style="height:10px"></div>
+  <div id="commentsList"></div>
+
+  <div style="height:10px"></div>
+  <textarea id="commentInput" rows="3" placeholder="Write a comment… Use @Name to mention someone"></textarea>
+  <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:10px">
+    <button class="btn primary" id="btnAddComment" type="button">Add Comment</button>
+  </div>
+</div>
+
+<!-- Task timeline -->
+<div class="card" style="padding:12px;margin-bottom:12px">
+  <div class="label">Timeline</div>
+  <div id="taskTimeline"></div>
+</div>
+
+<div class="card" style="padding:12px">
+  <div class="label">Attachments</div>
+  <div id="dAttachList"></div>
+</div>
+</div> </div><!-- Toast --><div class="toast" id="toast"></div><!-- Modal (OK required) --><div class="modalOverlay" id="modalOverlay"> <div class="modal"> <div class="modalHead"> <div> <div class="modalTitle" id="modalTitle">Message</div> <div class="sub" id="modalSub" style="margin-top:6px"></div> </div> <button class="btn small" id="modalClose">✕</button> </div> <div class="modalBody" id="modalBody"></div> <div class="modalActions"> <button class="btn primary" id="modalOk">OK</button> </div> </div> </div><!-- Command palette --><div class="cmdkOverlay" id="cmdkOverlay"> <div class="cmdk"> <div class="cmdkTop"> <div class="pill">Search</div> <input id="cmdkInput" placeholder="Search tasks, clients, people…"> <button class="btn small" id="cmdkClose" type="button">Close</button> </div> <div class="cmdkList" id="cmdkList"></div> </div> </div><!-- Global Loading Overlay --><div id="loadingOverlay" class="loadingOverlay hidden"> <div class="loadingCard"> <div class="loadingSpinner"></div> <div> <div style="font-weight:950;font-size:14px" id="loadingTitle">Working…</div> <div class="sub" id="loadingMsg" style="margin-top:6px">Please wait</div> </div> </div> </div><!-- Firebase --><script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script><!-- Scripts are in PART 3/3 -->
+
+<!-- index.html (PART 3/3) -->
+<script>
+  // ===== CONFIG =====
+  const BACKEND_BASE_URL = "https://investigators-burlington-button-harvest.trycloudflare.com/.netlify/functions";
+  const firebaseConfig = {
+    apiKey: "AIzaSyCnWS-V96J6YDBVYKOeL5p8aa45GPTdSEg",
+    authDomain: "compliance-management-484405.firebaseapp.com",
+    projectId: "compliance-management-484405",
+    storageBucket: "compliance-management-484405.firebasestorage.app",
+    messagingSenderId: "4348274796",
+    appId: "1:4348274796:web:a9e1720c2ae223035bd049",
+    measurementId: "G-06QR8MTCSR"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const auth = firebase.auth();
+  const db = firebase.firestore();
+  const el = (id) => document.getElementById(id);
+
+  // ===== Toast =====
+  const toast = el('toast');
+
+  function showToast(msg, ms = 2400) {
+    if (!toast) return alert(msg);
+    toast.textContent = msg;
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), ms);
+  }
+
+  // ===== Modal (OK required) =====
+  const modalOverlay = el('modalOverlay');
+  const modalTitle = el('modalTitle');
+  const modalSub = el('modalSub');
+  const modalBody = el('modalBody');
+  const modalOk = el('modalOk');
+  const modalClose = el('modalClose');
+
+  async function showModal({ title = "Message", sub = "", bodyHtml = "", okText = "OK" }) {
+    return new Promise((resolve) => {
+      if (modalTitle) modalTitle.textContent = title;
+      if (modalSub) modalSub.textContent = sub;
+      if (modalBody) modalBody.innerHTML = bodyHtml;
+      if (modalOk) modalOk.textContent = okText;
+      const done = () => {
+        modalOverlay.classList.remove('show');
+        modalOk.onclick = null;
+        modalClose.onclick = null;
+        resolve(true);
+      };
+      modalOk.onclick = done;
+      modalClose.onclick = done;
+      modalOverlay.classList.add('show');
+    });
+  }
+
+  // ===== Loading Overlay =====
+  const loadingOverlay = el('loadingOverlay');
+  const loadingTitle = el('loadingTitle');
+  const loadingMsg = el('loadingMsg');
+  let loadingCount = 0;
+
+  function showLoading(title = "Working…", msg = "Please wait") {
+    loadingCount++;
+    if (loadingTitle) loadingTitle.textContent = title;
+    if (loadingMsg) loadingMsg.textContent = msg;
+    if (loadingOverlay) loadingOverlay.classList.remove('hidden');
+    document.body.classList.add('is-loading');
+  }
+
+  function hideLoading() {
+    loadingCount = Math.max(0, loadingCount - 1);
+    if (loadingCount !== 0) return;
+    if (loadingOverlay) loadingOverlay.classList.add('hidden');
+    document.body.classList.remove('is-loading');
+  }
+
+  // ===== Theme: manual + auto-switch (system) =====
+  const THEME_KEY = "cms_theme";
+  const THEME_AUTO_KEY = "cms_theme_auto"; // "true"/"false"
+  function applyTheme(theme) {
+    const dark = (theme === "dark");
+    document.body.classList.toggle('dark-mode', dark);
+    const ti = el('themeIcon');
+    const tl = el('themeLabel');
+    if (ti) ti.textContent = dark ? "☀" : "☾";
+    if (tl) tl.textContent = dark ? "Light" : "Dark";
+  }
+
+  function applyThemeAutoIfEnabled() {
+    const auto = (localStorage.getItem(THEME_AUTO_KEY) !== 'false'); // default true
+    if (!auto) return;
+    const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+    applyTheme(prefersDark ? 'dark' : 'light');
+    localStorage.setItem(THEME_KEY, prefersDark ? 'dark' : 'light');
+  }
+  applyTheme(localStorage.getItem(THEME_KEY) || "light");
+  applyThemeAutoIfEnabled();
+  if (window.matchMedia) {
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => applyThemeAutoIfEnabled());
+  }
+  const themeToggle = el('themeToggle');
+  if (themeToggle) {
+    themeToggle.onclick = () => {
+      localStorage.setItem(THEME_AUTO_KEY, 'false'); // manual overrides auto
+      const next = document.body.classList.contains('dark-mode') ? "light" : "dark";
+      localStorage.setItem(THEME_KEY, next);
+      applyTheme(next);
+    };
+  }
+
+  // ===== Sidebar controls =====
+  const sidebarToggle = el('sidebarToggle');
+  if (sidebarToggle) sidebarToggle.onclick = () => document.body.classList.toggle('sidebar-open');
+  const SIDEBAR_COLLAPSED_KEY = "cms_sidebar_collapsed";
+  const sidebarCollapseBtn = el('sidebarCollapseBtn');
+
+  function applySidebarCollapsed() {
+    const c = localStorage.getItem(SIDEBAR_COLLAPSED_KEY) === 'true';
+    document.body.classList.toggle('sidebar-collapsed', c);
+  }
+  applySidebarCollapsed();
+  if (sidebarCollapseBtn) {
+    sidebarCollapseBtn.onclick = () => {
+      const next = !(localStorage.getItem(SIDEBAR_COLLAPSED_KEY) === 'true');
+      localStorage.setItem(SIDEBAR_COLLAPSED_KEY, next ? 'true' : 'false');
+      applySidebarCollapsed();
+    };
+  }
+
+  // ===== IST Date Helpers =====
+  const IST_TZ = 'Asia/Kolkata';
+
+  function ymdIST(date = new Date()) {
+    const parts = new Intl.DateTimeFormat('en-CA', {
+      timeZone: IST_TZ,
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit'
+    }).formatToParts(date);
+    const m = Object.fromEntries(parts.map(p => [p.type, p.value]));
+    return `${m.year}-${m.month}-${m.day}`;
+  }
+
+  function dateFromYmdIST(ymd) {
+    return new Date(`${ymd}T00:00:00+05:30`);
+  }
+
+  function dmyToYmd(dmy) {
+    const s = String(dmy || '').trim();
+    const m = /^(\d{2})-(\d{2})-(\d{4})$/.exec(s);
+    if (!m) throw new Error(`Invalid date: "${s}". Use DD-MM-YYYY`);
+    return `${m[3]}-${m[2]}-${m[1]}`;
+  }
+
+  function ymdToDmy(ymd) {
+    const s = String(ymd || '').trim();
+    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s);
+    if (!m) return '';
+    return `${m[3]}-${m[2]}-${m[1]}`;
+  }
+
+  function todayYmdIST() {
+    return ymdIST(new Date());
+  }
+
+  function dateDiffDaysIST(aYmd, bYmd) {
+    const a = dateFromYmdIST(aYmd).getTime();
+    const b = dateFromYmdIST(bYmd).getTime();
+    return Math.floor((b - a) / (24 * 3600 * 1000));
+  }
+
+  function asEmailList(str) {
+    return String(str || '').split(/[;,:]/).map(s => s.trim()).filter(Boolean);
+  }
+
+  function normalizeCategoryToKey(cat) {
+    const c = String(cat || '').trim().toUpperCase().replace(/\s+/g, '_');
+    if (c === 'INCOME_TAX' || c === 'INCOME' || c === 'INCOME_TAX_RETURN') return 'INCOME_TAX';
+    if (c === 'INCOME_TAX') return 'INCOME_TAX';
+    if (c === 'ACCOUNTING') return 'ACCOUNTING';
+    return c || 'OTHER';
+  }
+
+  function categoryCssClass(cat) {
+    const c = normalizeCategoryToKey(cat);
+    if (c === 'GST') return 'gst';
+    if (c === 'TDS') return 'tds';
+    if (c === 'INCOME_TAX') return 'income_tax';
+    if (c === 'ROC') return 'roc';
+    if (c === 'ACCOUNTING') return 'accounting';
+    if (c === 'AUDIT') return 'audit';
+    return 'other';
+  }
+
+  // ===== API wrappers =====
+  function joinUrl(base, path) {
+    if (!path) return base;
+    return base + (path.startsWith('/') ? path : `/${path}`);
+  }
+  async function apiPost(fnPath, bodyObj, opt = {}) {
+    const { loadingTitle: lt, loadingMsg: lm, silentLoading } = opt || {};
+    if (!silentLoading) showLoading(lt || "Working…", lm || "Please wait");
+    try {
+      const token = await auth.currentUser.getIdToken();
+      const res = await fetch(joinUrl(BACKEND_BASE_URL, fnPath), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(bodyObj || {}),
+      });
+      const txt = await res.text();
+      let data;
+      try {
+        data = JSON.parse(txt);
+      } catch {
+        data = { raw: txt };
+      }
+      data.status = res.status;
+      data.httpOk = res.ok;
+      if (data.ok === undefined) data.ok = res.ok;
+      return data;
+    } catch (e) {
+      return { ok: false, error: e.message || String(e) };
+    } finally {
+      if (!silentLoading) hideLoading();
+    }
+  }
+  async function apiPostForm(fnPath, formData, opt = {}) {
+    const { loadingTitle: lt, loadingMsg: lm, silentLoading } = opt || {};
+    if (!silentLoading) showLoading(lt || "Working…", lm || "Please wait");
+    try {
+      const token = await auth.currentUser.getIdToken();
+      const res = await fetch(joinUrl(BACKEND_BASE_URL, fnPath), {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` },
+        body: formData
+      });
+      const txt = await res.text();
+      let data;
+      try {
+        data = JSON.parse(txt);
+      } catch {
+        data = { raw: txt };
+      }
+      data.status = res.status;
+      data.httpOk = res.ok;
+      if (data.ok === undefined) data.ok = res.ok;
+      return data;
+    } catch (e) {
+      return { ok: false, error: e.message || String(e) };
+    } finally {
+      if (!silentLoading) hideLoading();
+    }
+  }
+
+  function downloadBase64File(fileName, base64, mime) {
+    const bytes = Uint8Array.from(atob(base64), c => c.charCodeAt(0));
+    const blob = new Blob([bytes], {
+      type: mime || 'application/octet-stream'
+    });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = fileName || 'download.bin';
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1200);
+  }
+  async function copyToClipboard(text) {
+    try {
+      await navigator.clipboard.writeText(String(text ?? ''));
+      return true;
+    } catch {
+      const ta = document.createElement('textarea');
+      ta.value = String(text ?? '');
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      ta.remove();
+      return true;
+    }
+  }
+
+  // ===== Command palette (Ctrl/Cmd+K) =====
+  const cmdkOverlay = el('cmdkOverlay');
+  const cmdkInput = el('cmdkInput');
+  const cmdkList = el('cmdkList');
+  const btnCmdK = el('btnCmdK');
+  const cmdkClose = el('cmdkClose');
+
+  function openCmdK() {
+    if (!cmdkOverlay) return;
+    cmdkOverlay.classList.add('show');
+    setTimeout(() => cmdkInput && cmdkInput.focus(), 10);
+    renderCmdKList('');
+  }
+
+  function closeCmdK() {
+    if (!cmdkOverlay) return;
+    cmdkOverlay.classList.remove('show');
+    if (cmdkInput) cmdkInput.value = '';
+  }
+  if (btnCmdK) btnCmdK.onclick = openCmdK;
+  if (cmdkClose) cmdkClose.onclick = closeCmdK;
+  if (cmdkOverlay) cmdkOverlay.addEventListener('click', (e) => {
+    if (e.target === cmdkOverlay) closeCmdK();
+  });
+  document.addEventListener('keydown', (e) => {
+    const k = e.key.toLowerCase();
+    if ((e.ctrlKey || e.metaKey) && k === 'k') {
+      e.preventDefault();
+      openCmdK();
+    }
+    if (k === 'escape') {
+      closeCmdK();
+      closeDrawer();
+      modalOverlay?.classList.remove('show');
+    }
+  });
+  const SEARCH_HISTORY_KEY = "cms_search_history";
+
+  function pushSearchHistory(q) {
+    const s = String(q || '').trim();
+    if (!s) return;
+    const arr = JSON.parse(localStorage.getItem(SEARCH_HISTORY_KEY) || '[]');
+    const out = [s, ...arr.filter(x => x !== s)].slice(0, 8);
+    localStorage.setItem(SEARCH_HISTORY_KEY, JSON.stringify(out));
+  }
+
+  // ===== Navigation =====
+  function showPage(pageId) {
+    document.body.classList.remove('sidebar-open');
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    const p = document.getElementById(pageId);
+    if (p) p.classList.add('active');
+    document.querySelectorAll('.navItem').forEach(n => n.classList.remove('active'));
+    const nav = document.querySelector(`.navItem[data-target="${pageId}"]`);
+    if (nav) nav.classList.add('active');
+  }
+  const navGroup = el('navGroup');
+  if (navGroup) {
+    navGroup.addEventListener('click', async (e) => {
+      const item = e.target.closest('.navItem');
+      if (!item) return;
+      const target = item.getAttribute('data-target');
+      if (target) showPage(target);
+      if (target === 'p_team' && currentRole === 'PARTNER') {
+        try {
+          await loadTeam();
+        } catch {}
+      }
+    });
+  }
+
+  // ===== UI State =====
+  const loginCard = el('loginCard');
+  const appUI = el('appUI');
+  const topUser = el('topUser');
+  const navRoleHint = el('navRoleHint');
+  const tasksSidebarCard = el('tasksSidebarCard');
+  const sidebarTasks = el('sidebarTasks');
+  const sidebarTaskCount = el('sidebarTaskCount');
+  const overlay = el('overlay');
+  const drawer = el('drawer');
+  let currentRole = "WORKER";
+  let myUid = null;
+  let allClients = [];
+  let visibleTasks = [];
+  let selectedTaskId = null;
+  // Loading flags for skeleton
+  let tasksLoadedOnce = false;
+  let clientsLoadedOnce = false;
+  // Bulk selection
+  const selectedIds = new Set();
+  // Starred tasks per user (stored in user doc)
+  let myStarred = new Set();
+
+  function clientById(id) {
+    return allClients.find(c => c.id === id) || null;
+  }
+
+  function clientNameById(id) {
+    const c = clientById(id);
+    return c ? (c.name || '') : '';
+  }
+
+  function loadClientDropdowns() {
+    const filterClient = el('filterClient');
+    const ctClientId = el('ctClientId');
+    const opts = allClients
+      .map(c => ({
+        id: c.id,
+        name: c.name || c.id
+      }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+    if (filterClient) {
+      const prev = filterClient.value;
+      filterClient.innerHTML = `<option value="">All Clients</option>` + opts.map(o => `<option value="${o.id}">${o.name}</option>`).join('');
+      if (prev) filterClient.value = prev;
+    }
+    if (ctClientId) {
+      const prev = ctClientId.value;
+      ctClientId.innerHTML = `<option value="">(select)</option>` + opts.map(o => `<option value="${o.id}">${o.name}</option>`).join('');
+      if (prev) ctClientId.value = prev;
+    }
+    // Assignee multi-select options are loaded from team list; safe fallback:
+    const filterAssignees = el('filterAssignees');
+    if (filterAssignees && filterAssignees.options.length === 0) {
+      // fallback: build from task assigned emails
+      const set = new Set(visibleTasks.map(t => (t.assignedToEmail || '').trim()).filter(Boolean));
+      const arr = [...set].sort((a, b) => a.localeCompare(b));
+      filterAssignees.innerHTML = arr.map(e => `<option value="${e}">${e}</option>`).join('');
+    }
+  }
+
+  // ===== Calendar settings =====
+  let calendarSettings = {
+    startHH: 10,
+    endHH: 12,
+    timeZone: IST_TZ
+  };
+  async function loadCalendarSettings(silent = false) {
+    const r = await apiPost('/settings_calendar_get', {}, {
+      silentLoading: silent
+    });
+    if (!r.ok) return;
+    const d = r.data || {};
+    calendarSettings = {
+      startHH: Number(d.startHH ?? 10),
+      endHH: Number(d.endHH ?? 12),
+      timeZone: d.timeZone || IST_TZ
+    };
+    if (el('calSetStartHH')) el('calSetStartHH').value = calendarSettings.startHH;
+    if (el('calSetEndHH')) el('calSetEndHH').value = calendarSettings.endHH;
+    if (el('calSetTz')) el('calSetTz').value = calendarSettings.timeZone;
+  }
+
+  function buildAddToCalendarUrlForTask(t, clientName) {
+    const ymdCompact = (s) => String(s || '').replaceAll('-', '');
+    const hh2 = (h) => String(h).padStart(2, '0');
+    const start = `${ymdCompact(t.startDateYmd)}T${hh2(calendarSettings.startHH)}0000`;
+    const end = `${ymdCompact(t.startDateYmd)}T${hh2(calendarSettings.endHH)}0000`;
+    const details = `Client: ${clientName || ''}\n` + `Task: ${t.title || ''}\n` + `Start: ${ymdToDmy(t.startDateYmd)}\n` + `Due: ${ymdToDmy(t.dueDateYmd)}\n`;
+    const params = new URLSearchParams({
+      action: 'TEMPLATE',
+      text: `START: ${t.title || 'Task'}`,
+      dates: `${start}/${end}`,
+      ctz: calendarSettings.timeZone || IST_TZ,
+      details
+    });
+    return `https://calendar.google.com/calendar/render?${params.toString()}`;
+  }
+
+  // ===== Drafting Studio =====
+  // Keep wording user-friendly; still uses placeholders internally.
+  const TEMPLATE_VARS = [{
+    name: "Client name",
+    key: "{{clientName}}",
+    desc: "Client name"
+  }, {
+    name: "Task title",
+    key: "{{taskTitle}}",
+    desc: "Task title"
+  }, {
+    name: "Start date",
+    key: "{{startDate}}",
+    desc: "Start date (DD-MM-YYYY)"
+  }, {
+    name: "Due date",
+    key: "{{dueDate}}",
+    desc: "Due date (DD-MM-YYYY)"
+  }, {
+    name: "Add to calendar link",
+    key: "{{addToCalendarUrl}}",
+    desc: "Google Calendar link"
+  }, {
+    name: "Completed time",
+    key: "{{completedAt}}",
+    desc: "Completion time in IST"
+  }, ];
+  let draftLastFocus = 'body';
+  let draftInited = false;
+
+  function normalizeForImport(s) {
+    let x = String(s ?? '');
+    // Convert real newlines to \n tokens for Excel-safe single-cell paste
+    x = x.replace(/\r?\n/g, '\\n');
+    x = x.replace(/\t/g, ' ');
+    return x;
+  }
+
+  function tokensToRealLines(s) {
+    return String(s ?? '').replaceAll('\\n', '\n');
+  }
+
+  function draftSampleVars() {
+    return {
+      clientName: 'ABC Pvt Ltd',
+      taskTitle: 'GSTR-3B Filing',
+      startDate: '01-02-2026',
+      dueDate: '20-02-2026',
+      addToCalendarUrl: 'https://calendar.google.com/calendar/render?action=TEMPLATE&text=START...',
+      completedAt: new Date().toLocaleString('en-IN', {
+        timeZone: IST_TZ
+      }),
+    };
+  }
+
+  function insertAtCursor(input, text) {
+    const start = input.selectionStart ?? input.value.length;
+    const end = input.selectionEnd ?? input.value.length;
+    input.value = input.value.slice(0, start) + text + input.value.slice(end);
+    const pos = start + text.length;
+    input.selectionStart = input.selectionEnd = pos;
+    input.focus();
+  }
+
+  function renderDraftPreview() {
+    const subj = el('draftSubject');
+    const body = el('draftBody');
+    const out = el('draftPreview');
+    if (!subj || !body || !out) return;
+    const vars = draftSampleVars();
+    const replaceVar = (text) => {
+      let t = String(text || '');
+      for (const [k, v] of Object.entries(vars)) t = t.replaceAll(`{{${k}}}`, String(v));
+      return t;
+    };
+    const bodyReal = tokensToRealLines(body.value);
+    out.textContent = `Subject: ${replaceVar(subj.value)}\n\n${replaceVar(bodyReal)}`;
+  }
+
+  function initDraftingStudio() {
+    if (draftInited) return;
+    draftInited = true;
+    const btn = el('btnVarMenu');
+    const dd = el('varDropdown');
+    const list = el('varList');
+    const search = el('varSearch');
+    const subj = el('draftSubject');
+    const body = el('draftBody');
+    const mode = el('draftNewlineMode');
+    if (!btn || !dd || !list || !search || !subj || !body || !mode) return;
+    subj.addEventListener('focus', () => draftLastFocus = 'subject');
+    body.addEventListener('focus', () => draftLastFocus = 'body');
+    btn.onclick = () => {
+      dd.classList.toggle('show');
+      if (dd.classList.contains('show')) search.focus();
+    };
+    document.addEventListener('click', (e) => {
+      const wrap = btn.closest('.draftVarMenu');
+      if (!wrap) return;
+      if (wrap.contains(e.target)) return;
+      dd.classList.remove('show');
+    });
+
+    function renderVarList(filterText = '') {
+      const q = String(filterText || '').toLowerCase();
+      list.innerHTML = '';
+      const rows = TEMPLATE_VARS.filter(v => !q || v.name.toLowerCase().includes(q) || v.key.toLowerCase().includes(q) || v.desc.toLowerCase().includes(q));
+      rows.forEach(v => {
+        const div = document.createElement('div');
+        div.className = 'varItem';
+        div.innerHTML = ` <div class="varTop"> <div class="varName">${v.name}</div> <div class="varKey mono">${v.key}</div> </div> <div class="varDesc">${v.desc}</div> `;
+        div.onclick = () => {
+          const target = (draftLastFocus === 'subject') ? subj : body;
+          insertAtCursor(target, v.key);
+          dd.classList.remove('show');
+          renderDraftPreview();
+        };
+        list.appendChild(div);
+      });
+      if (!rows.length) list.innerHTML = `<div class="sub">No matches.</div>`;
+    }
+    renderVarList('');
+    search.oninput = () => renderVarList(search.value);
+    body.addEventListener('keydown', (e) => {
+      if (e.key !== 'Enter') return;
+      if (e.shiftKey) return;
+      if (mode.value === 'TOKEN') {
+        e.preventDefault();
+        insertAtCursor(body, '\\n');
+        renderDraftPreview();
+      }
+    });
+    subj.addEventListener('input', renderDraftPreview);
+    body.addEventListener('input', renderDraftPreview);
+    mode.onchange = renderDraftPreview;
+    const btnCopyForImport = el('btnDraftCopyForImport');
+    const btnCopySubject = el('btnDraftCopySubject');
+    const btnCopyBodyRaw = el('btnDraftCopyBodyRaw');
+    if (btnCopyForImport) btnCopyForImport.onclick = async () => {
+      await copyToClipboard(normalizeForImport(tokensToRealLines(body.value)));
+      showToast('Copied (Excel-safe)');
+    };
+    if (btnCopySubject) btnCopySubject.onclick = async () => {
+      await copyToClipboard(subj.value || '');
+      showToast('Copied subject');
+    };
+    if (btnCopyBodyRaw) btnCopyBodyRaw.onclick = async () => {
+      await copyToClipboard(tokensToRealLines(body.value || ''));
+      showToast('Copied body');
+    };
+    renderDraftPreview();
+  }
+
+  // ===== Alerts / KPIs =====
+  function seriesLabel(t) {
+    if (!t.seriesId) return '-';
+    return `${t.occurrenceIndex || '?'} / ${t.occurrenceTotal || '?'}`;
+  }
+
+  function taskAlertPill(t) {
+    if (t.status === 'COMPLETED') return `<span class="pill ok">DONE</span>`;
+    const tdy = todayYmdIST();
+    const dd = dateDiffDaysIST(tdy, t.dueDateYmd);
+    const sd = t.startDateYmd ? dateDiffDaysIST(tdy, t.startDateYmd) : null;
+    if (dd < 0) return `<span class="pill danger">OVERDUE</span>`;
+    if (dd === 0) return `<span class="pill danger">DUE TODAY</span>`;
+    if (dd <= 3) {
+      if (sd !== null && sd > 0) return `<span class="pill danger">HIGH ALERT</span>`;
+      return `<span class="pill warn">DUE SOON</span>`;
+    }
+    if (sd !== null && sd === 0) return `<span class="pill warn">START TODAY</span>`;
+    if (dd <= 7) return `<span class="pill warn">THIS WEEK</span>`;
+    return `<span class="pill">OK</span>`;
+  }
+
+  function categoryPill(t) {
+    const cls = categoryCssClass(t.category);
+    const label = String(t.category || '').toUpperCase().replaceAll('_', ' ') || 'OTHER';
+    return `<span class="pill cat ${cls}">${label}</span>`;
+  }
+
+  function computeKPIs() {
+    const tdy = todayYmdIST();
+    let total = visibleTasks.length;
+    let d7 = 0,
+      d15 = 0,
+      d30 = 0,
+      over = 0,
+      appr = 0;
+    let startToday = 0,
+      dueToday = 0,
+      dueNext7 = 0;
+    for (const t of visibleTasks) {
+      if (!t.dueDateYmd) continue;
+      const dd = dateDiffDaysIST(tdy, t.dueDateYmd);
+      if (t.startDateYmd && t.startDateYmd === tdy && t.status !== 'COMPLETED') startToday++;
+      if (t.dueDateYmd === tdy && t.status !== 'COMPLETED') dueToday++;
+      if (t.status !== 'COMPLETED' && dd >= 0 && dd <= 7) dueNext7++;
+      if (t.status !== 'COMPLETED') {
+        if (dd < 0) over++;
+        if (dd >= 0 && dd <= 7) d7++;
+        if (dd >= 0 && dd <= 15) d15++;
+        if (dd >= 0 && dd <= 30) d30++;
+      }
+      if (t.status === 'APPROVAL_PENDING') appr++;
+    }
+    if (el('kTotal')) el('kTotal').innerText = total;
+    if (el('k7')) el('k7').innerText = d7;
+    if (el('k15')) el('k15').innerText = d15;
+    if (el('k30')) el('k30').innerText = d30;
+    if (el('kOverdue')) el('kOverdue').innerText = over;
+    if (el('kAppr')) el('kAppr').innerText = appr;
+    if (el('kStartToday')) el('kStartToday').innerText = startToday;
+    if (el('kDueToday')) el('kDueToday').innerText = dueToday;
+    if (el('kDueNext7')) el('kDueNext7').innerText = dueNext7;
+  }
+
+  // ===== Filters =====
+  function getSelectedMulti(selectEl) {
+    if (!selectEl) return [];
+    return Array.from(selectEl.selectedOptions).map(o => o.value).filter(Boolean);
+  }
+
+  // Advanced filters (simple JSON-based builder placeholder)
+  let advancedFilter = null; // later can be set by UI
+  function applyPartnerFilters() {
+    const cId = el('filterClient')?.value || '';
+    const st = el('filterStatus')?.value || '';
+    const cat = el('filterCategory')?.value || '';
+    const q = (el('filterSearch')?.value || '').toLowerCase();
+    const dueFromDmy = (el('filterDueFrom')?.value || '').trim();
+    const dueToDmy = (el('filterDueTo')?.value || '').trim();
+    const dueOnOrBeforeDmy = (el('filterDueOnOrBefore')?.value || '').trim();
+    const dueOnOrAfterDmy = (el('filterDueOnOrAfter')?.value || '').trim();
+    const needDays = Number(el('filterNeedDays')?.value || 7);
+    const mode = el('filterMode')?.value || 'ALL';
+    const priority = el('filterPriority')?.value || '';
+    const starredOnly = el('filterStarred')?.value === 'ONLY';
+    const assignees = getSelectedMulti(el('filterAssignees'));
+    let dueFromYmd = '',
+      dueToYmd = '',
+      dueBeforeYmd = '',
+      dueAfterYmd = '';
+    try {
+      if (dueFromDmy) dueFromYmd = dmyToYmd(dueFromDmy);
+    } catch {}
+    try {
+      if (dueToDmy) dueToYmd = dmyToYmd(dueToDmy);
+    } catch {}
+    try {
+      if (dueOnOrBeforeDmy) dueBeforeYmd = dmyToYmd(dueOnOrBeforeDmy);
+    } catch {}
+    try {
+      if (dueOnOrAfterDmy) dueAfterYmd = dmyToYmd(dueOnOrAfterDmy);
+    } catch {}
+    const tdy = todayYmdIST();
+    return visibleTasks.filter(t => {
+      // Snooze handling: default hide snoozed unless mode=SNOOZED
+      const snoozedUntil = t.snoozedUntilYmd || '';
+      const isSnoozedNow = snoozedUntil && snoozedUntil > tdy && t.status !== 'COMPLETED';
+      if (mode !== 'SNOOZED' && isSnoozedNow) return false;
+      if (mode === 'SNOOZED' && !isSnoozedNow) return false;
+      if (cId && t.clientId !== cId) return false;
+      if (st && t.status !== st) return false;
+      if (cat && String(t.category || '') !== cat) return false;
+      if (priority && String(t.priority || 'MEDIUM') !== priority) return false;
+      if (starredOnly && !myStarred.has(t.id)) return false;
+      if (assignees.length) {
+        const a = String(t.assignedToEmail || '').trim();
+        if (!assignees.includes(a)) return false;
+      }
+      if (dueFromYmd && String(t.dueDateYmd || '') < dueFromYmd) return false;
+      if (dueToYmd && String(t.dueDateYmd || '') > dueToYmd) return false;
+      if (dueBeforeYmd && String(t.dueDateYmd || '') > dueBeforeYmd) return false;
+      if (dueAfterYmd && String(t.dueDateYmd || '') < dueAfterYmd) return false;
+      if (q) {
+        const hay = `${t.title||''} ${clientNameById(t.clientId)||''} ${t.assignedToEmail||''}`.toLowerCase();
+        if (!hay.includes(q)) return false;
+      }
+      if (mode === "APPROVAL") return t.status === "APPROVAL_PENDING";
+      if (mode === "TODAY") return (t.startDateYmd === tdy || t.dueDateYmd === tdy);
+      if (mode === "NEXT_7") {
+        const dd = dateDiffDaysIST(tdy, t.dueDateYmd);
+        return t.status !== 'COMPLETED' && dd >= 0 && dd <= 7;
+      }
+      if (mode === "NEEDS_ACTION") {
+        if (t.status === 'COMPLETED') return false;
+        const dd = dateDiffDaysIST(tdy, t.dueDateYmd);
+        if (dd < 0) return true;
+        if (dd <= needDays) return true;
+        return false;
+      }
+      // Advanced filter (optional): AND/OR builder can be plugged here
+      if (advancedFilter) {
+        // placeholder: if exists, do nothing now
+      }
+      return true;
+    });
+  }
+
+  // ===== Rendering =====
+  function renderTasksSkeleton(show) {
+    const sk = el('tasksSkeleton');
+    const wrap = el('tasksTableWrap');
+    if (!sk || !wrap) return;
+    sk.classList.toggle('hidden', !show);
+    wrap.classList.toggle('hidden', show);
+  }
+
+  function updateBulkBar() {
+    const bulkBar = el('bulkBar');
+    const bulkCount = el('bulkCount');
+    if (!bulkBar || !bulkCount) return;
+    const n = selectedIds.size;
+    bulkCount.textContent = String(n);
+    bulkBar.classList.toggle('show', n > 0);
+  }
+
+  function setSelected(id, checked) {
+    if (checked) selectedIds.add(id);
+    else selectedIds.delete(id);
+    updateBulkBar();
+  }
+
+  function renderPartnerTasks() {
+    const tbody = el('partnerTasks');
+    const empty = el('tasksEmpty');
+    const chkAll = el('chkAll');
+    if (!tbody) return;
+    if (!tasksLoadedOnce) {
+      renderTasksSkeleton(true);
+      return;
+    } else {
+      renderTasksSkeleton(false);
+    }
+    const rows = applyPartnerFilters()
+      .sort((a, b) => String(a.dueDateYmd || '').localeCompare(String(b.dueDateYmd || '')));
+    tbody.innerHTML = '';
+    if (chkAll) chkAll.checked = false;
+    if (!rows.length) {
+      if (empty) empty.classList.remove('hidden');
+      return;
+    } else {
+      if (empty) empty.classList.add('hidden');
+    }
+    for (const t of rows) {
+      const tr = document.createElement('tr');
+      tr.style.cursor = 'pointer';
+      const isChecked = selectedIds.has(t.id);
+      const priority = String(t.priority || 'MEDIUM');
+      tr.innerHTML = `
+        <td style="width:44px">
+          <input type="checkbox" class="chkRow" data-id="${t.id}" ${isChecked ? 'checked' : ''}>
+        </td>
+        <td>${taskAlertPill(t)}</td>
+        <td>${clientNameById(t.clientId)}</td>
+        <td>
+          <div style="font-weight:950">${t.title || ''}</div>
+          <div class="sub" style="margin-top:6px">${t.type || ''}</div>
+        </td>
+        <td>${seriesLabel(t)}</td>
+        <td>${categoryPill(t)}</td>
+        <td>
+          <span class="pill ${priority==='HIGH'?'danger':priority==='LOW'?'ok':'warn'}">${priority}</span>
+        </td>
+        <td>${ymdToDmy(t.startDateYmd)}</td>
+        <td>
+          <span class="cellLink" data-edit="due" data-id="${t.id}">${ymdToDmy(t.dueDateYmd)}</span>
+        </td>
+        <td>
+          <span class="cellLink" data-edit="status" data-id="${t.id}">${t.status || ''}</span>
+        </td>
+        <td>
+          <span class="cellLink" data-edit="assignee" data-id="${t.id}">${t.assignedToEmail || ''}</span>
+        </td>
+        <td>
+          <button class="btn small" data-act="star" data-id="${t.id}" type="button">${myStarred.has(t.id) ? '★' : '☆'}</button>
+        </td>
+      `;
+      tr.addEventListener('click', (e) => {
+        // don't open drawer when clicking checkbox or star button
+        const isChk = e.target.closest('input.chkRow');
+        const isStarBtn = e.target.closest('button[data-act="star"]');
+        if (isChk || isStarBtn) return;
+        openTaskDrawer(t.id);
+      });
+      tbody.appendChild(tr);
+    }
+    // Empty state hiding done above
+  }
+
+  function renderClients() {
+    const tbody = el('clientTable');
+    const empty = el('clientsEmpty');
+    if (!tbody) return;
+    tbody.innerHTML = '';
+    const list = [...allClients].sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+    if (!clientsLoadedOnce) {
+      // optional: you can add skeleton for clients too
+    }
+    if (!list.length) {
+      if (empty) empty.classList.remove('hidden');
+      return;
+    } else {
+      if (empty) empty.classList.add('hidden');
+    }
+    for (const c of list) {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td><b>${c.name || ''}</b></td>
+        <td>${c.primaryEmail || ''}</td>
+        <td>${c.pan || ''}</td>
+        <td>${c.gstin || ''}</td>
+        <td>${c.engagementType || ''}</td>
+      `;
+      tbody.appendChild(tr);
+    }
+  }
+
+  function renderSidebarTasks() {
+    if (document.body.classList.contains('logged-out')) return;
+    const days = Number(el('sbDays')?.value || 7);
+    const tdy = todayYmdIST();
+    const list = visibleTasks
+      .filter(t => t.status !== 'COMPLETED' && t.dueDateYmd)
+      .filter(t => {
+        const dd = dateDiffDaysIST(tdy, t.dueDateYmd);
+        return dd < 0 || dd <= days;
+      })
+      .sort((a, b) => String(a.dueDateYmd || '').localeCompare(String(b.dueDateYmd || '')))
+      .slice(0, 30);
+    if (sidebarTaskCount) sidebarTaskCount.textContent = String(list.length);
+    if (!sidebarTasks) return;
+    sidebarTasks.innerHTML = '';
+    if (!list.length) {
+      sidebarTasks.innerHTML = `<div class="sub">No tasks in this range.</div>`;
+      return;
+    }
+    for (const t of list) {
+      const div = document.createElement('div');
+      div.className = 'taskItem';
+      div.innerHTML = `
+        <div class="top">
+          <div class="name">${t.title || ''}</div>
+          <div>${taskAlertPill(t)}</div>
+        </div>
+        <div class="meta">${clientNameById(t.clientId)} • Due ${ymdToDmy(t.dueDateYmd)} • ${t.status}</div>
+      `;
+      div.onclick = () => {
+        showPage('p_tasks');
+        openTaskDrawer(t.id);
+      };
+      sidebarTasks.appendChild(div);
+    }
+  }
+
+  // Dashboard "Today & Next 7"
+  function renderDashboardToday() {
+    const tdy = todayYmdIST();
+    const tbody = el('dashTodayList');
+    const empty = el('dashTodayEmpty');
+    if (!tbody) return;
+    const list = visibleTasks
+      .filter(t => t.status !== 'COMPLETED')
+      .filter(t => t.startDateYmd === tdy || t.dueDateYmd === tdy || (dateDiffDaysIST(tdy, t.dueDateYmd) >= 0 && dateDiffDaysIST(tdy, t.dueDateYmd) <= 7))
+      .sort((a, b) => String(a.dueDateYmd || '').localeCompare(String(b.dueDateYmd || '')))
+      .slice(0, 25);
+    tbody.innerHTML = '';
+    if (!list.length) {
+      if (empty) empty.classList.remove('hidden');
+      return;
+    } else {
+      if (empty) empty.classList.add('hidden');
+    }
+    for (const t of list) {
+      const tr = document.createElement('tr');
+      tr.style.cursor = 'pointer';
+      tr.innerHTML = `
+        <td>${taskAlertPill(t)}</td>
+        <td>${clientNameById(t.clientId)}</td>
+        <td><b>${t.title||''}</b></td>
+        <td>${ymdToDmy(t.startDateYmd)}</td>
+        <td>${ymdToDmy(t.dueDateYmd)}</td>
+        <td>${t.status||''}</td>
+        <td>${t.assignedToEmail||''}</td>
+      `;
+      tr.onclick = () => {
+        showPage('p_tasks');
+        openTaskDrawer(t.id);
+      };
+      tbody.appendChild(tr);
+    }
+  }
+
+  function renderDashboardAlerts() {
+    const tbody = el('dashAlerts');
+    const empty = el('dashAlertsEmpty');
+    if (!tbody) return;
+    tbody.innerHTML = '';
+    const tdy = todayYmdIST();
+    const alerts = visibleTasks
+      .filter(t => t.status !== 'COMPLETED' && t.dueDateYmd)
+      .map(t => {
+        const dd = dateDiffDaysIST(tdy, t.dueDateYmd);
+        const sd = t.startDateYmd ? dateDiffDaysIST(tdy, t.startDateYmd) : null;
+        let rank = 999;
+        if (dd < 0) rank = 0;
+        else if (dd === 0) rank = 1;
+        else if (dd <= 3 && sd !== null && sd > 0) rank = 2;
+        else if (dd <= 3) rank = 3;
+        else if (dd <= 7) rank = 4;
+        else rank = 999;
+        return {
+          t,
+          rank
+        };
+      })
+      .filter(x => x.rank !== 999)
+      .sort((a, b) => a.rank - b.rank)
+      .slice(0, 25);
+    if (!alerts.length) {
+      if (empty) empty.classList.remove('hidden');
+      return;
+    } else {
+      if (empty) empty.classList.add('hidden');
+    }
+    for (const x of alerts) {
+      const t = x.t;
+      const tr = document.createElement('tr');
+      tr.style.cursor = 'pointer';
+      tr.innerHTML = `
+        <td>${taskAlertPill(t)}</td>
+        <td>${clientNameById(t.clientId)}</td>
+        <td><b>${t.title || ''}</b></td>
+        <td>${ymdToDmy(t.startDateYmd)}</td>
+        <td>${ymdToDmy(t.dueDateYmd)}</td>
+        <td>${t.status || ''}</td>
+      `;
+      tr.onclick = () => {
+        showPage('p_tasks');
+        openTaskDrawer(t.id);
+      };
+      tbody.appendChild(tr);
+    }
+  }
+
+  // ===== Calendar Views =====
+  let calCursor = new Date();
+  calCursor.setDate(1);
+  const DOW = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+  let calView = 'MONTH'; // MONTH|WEEK|DAY|AGENDA
+  let calSelectedYmd = todayYmdIST();
+
+  function monthLabel(d) {
+    const m = d.toLocaleString(undefined, {
+      month: 'long'
+    });
+    return `${m} ${d.getFullYear()}`;
+  }
+
+  function tasksByDueDateMap() {
+    const map = new Map();
+    for (const t of visibleTasks) {
+      if (!t.dueDateYmd) continue;
+      if (!map.has(t.dueDateYmd)) map.set(t.dueDateYmd, []);
+      map.get(t.dueDateYmd).push(t);
+    }
+    return map;
+  }
+
+  function setCalendarView(v) {
+    calView = v;
+    el('calMonthWrap')?.classList.toggle('hidden', v !== 'MONTH');
+    el('calWeekWrap')?.classList.toggle('hidden', v !== 'WEEK');
+    el('calDayWrap')?.classList.toggle('hidden', v !== 'DAY');
+    el('calAgendaWrap')?.classList.toggle('hidden', v !== 'AGENDA');
+    renderCalendar();
+  }
+
+  function renderCalendarMonth() {
+    const grid = el('calGrid');
+    const label = el('calLabel');
+    if (!grid || !label) return;
+    grid.innerHTML = '';
+    label.textContent = monthLabel(calCursor);
+    for (const d of DOW) {
+      const div = document.createElement('div');
+      div.className = 'calDow';
+      div.textContent = d;
+      grid.appendChild(div);
+    }
+    const map = tasksByDueDateMap();
+    const first = new Date(calCursor);
+    const month = first.getMonth();
+    const firstDow = (first.getDay() + 6) % 7;
+    const start = new Date(first);
+    start.setDate(first.getDate() - firstDow);
+    const tdy = todayYmdIST();
+    for (let i = 0; i < 42; i++) {
+      const d = new Date(start);
+      d.setDate(start.getDate() + i);
+      const y = ymdIST(d);
+      const cell = document.createElement('div');
+      cell.className = 'calCell';
+      if (d.getMonth() !== month) cell.classList.add('muted');
+      if (y === tdy) cell.classList.add('today');
+      const list = map.get(y) || [];
+      const hasOverdue = list.some(t => t.status !== 'COMPLETED' && dateDiffDaysIST(tdy, t.dueDateYmd) < 0);
+      const hasDueSoon = list.some(t => t.status !== 'COMPLETED' && dateDiffDaysIST(tdy, t.dueDateYmd) >= 0 && dateDiffDaysIST(tdy, t.dueDateYmd) <= 3);
+      const hasDone = list.some(t => t.status === 'COMPLETED');
+      cell.innerHTML = `
+        <div class="calDayNum">${d.getDate()}</div>
+        <div class="calDotRow">
+          <div class="calDots">
+            <div class="dot ${hasOverdue ? 'danger' : ''}"></div>
+            <div class="dot ${hasDueSoon ? 'warn' : ''}"></div>
+            <div class="dot ${hasDone ? 'ok' : ''}"></div>
+          </div>
+          <div class="calCount">${list.length ? (list.length + ' tasks') : ''}</div>
+        </div>
+      `;
+      cell.onclick = () => {
+        calSelectedYmd = y;
+        setCalendarView('DAY');
+      };
+      grid.appendChild(cell);
+    }
+  }
+
+  function renderCalendarWeek() {
+    const label = el('calLabel');
+    const grid = el('calWeekGrid');
+    if (!grid || !label) return;
+    // Week based on calSelectedYmd (or today)
+    const base = dateFromYmdIST(calSelectedYmd || todayYmdIST());
+    // move to Monday
+    const dow = (base.getDay() + 6) % 7;
+    const monday = new Date(base);
+    monday.setDate(base.getDate() - dow);
+    const days = [];
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(monday);
+      d.setDate(monday.getDate() + i);
+      days.push(d);
+    }
+    label.textContent = `Week of ${ymdToDmy(ymdIST(monday))}`;
+    grid.innerHTML = '';
+    grid.style.gridTemplateColumns = 'repeat(7, 1fr)';
+    const map = tasksByDueDateMap();
+    for (const d of days) {
+      const y = ymdIST(d);
+      const list = (map.get(y) || []).slice().sort((a, b) => String(a.status || '').localeCompare(String(b.status || '')));
+      const col = document.createElement('div');
+      col.className = 'card';
+      col.style.padding = '10px';
+      col.innerHTML = `
+        <div style="display:flex;justify-content:space-between;gap:10px;align-items:center">
+          <div style="font-weight:950">${DOW[(d.getDay()+6)%7]} ${d.getDate()}</div>
+          <div class="pill">${list.length} tasks</div>
+        </div>
+        <div style="height:10px"></div>
+        ${list.length ? list.map(t => `
+          <div class="agendaItem" data-id="${t.id}">
+            <div class="agendaTop">
+              <div>
+                <div class="agendaTitle">${t.title||''}</div>
+                <div class="agendaMeta">${clientNameById(t.clientId)} • ${t.status}</div>
+              </div>
+              <div>${taskAlertPill(t)}</div>
+            </div>
+          </div>
+        `).join('') : `<div class="sub">No tasks due.</div>`}
+      `;
+      col.querySelectorAll('.agendaItem[data-id]').forEach(x => {
+        x.onclick = () => openTaskDrawer(x.getAttribute('data-id'));
+      });
+      grid.appendChild(col);
+    }
+  }
+
+  function renderCalendarDay() {
+    const label = el('calLabel');
+    const listEl = el('calDayList');
+    if (!listEl || !label) return;
+    const y = calSelectedYmd || todayYmdIST();
+    label.textContent = `Day: ${ymdToDmy(y)}`;
+    const list = visibleTasks
+      .filter(t => t.dueDateYmd === y)
+      .sort((a, b) => String(a.status || '').localeCompare(String(b.status || '')));
+    listEl.innerHTML = '';
+    if (!list.length) {
+      listEl.innerHTML = `<div class="emptyState"><div class="emptyArt"></div><div><div class="emptyTitle">No tasks due</div><div class="emptyText">Nothing is due on this date.</div></div></div>`;
+      return;
+    }
+    for (const t of list) {
+      const div = document.createElement('div');
+      div.className = 'agendaItem';
+      div.innerHTML = `
+        <div class="agendaTop">
+          <div>
+            <div class="agendaTitle">${t.title||''}</div>
+            <div class="agendaMeta">${clientNameById(t.clientId)} • Start ${ymdToDmy(t.startDateYmd)} • ${t.status}</div>
+          </div>
+          <div>${taskAlertPill(t)}</div>
+        </div>
+      `;
+      div.onclick = () => openTaskDrawer(t.id);
+      listEl.appendChild(div);
+    }
+  }
+
+  function renderCalendarAgenda() {
+    const label = el('calLabel');
+    const listEl = el('calAgendaList');
+    if (!listEl || !label) return;
+    label.textContent = 'Agenda';
+    const list = visibleTasks
+      .filter(t => t.dueDateYmd)
+      .slice()
+      .sort((a, b) => String(a.dueDateYmd || '').localeCompare(String(b.dueDateYmd || '')))
+      .slice(0, 200);
+    listEl.innerHTML = '';
+    if (!list.length) {
+      listEl.innerHTML = `<div class="emptyState"><div class="emptyArt"></div><div><div class="emptyTitle">No tasks</div><div class="emptyText">Create a task to start tracking work.</div></div></div>`;
+      return;
+    }
+    for (const t of list) {
+      const div = document.createElement('div');
+      div.className = 'agendaItem';
+      div.innerHTML = `
+        <div class="agendaTop">
+          <div>
+            <div class="agendaTitle">${t.title||''}</div>
+            <div class="agendaMeta">${clientNameById(t.clientId)} • Due ${ymdToDmy(t.dueDateYmd)} • ${t.status}</div>
+          </div>
+          <div>${taskAlertPill(t)}</div>
+        </div>
+      `;
+      div.onclick = () => openTaskDrawer(t.id);
+      listEl.appendChild(div);
+    }
+  }
+
+  function renderCalendar() {
+    if (calView === 'MONTH') return renderCalendarMonth();
+    if (calView === 'WEEK') return renderCalendarWeek();
+    if (calView === 'DAY') return renderCalendarDay();
+    return renderCalendarAgenda();
+  }
+  const calPrev = el('calPrev');
+  const calNext = el('calNext');
+  const calTodayBtn = el('calToday');
+  if (calPrev) calPrev.onclick = () => {
+    calCursor.setMonth(calCursor.getMonth() - 1);
+    renderCalendar();
+  };
+  if (calNext) calNext.onclick = () => {
+    calCursor.setMonth(calCursor.getMonth() + 1);
+    renderCalendar();
+  };
+  if (calTodayBtn) calTodayBtn.onclick = () => {
+    calCursor = new Date();
+    calCursor.setDate(1);
+    calSelectedYmd = todayYmdIST();
+    renderCalendar();
+  };
+  el('btnCalMonth')?.addEventListener('click', () => setCalendarView('MONTH'));
+  el('btnCalWeek')?.addEventListener('click', () => setCalendarView('WEEK'));
+  el('btnCalDay')?.addEventListener('click', () => setCalendarView('DAY'));
+  el('btnCalAgenda')?.addEventListener('click', () => setCalendarView('AGENDA'));
+
+  // ===== Drawer logic =====
+  const btnExpand = el('btnExpandDrawer');
+  if (btnExpand) {
+    btnExpand.onclick = () => {
+      drawer.classList.toggle('fullscreen');
+      btnExpand.textContent = drawer.classList.contains('fullscreen') ? '><' : '⤢';
+    };
+  }
+
+  function closeDrawer() {
+    selectedTaskId = null;
+    overlay?.classList.remove('show');
+    if (drawer) {
+      drawer.classList.remove('show');
+      drawer.classList.remove('fullscreen');
+    }
+    if (btnExpand) btnExpand.textContent = '⤢';
+  }
+  el('btnCloseDrawer')?.addEventListener('click', closeDrawer);
+  overlay?.addEventListener('click', closeDrawer);
+
+  function fillStatusOptions(role) {
+    const sel = el('uStatus');
+    if (!sel) return;
+    sel.innerHTML = '';
+    const base = ['PENDING', 'IN_PROGRESS', 'CLIENT_PENDING', 'APPROVAL_PENDING'];
+    const list = (role === 'PARTNER' || role === 'MANAGER') ? [...base, 'COMPLETED'] : base;
+    list.forEach(s => {
+      const o = document.createElement('option');
+      o.value = s;
+      o.textContent = s;
+      sel.appendChild(o);
+    });
+  }
+
+  function renderAttachments(t) {
+    const box = el('dAttachList');
+    if (!box) return;
+    box.innerHTML = '';
+    const arr = t.attachments || [];
+    if (!arr.length) {
+      box.innerHTML = `<div class="sub">No attachments</div>`;
+      return;
+    }
+    arr.forEach(a => {
+      const div = document.createElement('div');
+      div.className = 'card';
+      div.style.padding = '10px';
+      div.style.marginBottom = '8px';
+      div.innerHTML = `
+        <div style="font-weight:950">${a.type || 'DOC'} — ${a.fileName || ''}</div>
+        <div class="sub" style="margin-top:6px"><a class="link" href="${a.driveWebViewLink || '#'}" target="_blank">Open file</a></div>
+      `;
+      box.appendChild(div);
+    });
+  }
+
+  function openTaskDrawer(taskId) {
+    const t = visibleTasks.find(x => x.id === taskId);
+    if (!t) return showToast('Task not found');
+    selectedTaskId = taskId;
+    const clientName = clientNameById(t.clientId);
+    const eventId = t.calendarEventId || t.calendarStartEventId || null;
+    el('dTitle').textContent = t.title || 'Task';
+    el('dSub').textContent = `${clientName ? ('Client: ' + clientName + ' • ') : ''}Series: ${t.seriesId ? seriesLabel(t) : 'none'}`;
+    el('dInfo').innerHTML = `
+      <div><b>Start:</b> ${ymdToDmy(t.startDateYmd)} • <b>Due:</b> ${ymdToDmy(t.dueDateYmd)}</div>
+      <div><b>Status:</b> ${t.status} • <b>Assignee:</b> ${t.assignedToEmail || ''}</div>
+      <div class="sub" style="margin-top:6px"><b>Start email sent:</b> ${t.clientStartMailSent ? 'Yes' : 'No'}</div>
+    `;
+    const searchQ = encodeURIComponent(`${t.title || ''} ${t.startDateYmd || ''}`);
+    const fallback = `https://calendar.google.com/calendar/u/0/r/search?q=${searchQ}`;
+    el('btnOpenCalEvent').href = t.calendarHtmlLink || fallback;
+    el('btnAddToMyCal').href = buildAddToCalendarUrlForTask(t, clientName);
+    fillStatusOptions(currentRole);
+    el('uStatus').value = t.status || 'PENDING';
+    el('uStatusNote').value = t.statusNote || '';
+    el('uDelayReason').value = t.delayReason || '';
+    el('uDelayNotes').value = t.delayNotes || '';
+    // partner box visible for partner/manager; workers get limited edit in future
+    const canEditDetails = (currentRole === 'PARTNER' || currentRole === 'MANAGER');
+    el('partnerOnlyBox').style.display = canEditDetails ? 'block' : 'none';
+    if (canEditDetails) {
+      el('uApplyToSeries').checked = false;
+      el('uApplyToSeries').disabled = !t.seriesId;
+      el('uTitle').value = t.title || '';
+      el('uCategory').value = (String(t.category || 'Other').replaceAll('_', ' ') || 'Other');
+      el('uType').value = t.type || 'FILING';
+      el('uTrigger').value = t.triggerDaysBefore ?? 15;
+      el('uAssignedToEmail').value = t.assignedToEmail || '';
+      el('uDueDateDmy').value = ymdToDmy(t.dueDateYmd) || '';
+      el('uPriority').value = String(t.priority || 'MEDIUM');
+      el('uSnoozedUntil').value = t.snoozedUntilYmd ? ymdToDmy(t.snoozedUntilYmd) : '';
+      el('uClientTo').value = (t.clientToEmails || []).join(';');
+      el('uClientCc').value = (t.clientCcEmails || []).join(';');
+      el('uClientBcc').value = (t.clientBccEmails || []).join(';');
+      el('uCcAssignee').checked = (t.ccAssigneeOnClientStart === true);
+      el('uCcManager').checked = (t.ccManagerOnClientStart === true);
+      el('uSendCompletion').checked = (t.sendClientCompletionMail !== false);
+      el('uClientStartSubject').value = t.clientStartSubject || '';
+      el('uClientStartBody').value = t.clientStartBody || '';
+      el('uClientCompletionSubject').value = t.clientCompletionSubject || '';
+      el('uClientCompletionBody').value = t.clientCompletionBody || '';
+      el('btnSeriesRebuild').disabled = !t.seriesId;
+      el('btnSeriesReassign').disabled = !t.seriesId;
+      el('btnDeleteSeries').disabled = !t.seriesId;
+      el('srAssignEmail').value = t.assignedToEmail || '';
+    }
+    // Star button text
+    const btnStarTask = el('btnStarTask');
+    if (btnStarTask) btnStarTask.textContent = myStarred.has(t.id) ? 'Starred' : 'Star';
+    renderAttachments(t);
+    loadCommentsForTask(taskId);
+    loadTimelineForTask(taskId);
+    overlay?.classList.add('show');
+    drawer?.classList.add('show');
+  }
+
+  // ===== Comments =====
+  let unsubComments = null;
+  async function loadCommentsForTask(taskId) {
+    const box = el('commentsList');
+    if (!box) return;
+    box.innerHTML = `<div class="sub">Loading…</div>`;
+    if (unsubComments) {
+      try {
+        unsubComments();
+      } catch {}
+    }
+    unsubComments = db.collection('tasks').doc(taskId).collection('comments')
+      .orderBy('createdAt', 'asc')
+      .limit(200)
+      .onSnapshot((snap) => {
+        if (snap.empty) {
+          box.innerHTML = `<div class="sub">No comments yet.</div>`;
+          return;
+        }
+        box.innerHTML = '';
+        snap.docs.forEach(d => {
+          const c = d.data();
+          const div = document.createElement('div');
+          div.className = 'card';
+          div.style.padding = '10px';
+          div.style.marginBottom = '8px';
+          div.innerHTML = `
+            <div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start">
+              <div style="font-weight:950">${c.authorName || c.authorEmail || 'User'}</div>
+              <div class="sub">${c.createdAt?.toDate?.().toLocaleString?.('en-IN',{timeZone:IST_TZ}) || ''}</div>
+            </div>
+            <div class="sub" style="margin-top:8px;white-space:pre-wrap">${String(c.text||'')}</div>
+          `;
+          box.appendChild(div);
+        });
+      });
+  }
+  async function addComment(taskId, text) {
+    const t = String(text || '').trim();
+    if (!t) return;
+    // Mention parsing is handled in backend in this plan (we'll add a function),
+    // but we also store raw comments in Firestore for simplicity.
+    await db.collection('tasks').doc(taskId).collection('comments').add({
+      text: t,
+      authorUid: myUid,
+      authorEmail: auth.currentUser?.email || '',
+      authorName: myDisplayName || '',
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+  }
+  el('btnAddComment')?.addEventListener('click', async () => {
+    if (!selectedTaskId) return;
+    const inp = el('commentInput');
+    const text = inp?.value || '';
+    try {
+      await addComment(selectedTaskId, text);
+      if (inp) inp.value = '';
+      showToast('Comment added');
+    } catch (e) {
+      showToast('Failed to add comment: ' + (e.message || e), 6000);
+    }
+  });
+
+  // ===== Timeline (audit logs) =====
+  let unsubTimeline = null;
+  async function loadTimelineForTask(taskId) {
+    const box = el('taskTimeline');
+    if (!box) return;
+    box.innerHTML = `<div class="sub">Loading…</div>`;
+    if (unsubTimeline) {
+      try {
+        unsubTimeline();
+      } catch {}
+    }
+    unsubTimeline = db.collection('auditLogs')
+      .where('taskId', '==', taskId)
+      .limit(200)
+      .onSnapshot((snap) => {
+        if (snap.empty) {
+          box.innerHTML = `<div class="sub">No timeline entries.</div>`;
+          return;
+        }
+        const items = snap.docs.map(d => d.data());
+        items.sort((a, b) => (a.timestamp?.toMillis?.() || 0) - (b.timestamp?.toMillis?.() || 0));
+        box.innerHTML = '';
+        items.forEach(a => {
+          const div = document.createElement('div');
+          div.className = 'card';
+          div.style.padding = '10px';
+          div.style.marginBottom = '8px';
+          div.innerHTML = `
+            <div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start">
+              <div style="font-weight:950">${a.action || ''}</div>
+              <div class="sub">${a.timestamp?.toDate?.().toLocaleString?.('en-IN',{timeZone:IST_TZ}) || ''}</div>
+            </div>
+            <div class="sub" style="margin-top:8px">${a.actorEmail || ''}</div>
+            <div class="sub" style="margin-top:8px;white-space:pre-wrap">${JSON.stringify(a.details||{}, null, 0)}</div>
+          `;
+          box.appendChild(div);
+        });
+      });
+  }
+
+  // ===== Starred (favorites) =====
+  let myDisplayName = '';
+  async function loadMyProfile(uid) {
+    try {
+      const snap = await db.collection('users').doc(uid).get();
+      const u = snap.exists ? snap.data() : {};
+      myDisplayName = u.displayName || (auth.currentUser?.email || '').split('@')[0] || '';
+      const arr = Array.isArray(u.starredTaskIds) ? u.starredTaskIds : [];
+      myStarred = new Set(arr);
+    } catch {}
+  }
+  async function toggleStar(taskId) {
+    const has = myStarred.has(taskId);
+    try {
+      if (has) {
+        myStarred.delete(taskId);
+        await db.collection('users').doc(myUid).update({
+          starredTaskIds: firebase.firestore.FieldValue.arrayRemove(taskId),
+          updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+      } else {
+        myStarred.add(taskId);
+        await db.collection('users').doc(myUid).update({
+          starredTaskIds: firebase.firestore.FieldValue.arrayUnion(taskId),
+          updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+      }
+    } catch (e) {
+      // if rules block, keep UI local only
+      if (has) myStarred.add(taskId);
+      else myStarred.delete(taskId);
+      console.warn('Star update blocked:', e);
+    }
+  }
+
+  // ===== Confetti =====
+  const confettiCanvas = el('confettiCanvas');
+
+  function runConfetti() {
+    if (!confettiCanvas) return;
+    const ctx = confettiCanvas.getContext('2d');
+    const W = confettiCanvas.width = window.innerWidth;
+    const H = confettiCanvas.height = window.innerHeight;
+    confettiCanvas.style.display = 'block';
+    const colors = ['#22c55e', '#3b82f6', '#a855f7', '#f59e0b', '#ef4444', '#64d2ff'];
+    const pieces = Array.from({
+      length: 180
+    }).map(() => ({
+      x: Math.random() * W,
+      y: -20 - Math.random() * H * 0.3,
+      r: 4 + Math.random() * 6,
+      c: colors[(Math.random() * colors.length) | 0],
+      vx: -2 + Math.random() * 4,
+      vy: 2 + Math.random() * 6,
+      rot: Math.random() * Math.PI,
+      vr: -0.2 + Math.random() * 0.4
+    }));
+    const t0 = performance.now();
+
+    function frame(now) {
+      const dt = now - t0;
+      ctx.clearRect(0, 0, W, H);
+      pieces.forEach(p => {
+        p.x += p.vx;
+        p.y += p.vy;
+        p.rot += p.vr;
+        p.vy += 0.02;
+        ctx.save();
+        ctx.translate(p.x, p.y);
+        ctx.rotate(p.rot);
+        ctx.fillStyle = p.c;
+        ctx.fillRect(-p.r, -p.r * 0.6, p.r * 2, p.r * 1.2);
+        ctx.restore();
+      });
+      if (dt < 1400) requestAnimationFrame(frame);
+      else confettiCanvas.style.display = 'none';
+    }
+    requestAnimationFrame(frame);
+  }
+
+  // ===== Bulk actions =====
+  el('btnBulkClear')?.addEventListener('click', () => {
+    selectedIds.clear();
+    document.querySelectorAll('input.chkRow').forEach(x => x.checked = false);
+    el('chkAll') && (el('chkAll').checked = false);
+    updateBulkBar();
+  });
+  el('chkAll')?.addEventListener('change', (e) => {
+    const checked = !!e.target.checked;
+    document.querySelectorAll('input.chkRow').forEach(x => {
+      x.checked = checked;
+      const id = x.getAttribute('data-id');
+      if (checked) selectedIds.add(id);
+      else selectedIds.delete(id);
+    });
+    updateBulkBar();
+  });
+  el('partnerTasks')?.addEventListener('change', (e) => {
+    const chk = e.target.closest('input.chkRow');
+    if (!chk) return;
+    const id = chk.getAttribute('data-id');
+    setSelected(id, chk.checked);
+  });
+  el('partnerTasks')?.addEventListener('click', async (e) => {
+    const starBtn = e.target.closest('button[data-act="star"]');
+    if (starBtn) {
+      e.stopPropagation();
+      const id = starBtn.getAttribute('data-id');
+      await toggleStar(id);
+      renderPartnerTasks();
+      return;
+    }
+  });
+  el('btnBulkApplyStatus')?.addEventListener('click', async () => {
+    if (!selectedIds.size) return;
+    const newStatus = el('bulkStatus')?.value || '';
+    if (!newStatus) return showToast('Pick a status');
+    const ids = [...selectedIds];
+    const r = await apiPost('/tasks_bulkUpdate', {
+      taskIds: ids,
+      op: 'STATUS',
+      newStatus
+    }, {
+      loadingTitle: 'Updating…'
+    });
+    if (!r.ok) return showToast('Bulk update failed: ' + (r.error || JSON.stringify(r)), 7000);
+    showToast(`Updated ${r.updatedCount || 0} tasks`);
+    selectedIds.clear();
+    updateBulkBar();
+  });
+  el('btnBulkReassign')?.addEventListener('click', async () => {
+    if (!selectedIds.size) return;
+    const assignedToEmail = (el('bulkAssignEmail')?.value || '').trim();
+    if (!assignedToEmail) return showToast('Enter email');
+    const ids = [...selectedIds];
+    const r = await apiPost('/tasks_bulkUpdate', {
+      taskIds: ids,
+      op: 'REASSIGN',
+      assignedToEmail
+    }, {
+      loadingTitle: 'Reassigning…'
+    });
+    if (!r.ok) return showToast('Bulk reassign failed: ' + (r.error || JSON.stringify(r)), 7000);
+    showToast(`Reassigned ${r.updatedCount || 0} tasks`);
+    selectedIds.clear();
+    updateBulkBar();
+  });
+  el('btnBulkSnooze')?.addEventListener('click', async () => {
+    if (!selectedIds.size) return;
+    const dmy = prompt('Snooze until (DD-MM-YYYY). Leave empty to cancel:', '');
+    if (!dmy) return;
+    let ymd;
+    try {
+      ymd = dmyToYmd(dmy);
+    } catch (e) {
+      return showToast(e.message, 6000);
+    }
+    const ids = [...selectedIds];
+    const r = await apiPost('/tasks_bulkUpdate', {
+      taskIds: ids,
+      op: 'SNOOZE',
+      snoozedUntilYmd: ymd
+    }, {
+      loadingTitle: 'Snoozing…'
+    });
+    if (!r.ok) return showToast('Bulk snooze failed: ' + (r.error || JSON.stringify(r)), 7000);
+    showToast(`Snoozed ${r.updatedCount || 0} tasks`);
+    selectedIds.clear();
+    updateBulkBar();
+  });
+  el('btnBulkDelete')?.addEventListener('click', async () => {
+    if (!selectedIds.size) return;
+    if (!confirm('Delete selected tasks?')) return;
+    const ids = [...selectedIds];
+    const r = await apiPost('/tasks_bulkUpdate', {
+      taskIds: ids,
+      op: 'DELETE'
+    }, {
+      loadingTitle: 'Deleting…'
+    });
+    if (!r.ok) return showToast('Bulk delete failed: ' + (r.error || JSON.stringify(r)), 7000);
+    showToast(`Deleted ${r.deletedCount || 0} tasks`);
+    selectedIds.clear();
+    updateBulkBar();
+  });
+
+  // ===== Button actions =====
+  el('btnSaveTaskStatus')?.addEventListener('click', async () => {
+    if (!selectedTaskId) return;
+    const newStatus = el('uStatus').value;
+    const payload = {
+      taskId: selectedTaskId,
+      newStatus,
+      statusNote: el('uStatusNote').value,
+      delayReason: el('uDelayReason').value || null,
+      delayNotes: el('uDelayNotes').value
+    };
+    const r = await apiPost('/tasks_updatestatus', payload, {
+      loadingTitle: 'Saving…'
+    });
+    if (!r.ok) return showToast('Save failed: ' + (r.error || JSON.stringify(r)), 7000);
+    showToast('Saved');
+    if (newStatus === 'COMPLETED') runConfetti();
+  });
+  el('btnUploadDoc')?.addEventListener('click', async () => {
+    if (!selectedTaskId) return;
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.onchange = async () => {
+      const file = input.files[0];
+      if (!file) return;
+      const type = prompt("Document type (CHALLAN / RETURN / ACK / OTHER)", "ACK") || "OTHER";
+      const fd = new FormData();
+      fd.append('taskId', selectedTaskId);
+      fd.append('type', type);
+      fd.append('file', file, file.name);
+      const r = await apiPostForm('/tasks_uploadattachment', fd, {
+        loadingTitle: 'Uploading…',
+        loadingMsg: 'Uploading file'
+      });
+      if (!r.ok) return showToast('Upload failed: ' + (r.error || JSON.stringify(r)), 7000);
+      showToast('Uploaded');
+    };
+    input.click();
+  });
+  // Delete single (enabled for worker too; backend enforces permissions)
+  el('btnDeleteOne')?.addEventListener('click', async () => {
+    if (!selectedTaskId) return;
+    if (!confirm('Delete this task?')) return;
+    const r = await apiPost('/tasks_delete', {
+      taskId: selectedTaskId,
+      applyToSeries: false
+    }, {
+      loadingTitle: 'Deleting…'
+    });
+    if (!r.ok) return showToast('Delete failed: ' + (r.error || JSON.stringify(r)), 7000);
+    showToast(`Deleted`);
+    closeDrawer();
+  });
+  el('btnDeleteSeries')?.addEventListener('click', async () => {
+    if (!selectedTaskId) return;
+    if (!confirm('Delete entire series?')) return;
+    const r = await apiPost('/tasks_delete', {
+      taskId: selectedTaskId,
+      applyToSeries: true
+    }, {
+      loadingTitle: 'Deleting series…'
+    });
+    if (!r.ok) return showToast('Delete failed: ' + (r.error || JSON.stringify(r)), 7000);
+    showToast(`Deleted series`);
+    closeDrawer();
+  });
+  el('btnSaveTaskDetails')?.addEventListener('click', async () => {
+    if (!selectedTaskId) return;
+    if (!(currentRole === 'PARTNER' || currentRole === 'MANAGER')) return showToast('Not allowed');
+    const applyToSeries = el('uApplyToSeries').checked;
+    let dueDateYmd = null;
+    const dueDmy = el('uDueDateDmy').value.trim();
+    if (dueDmy) {
+      try {
+        dueDateYmd = dmyToYmd(dueDmy);
+      } catch (e) {
+        return showToast(e.message, 7000);
+      }
+    }
+    let snoozedUntilYmd = null;
+    const snoozeDmy = el('uSnoozedUntil').value.trim();
+    if (snoozeDmy) {
+      try {
+        snoozedUntilYmd = dmyToYmd(snoozeDmy);
+      } catch (e) {
+        return showToast(e.message, 7000);
+      }
+    }
+    const payload = {
+      taskId: selectedTaskId,
+      applyToSeries,
+      title: el('uTitle').value,
+      category: el('uCategory').value,
+      type: el('uType').value,
+      priority: el('uPriority').value,
+      snoozedUntilYmd,
+      triggerDaysBefore: Number(el('uTrigger').value || 0),
+      assignedToEmail: el('uAssignedToEmail').value.trim(),
+      dueDateYmd,
+      clientStartSubject: el('uClientStartSubject').value,
+      clientStartBody: el('uClientStartBody').value,
+      sendClientCompletionMail: el('uSendCompletion').checked,
+      clientCompletionSubject: el('uClientCompletionSubject').value,
+      clientCompletionBody: el('uClientCompletionBody').value,
+      // recipients and cc flags moved into backend update for consistency
+      clientToEmails: asEmailList(el('uClientTo').value),
+      clientCcEmails: asEmailList(el('uClientCc').value),
+      clientBccEmails: asEmailList(el('uClientBcc').value),
+      ccAssigneeOnClientStart: el('uCcAssignee').checked,
+      ccManagerOnClientStart: el('uCcManager').checked,
+    };
+    const r = await apiPost('/tasks_updatetask', payload, {
+      loadingTitle: 'Saving…'
+    });
+    if (!r.ok) return showToast('Save failed: ' + (r.error || JSON.stringify(r)), 7000);
+    showToast(`Saved`);
+  });
+  el('btnSeriesRebuild')?.addEventListener('click', async () => {
+    if (!selectedTaskId) return;
+    const t = visibleTasks.find(x => x.id === selectedTaskId);
+    if (!t?.seriesId) return showToast('No series');
+    const addCount = Number(el('srAddCount').value || 1);
+    const r = await apiPost('/series_rebuild', {
+      seriesId: t.seriesId,
+      addCount
+    }, {
+      loadingTitle: 'Adding…'
+    });
+    if (!r.ok) return showToast('Failed: ' + (r.error || JSON.stringify(r)), 7000);
+    showToast(`Added ${r.created} tasks`);
+  });
+  el('btnSeriesReassign')?.addEventListener('click', async () => {
+    if (!selectedTaskId) return;
+    const t = visibleTasks.find(x => x.id === selectedTaskId);
+    if (!t?.seriesId) return showToast('No series');
+    const assignedToEmail = el('srAssignEmail').value.trim();
+    if (!assignedToEmail) return showToast('Enter email');
+    const r = await apiPost('/series_reassign', {
+      seriesId: t.seriesId,
+      assignedToEmail
+    }, {
+      loadingTitle: 'Reassigning…'
+    });
+    if (!r.ok) return showToast('Failed: ' + (r.error || JSON.stringify(r)), 7000);
+    showToast(`Reassigned`);
+  });
+  el('btnCreateClient')?.addEventListener('click', async () => {
+    const payload = {
+      name: el('cName').value,
+      pan: el('cPAN').value,
+      gstin: el('cGSTIN').value,
+      cin: el('cCIN').value,
+      assessmentYear: el('cAY').value,
+      engagementType: el('cEng').value,
+      primaryEmail: el('cEmail').value,
+      ccEmails: asEmailList(el('cCC').value),
+      bccEmails: asEmailList(el('cBCC').value),
+    };
+    const r = await apiPost('/clients_create', payload, {
+      loadingTitle: 'Creating client…'
+    });
+    if (!r.ok) return showToast('Failed: ' + (r.error || JSON.stringify(r)), 7000);
+    showToast('Client created');
+  });
+  el('btnGoTasks')?.addEventListener('click', () => showPage('p_tasks'));
+  el('btnOpenTasksFromDash')?.addEventListener('click', () => showPage('p_tasks'));
+  el('btnGoToday')?.addEventListener('click', () => {
+    el('filterMode').value = 'TODAY';
+    showPage('p_tasks');
+    renderPartnerTasks();
+  });
+  el('btnGoNext7')?.addEventListener('click', () => {
+    el('filterMode').value = 'NEXT_7';
+    showPage('p_tasks');
+    renderPartnerTasks();
+  });
+  // Create task (partner/worker; backend decides restrictions)
+  el('btnCreateTaskOne')?.addEventListener('click', async () => {
+    let dueYmd;
+    try {
+      dueYmd = dmyToYmd(el('ctDueDate').value.trim());
+    } catch (e) {
+      return showToast(e.message, 7000);
+    }
+    const payload = {
+      clientId: el('ctClientId').value || null,
+      clientName: (el('ctClientName').value || '').trim() || null,
+      clientEmail: (el('ctClientEmail').value || '').trim() || null,
+      assignedToEmail: (el('ctAssignedToEmail').value || '').trim() || null,
+      title: el('ctTitle').value,
+      category: el('ctCategory').value,
+      type: el('ctType').value || 'FILING',
+      priority: el('ctPriority').value || 'MEDIUM',
+      dueDateYmd: dueYmd,
+      triggerDaysBefore: Number(el('ctTrigger').value || 15),
+      recurrence: el('ctRecurrence').value,
+      generateCount: Number(el('ctGenerateCount').value || 1),
+      clientToEmails: asEmailList(el('ctClientTo').value),
+      clientCcEmails: asEmailList(el('ctClientCc').value),
+      clientBccEmails: asEmailList(el('ctClientBcc').value),
+      ccAssigneeOnClientStart: el('ctCcAssignee').checked,
+      ccManagerOnClientStart: el('ctCcManager').checked,
+      clientStartSubject: el('ctStartSubject').value,
+      clientStartBody: el('ctStartBody').value,
+      sendClientCompletionMail: el('ctSendCompletion').checked,
+      clientCompletionSubject: el('ctCompletionSubject').value,
+      clientCompletionBody: el('ctCompletionBody').value
+    };
+    const r = await apiPost('/tasks_createone', payload, {
+      loadingTitle: 'Creating…'
+    });
+    if (!r.ok) return showToast('Create failed: ' + (r.error || JSON.stringify(r)), 8000);
+    const created = r.created || 0;
+    const seriesCreated = r.seriesCreated || (r.seriesId ? 1 : 0);
+    await showModal({
+      title: 'Task created',
+      sub: 'Done',
+      bodyHtml: `<div class="sub">Created <b>${created}</b> task(s) across <b>${seriesCreated}</b> series.</div>`,
+      okText: 'OK'
+    });
+    showPage('p_tasks');
+  });
+  // Template download (renamed)
+  el('btnDownloadMyClientsXlsx')?.addEventListener('click', async () => {
+    const r = await apiPost('/exports_myClientsTemplateXlsx', {}, {
+      loadingTitle: 'Preparing template…'
+    });
+    if (!r.ok) return showToast('Failed: ' + (r.error || JSON.stringify(r)), 8000);
+    downloadBase64File(r.fileName || 'Client_Tasks_Import_Template.xlsx', r.base64, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    showToast('Template downloaded');
+  });
+  // Import XLSX (password for workers)
+  el('btnImportXlsx')?.addEventListener('click', async () => {
+    const f = el('xlsxFile').files[0];
+    if (!f) return showToast('Select XLSX file');
+    const fd = new FormData();
+    fd.append('file', f, f.name);
+    const pwd = (el('workerImportPassword')?.value || '').trim();
+    if (pwd) fd.append('importPassword', pwd);
+    const r = await apiPostForm('/tasks_bulkimportxlsx', fd, {
+      loadingTitle: 'Importing…',
+      loadingMsg: 'Creating tasks'
+    });
+    if (!r.ok) return showToast('Import failed: ' + (r.error || JSON.stringify(r)), 9000);
+    await showModal({
+      title: 'Import complete',
+      sub: 'Review your tasks',
+      bodyHtml: ` <div class="sub">Imported <b>${r.created || 0}</b> tasks.</div> <div class="sub" style="margin-top:8px">Series created: <b>${r.seriesCreated || 0}</b>.</div> `,
+      okText: 'OK'
+    });
+    showPage('p_tasks');
+  });
+  // Export range (XLSX)
+  el('btnExportFirmRange')?.addEventListener('click', async () => {
+    let fromDmy = el('exportFrom').value.trim();
+    let toDmy = el('exportTo').value.trim();
+    const includeAudit = el('exportIncludeAudit').value === 'true';
+    try {
+      dmyToYmd(fromDmy);
+      dmyToYmd(toDmy);
+    } catch (e) {
+      return showToast(e.message, 8000);
+    }
+    const r = await apiPost('/exports_firmRangeWithHistoryXlsx', {
+      fromDmy,
+      toDmy,
+      includeAudit
+    }, {
+      loadingTitle: 'Exporting…'
+    });
+    if (!r.ok) return showToast('Export failed: ' + (r.error || JSON.stringify(r)), 9000);
+    downloadBase64File(r.fileName, r.base64, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    showToast('Export downloaded');
+  });
+  async function runQuickExport(mode) {
+    const r = await apiPost('/exports_quickXlsx', {
+      mode
+    }, {
+      loadingTitle: 'Exporting…'
+    });
+    if (!r.ok) return showToast('Export failed: ' + (r.error || JSON.stringify(r)), 9000);
+    downloadBase64File(r.fileName, r.base64, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    showToast('Export downloaded');
+  }
+  el('btnExportNext7')?.addEventListener('click', () => runQuickExport('NEXT_7'));
+  el('btnExportNext15')?.addEventListener('click', () => runQuickExport('NEXT_15'));
+  el('btnExportNext30')?.addEventListener('click', () => runQuickExport('NEXT_30'));
+  el('btnExportOverdue')?.addEventListener('click', () => runQuickExport('OVERDUE'));
+  el('btnExportApproval')?.addEventListener('click', () => runQuickExport('APPROVAL_PENDING'));
+  // Save PDF (current view) = print
+  el('btnExportPdf')?.addEventListener('click', () => window.print());
+  el('btnPrintTasks')?.addEventListener('click', () => window.print());
+  el('btnPrintTask')?.addEventListener('click', () => window.print());
+  // Filters
+  el('btnResetFilters')?.addEventListener('click', () => {
+    el('filterClient').value = '';
+    el('filterStatus').value = '';
+    el('filterCategory').value = '';
+    el('filterSearch').value = '';
+    el('filterDueFrom').value = '';
+    el('filterDueTo').value = '';
+    el('filterDueOnOrBefore').value = '';
+    el('filterDueOnOrAfter').value = '';
+    el('filterNeedDays').value = '7';
+    el('filterMode').value = 'ALL';
+    el('filterPriority').value = '';
+    el('filterStarred').value = '';
+    // clear multi select
+    const ass = el('filterAssignees');
+    if (ass) Array.from(ass.options).forEach(o => o.selected = false);
+    renderPartnerTasks();
+  });
+  el('btnClearDates')?.addEventListener('click', () => {
+    el('filterDueFrom').value = '';
+    el('filterDueTo').value = '';
+    el('filterDueOnOrBefore').value = '';
+    el('filterDueOnOrAfter').value = '';
+    renderPartnerTasks();
+  });
+  ['filterClient', 'filterStatus', 'filterCategory', 'filterMode', 'filterPriority', 'filterStarred'].forEach(id => el(id)?.addEventListener('change', renderPartnerTasks));
+  ['filterSearch', 'filterDueFrom', 'filterDueTo', 'filterDueOnOrBefore', 'filterDueOnOrAfter', 'filterNeedDays'].forEach(id => el(id)?.addEventListener('input', renderPartnerTasks));
+  el('filterAssignees')?.addEventListener('change', renderPartnerTasks);
+  // Advanced filter builder placeholder
+  el('btnOpenAdvancedFilters')?.addEventListener('click', async () => {
+    await showModal({
+      title: 'Advanced filters',
+      sub: 'Coming next',
+      bodyHtml: `<div class="sub">This is where the AND/OR filter builder will be added.</div>`,
+      okText: 'OK'
+    });
+  });
+
+  // ===== Settings =====
+  async function loadSettings() {
+    const r = await apiPost('/settings_get', {}, {
+      loadingTitle: 'Loading…'
+    });
+    if (!r.ok) return showToast('Failed: ' + (r.error || JSON.stringify(r)), 8000);
+    const data = r.data || {};
+    el('setDailyEmails').value = (data.dailyInternalEmails || []).join(';');
+    el('setDailyWindowDays').value = data.dailyWindowDays || 30;
+    el('setSendToAssignees').value = (data.sendDailyToAssignees === false) ? 'false' : 'true';
+    el('setLastRun').value = data.lastDailyRunYmd || '';
+  }
+  el('btnReloadSettings')?.addEventListener('click', loadSettings);
+  el('btnSaveSettings')?.addEventListener('click', async () => {
+    const payload = {
+      dailyInternalEmails: el('setDailyEmails').value,
+      dailyWindowDays: Number(el('setDailyWindowDays').value || 30),
+      sendDailyToAssignees: el('setSendToAssignees').value === 'true'
+    };
+    const r = await apiPost('/settings_update', payload, {
+      loadingTitle: 'Saving…'
+    });
+    if (!r.ok) return showToast('Failed: ' + (r.error || JSON.stringify(r)), 8000);
+    showToast('Saved');
+    loadSettings();
+  });
+  async function reloadCalSettings() {
+    const r = await apiPost('/settings_calendar_get', {}, {
+      loadingTitle: 'Loading…'
+    });
+    if (!r.ok) return showToast('Failed: ' + (r.error || JSON.stringify(r)), 8000);
+    const d = r.data || {};
+    el('calSetStartHH').value = d.startHH ?? 10;
+    el('calSetEndHH').value = d.endHH ?? 12;
+    el('calSetTz').value = d.timeZone || IST_TZ;
+    calendarSettings = {
+      startHH: Number(d.startHH ?? 10),
+      endHH: Number(d.endHH ?? 12),
+      timeZone: d.timeZone || IST_TZ
+    };
+    showToast('Loaded');
+  }
+  el('btnReloadCalSettings')?.addEventListener('click', reloadCalSettings);
+  el('btnSaveCalSettings')?.addEventListener('click', async () => {
+    const startHH = Number(el('calSetStartHH').value);
+    const endHH = Number(el('calSetEndHH').value);
+    const timeZone = el('calSetTz').value.trim() || IST_TZ;
+    const r = await apiPost('/settings_calendar_update', {
+      startHH,
+      endHH,
+      timeZone
+    }, {
+      loadingTitle: 'Saving…'
+    });
+    if (!r.ok) return showToast('Failed: ' + (r.error || JSON.stringify(r)), 8000);
+    showToast('Saved');
+    await loadCalendarSettings(true);
+  });
+  // Worker import password settings (partner)
+  el('btnSaveWorkerImportPass')?.addEventListener('click', async () => {
+    const p1 = el('setWorkerImportPass')?.value || '';
+    const p2 = el('setWorkerImportPass2')?.value || '';
+    if (p1 !== p2) return showToast('Passwords do not match', 6000);
+    const r = await apiPost('/settings_workerImportPassword_set', {
+      password: p1
+    }, {
+      loadingTitle: 'Saving…'
+    });
+    if (!r.ok) return showToast('Failed: ' + (r.error || JSON.stringify(r)), 8000);
+    showToast('Saved');
+    el('setWorkerImportPass').value = '';
+    el('setWorkerImportPass2').value = '';
+  });
+  el('btnRemoveWorkerImportPass')?.addEventListener('click', async () => {
+    if (!confirm('Remove worker import password?')) return;
+    const r = await apiPost('/settings_workerImportPassword_set', {
+      password: ''
+    }, {
+      loadingTitle: 'Removing…'
+    });
+    if (!r.ok) return showToast('Failed: ' + (r.error || JSON.stringify(r)), 8000);
+    showToast('Removed');
+  });
+  // Change password (current user)
+  el('btnChangePass')?.addEventListener('click', async () => {
+    const p1 = el('myNewPass')?.value || '';
+    const p2 = el('myNewPass2')?.value || '';
+    if (!p1 || p1.length < 6) return showToast('Password must be at least 6 characters', 6000);
+    if (p1 !== p2) return showToast('Passwords do not match', 6000);
+    try {
+      showLoading('Updating password…', 'Please wait');
+      await auth.currentUser.updatePassword(p1);
+      showToast('Password updated');
+      el('myNewPass').value = '';
+      el('myNewPass2').value = '';
+    } catch (e) {
+      showToast('Password update failed: ' + (e.message || e.code || String(e)), 9000);
+    } finally {
+      hideLoading();
+    }
+  });
+  // Forgot password
+  el('btnForgotPass')?.addEventListener('click', async () => {
+    const email = (el('email')?.value || '').trim();
+    if (!email) return showToast('Enter your email above first', 6000);
+    try {
+      showLoading('Sending reset email…', 'Check your inbox');
+      await auth.sendPasswordResetEmail(email);
+      await showModal({
+        title: 'Password reset sent',
+        sub: 'Check your inbox',
+        bodyHtml: `<div class="sub">We sent a password reset email to <b>${email}</b>.</div>`,
+        okText: 'OK'
+      });
+    } catch (e) {
+      showToast('Failed: ' + (e.message || e.code || String(e)), 9000);
+    } finally {
+      hideLoading();
+    }
+  });
+
+  // ===== Team management =====
+  async function loadTeam() {
+    const r = await apiPost('/users_list', {}, {
+      loadingTitle: 'Loading team…'
+    });
+    if (!r.ok) return showToast('Failed: ' + (r.error || JSON.stringify(r)), 8000);
+    const users = r.users || r.users || r.users || r.users; // safe
+    const tbody = el('teamTable');
+    if (!tbody) return;
+    tbody.innerHTML = '';
+    users.forEach(u => {
+      const tr = document.createElement('tr');
+      const nameId = `name_${u.uid}`;
+      const roleSelId = `role_${u.uid}`;
+      const activeSelId = `active_${u.uid}`;
+      const mgrId = `mgr_${u.uid}`;
+      tr.innerHTML = `
+        <td><b>${u.email || ''}</b></td>
+        <td><input id="${nameId}" value="${u.displayName || ''}" placeholder="Name"></td>
+        <td>
+          <select id="${roleSelId}">
+            <option ${u.role==='PARTNER'?'selected':''}>PARTNER</option>
+            <option ${u.role==='MANAGER'?'selected':''}>MANAGER</option>
+            <option ${u.role==='WORKER'?'selected':''}>WORKER</option>
+          </select>
+        </td>
+        <td>
+          <select id="${activeSelId}">
+            <option value="true" ${(u.active!==false)?'selected':''}>true</option>
+            <option value="false" ${(u.active===false)?'selected':''}>false</option>
+          </select>
+        </td>
+        <td>
+          <input id="${mgrId}" value="${u.managerEmail || ''}" placeholder="manager@firm.com (optional)">
+        </td>
+        <td style="white-space:nowrap">
+          <button class="btn small" data-act="saveRole" data-uid="${u.uid}">Save</button>
+          <button class="btn small" data-act="saveMgr" data-uid="${u.uid}">Save Manager</button>
+          <button class="btn small" data-act="saveName" data-uid="${u.uid}">Save Name</button>
+        </td>
+      `;
+      tbody.appendChild(tr);
+    });
+    tbody.onclick = async (e) => {
+      const btn = e.target.closest('button[data-act]');
+      if (!btn) return;
+      const uid = btn.getAttribute('data-uid');
+      const act = btn.getAttribute('data-act');
+      if (act === 'saveRole') {
+        const role = el(`role_${uid}`).value;
+        const active = el(`active_${uid}`).value === 'true';
+        const rr = await apiPost('/users_setrole', {
+          uid,
+          role,
+          active
+        }, {
+          loadingTitle: 'Saving…'
+        });
+        if (!rr.ok) return showToast('Failed: ' + (rr.error || JSON.stringify(rr)), 8000);
+        showToast('Saved');
+      }
+      if (act === 'saveMgr') {
+        const managerEmail = el(`mgr_${uid}`).value.trim();
+        const rr = await apiPost('/users_setmanager', {
+          uid,
+          managerEmail
+        }, {
+          loadingTitle: 'Saving…'
+        });
+        if (!rr.ok) return showToast('Failed: ' + (rr.error || JSON.stringify(rr)), 9000);
+        showToast('Saved');
+      }
+      if (act === 'saveName') {
+        const displayName = el(`name_${uid}`).value.trim();
+        const rr = await apiPost('/users_setdisplayname', {
+          uid,
+          displayName
+        }, {
+          loadingTitle: 'Saving…'
+        });
+        if (!rr.ok) return showToast('Failed: ' + (rr.error || JSON.stringify(rr)), 9000);
+        showToast('Saved');
+      }
+    };
+    // Populate assignee multi-select with team emails
+    const filterAssignees = el('filterAssignees');
+    if (filterAssignees) {
+      const emails = users.map(u => (u.email || '').trim()).filter(Boolean).sort((a, b) => a.localeCompare(b));
+      filterAssignees.innerHTML = emails.map(e => `<option value="${e}">${e}</option>`).join('');
+    }
+  }
+  el('btnReloadTeam')?.addEventListener('click', loadTeam);
+
+  // ===== CmdK results =====
+  function renderCmdKList(query) {
+    if (!cmdkList) return;
+    const q = String(query || '').trim().toLowerCase();
+    const hist = JSON.parse(localStorage.getItem(SEARCH_HISTORY_KEY) || '[]');
+    const topHist = (!q && hist.length) ? hist : [];
+    let items = [];
+    if (topHist.length) {
+      items.push({
+        type: 'H',
+        title: 'Recent searches',
+        meta: '',
+        id: null
+      });
+      topHist.forEach(s => items.push({
+        type: 'HS',
+        title: s,
+        meta: 'Press Enter to search',
+        id: s
+      }));
+    }
+    const tasks = visibleTasks || [];
+    const clients = allClients || [];
+    const matchesTask = (t) => {
+      const hay = `${t.title||''} ${clientNameById(t.clientId)||''} ${t.assignedToEmail||''}`.toLowerCase();
+      return hay.includes(q);
+    };
+    const matchesClient = (c) => (`${c.name||''} ${c.primaryEmail||''}`.toLowerCase().includes(q));
+    if (q) {
+      const tHits = tasks.filter(matchesTask).slice(0, 12).map(t => ({
+        type: 'T',
+        title: t.title || '(task)',
+        meta: `${clientNameById(t.clientId)} • Due ${ymdToDmy(t.dueDateYmd)} • ${t.status}`,
+        id: t.id
+      }));
+      const cHits = clients.filter(matchesClient).slice(0, 8).map(c => ({
+        type: 'C',
+        title: c.name || '(client)',
+        meta: c.primaryEmail || '',
+        id: c.id
+      }));
+      items.push(...tHits, ...cHits);
+      if (!items.length) items.push({
+        type: 'N',
+        title: 'No results',
+        meta: '',
+        id: null
+      });
+    }
+    cmdkList.innerHTML = '';
+    items.forEach(it => {
+      const div = document.createElement('div');
+      div.className = 'cmdkItem';
+      div.innerHTML = `
+        <div>
+          <div class="t">${it.title}</div>
+          <div class="m">${it.meta || ''}</div>
+        </div>
+        <div class="pill">${it.type === 'T' ? 'Task' : it.type === 'C' ? 'Client' : ''}</div>
+      `;
+      div.onclick = () => {
+        if (it.type === 'T') {
+          showPage('p_tasks');
+          openTaskDrawer(it.id);
+          closeCmdK();
+        }
+        if (it.type === 'HS') {
+          cmdkInput.value = it.id;
+          renderCmdKList(it.id);
+          cmdkInput.focus();
+        }
+      };
+      cmdkList.appendChild(div);
+    });
+  }
+  cmdkInput?.addEventListener('input', () => renderCmdKList(cmdkInput.value));
+  cmdkInput?.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      const q = (cmdkInput.value || '').trim();
+      pushSearchHistory(q);
+    }
+  });
+
+  // ===== Firestore subscriptions =====
+  let unsubClients = null;
+  let unsubTasks = null;
+  let unsubAudit = null;
+
+  function subscribeClients() {
+    if (unsubClients) unsubClients();
+    clientsLoadedOnce = false;
+    unsubClients = db.collection('clients').onSnapshot((snap) => {
+      allClients = snap.docs.map(d => ({
+        id: d.id,
+        ...d.data()
+      }));
+      clientsLoadedOnce = true;
+      loadClientDropdowns();
+      renderClients();
+    });
+  }
+
+  function subscribeTasks(role, uid) {
+    if (unsubTasks) unsubTasks();
+    tasksLoadedOnce = false;
+    // For simplicity: show all tasks for partner/manager; only assigned tasks for worker
+    if (role === 'PARTNER' || role === 'MANAGER') {
+      unsubTasks = db.collection('tasks').onSnapshot((snap) => {
+        visibleTasks = snap.docs.map(d => ({
+          id: d.id,
+          ...d.data()
+        }));
+        tasksLoadedOnce = true;
+        computeKPIs();
+        renderPartnerTasks();
+        renderDashboardToday();
+        renderDashboardAlerts();
+        renderSidebarTasks();
+        renderCalendar();
+        loadClientDropdowns();
+        if (selectedTaskId) openTaskDrawer(selectedTaskId);
+      });
+    } else {
+      unsubTasks = db.collection('tasks').where('assignedToUid', '==', uid).onSnapshot((snap) => {
+        visibleTasks = snap.docs.map(d => ({
+          id: d.id,
+          ...d.data()
+        }));
+        tasksLoadedOnce = true;
+        computeKPIs();
+        renderPartnerTasks();
+        // reuse same table page for workers too
+        renderDashboardToday();
+        renderDashboardAlerts();
+        renderSidebarTasks();
+        renderCalendar();
+        loadClientDropdowns();
+        if (selectedTaskId) openTaskDrawer(selectedTaskId);
+      });
+    }
+  }
+
+  function subscribeAudit(role) {
+    if (unsubAudit) unsubAudit();
+    if (role !== 'PARTNER') return;
+    unsubAudit = db.collection('auditLogs').orderBy('timestamp', 'desc').limit(50).onSnapshot((snap) => {
+      const tbody = el('auditTable');
+      const empty = el('auditEmpty');
+      if (!tbody) return;
+      tbody.innerHTML = '';
+      if (snap.empty) {
+        if (empty) empty.classList.remove('hidden');
+        return;
+      } else {
+        if (empty) empty.classList.add('hidden');
+      }
+      snap.docs.forEach(d => {
+        const a = d.data();
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${a.timestamp?.toDate?.().toLocaleString?.('en-IN',{timeZone:IST_TZ}) || ''}</td>
+          <td>${a.action || ''}</td>
+          <td>${a.actorEmail || ''}</td>
+          <td><pre style="white-space:pre-wrap;margin:0">${JSON.stringify(a.details||{}, null, 0)}</pre></td>
+        `;
+        tbody.appendChild(tr);
+      });
+    });
+  }
+
+  // ===== Login / Signup =====
+  el('btnLogin')?.addEventListener('click', async () => {
+    try {
+      showLoading('Logging in…', 'Checking credentials');
+      await auth.signInWithEmailAndPassword(el('email').value.trim(), el('pass').value);
+      showToast('Logged in');
+    } catch (e) {
+      console.error(e);
+      showToast('Login failed: ' + (e.message || e.code || String(e)), 9000);
+    } finally {
+      hideLoading();
+    }
+  });
+
+  el('btnSignup')?.addEventListener('click', async () => {
+    try {
+      showLoading('Signing up…', 'Creating your account');
+      const email = el('email').value.trim();
+      const pass = el('pass').value;
+      const cred = await auth.createUserWithEmailAndPassword(email, pass);
+
+      await db.collection('users').doc(cred.user.uid).set({
+        email,
+        emailLower: email.toLowerCase(),
+        displayName: email.split('@')[0],
+        role: "WORKER",
+        active: true,
+        managerEmail: null,
+        managerUid: null,
+        starredTaskIds: [],
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+
+      showToast("Signed up. You’re logged in.");
+    } catch (e) {
+      console.error(e);
+      showToast('Signup failed: ' + (e.message || e.code || String(e)), 9000);
+    } finally {
+      hideLoading();
+    }
+  });
+
+  // ===== Auth listener =====
+  auth.onAuthStateChanged(async (user) => {
+    if (!user) {
+      document.body.classList.add('logged-out');
+      navRoleHint && (navRoleHint.textContent = "Not signed in");
+      topUser && (topUser.innerHTML = "");
+      loginCard.classList.remove('hidden');
+      appUI.classList.add('hidden');
+      tasksSidebarCard.classList.add('hidden');
+
+      if (unsubClients) unsubClients();
+      if (unsubTasks) unsubTasks();
+      if (unsubAudit) unsubAudit();
+      if (unsubComments) unsubComments();
+      if (unsubTimeline) unsubTimeline();
+      return;
+    }
+
+    document.body.classList.remove('logged-out');
+    myUid = user.uid;
+
+    const initial = (user.email || 'U').trim().charAt(0).toUpperCase();
+    topUser.innerHTML = `
+      <div class="pillUser">
+        <div class="avatar">${initial}</div>
+        <div style="display:flex;flex-direction:column;line-height:1.1">
+          <div style="font-weight:950">${user.email}</div>
+          <div style="font-size:12px;color:var(--muted);font-weight:800">Signed in</div>
+        </div>
+      </div>
+      <button id="logoutBtn" class="btn" type="button">Logout</button>
+    `;
+    el('logoutBtn').onclick = () => auth.signOut();
+
+    loginCard.classList.add('hidden');
+    appUI.classList.remove('hidden');
+    tasksSidebarCard.classList.remove('hidden');
+
+    // role
+    let role = "WORKER";
+    try {
+      const uDoc = await db.collection('users').doc(user.uid).get();
+      role = uDoc.exists ? (uDoc.data().role || "WORKER") : "WORKER";
+    } catch (e) {
+      console.warn('Cannot read user role:', e);
+    }
+    currentRole = String(role || 'WORKER').toUpperCase().trim();
+    navRoleHint && (navRoleHint.textContent = currentRole === 'PARTNER' ? "Partner" : currentRole === 'MANAGER' ? "Manager" : "Worker");
+
+    // Hide partner-only pages from workers/managers as needed
+    const partnerOnlyIds = ['navClients', 'navTeam', 'navSettings', 'navAudit'];
+    const isPartner = currentRole === 'PARTNER';
+    partnerOnlyIds.forEach(id => el(id)?.classList.toggle('hidden', !isPartner));
+
+    // Workers should not create clients: hide Clients nav always if not partner
+    el('navClients')?.classList.toggle('hidden', !isPartner);
+
+    await loadMyProfile(user.uid);
+    await loadCalendarSettings(true);
+
+    subscribeClients();
+    subscribeTasks(currentRole, user.uid);
+    subscribeAudit(currentRole);
+
+    // init drafting studio for all roles
+    initDraftingStudio();
+
+    // load partner settings/team
+    if (isPartner) {
+      loadSettings();
+      loadTeam();
+      reloadCalSettings();
+    }
+
+    // default page
+    showPage('p_dashboard');
+  });
+
+  // ===== Extra: "today/next7" quick actions =====
+  // Already wired above
+
+  // ===== Print CSS hint =====
+  // Tip: add @media print rules in PART 1 CSS if needed.
+</script>
+</body>
+</html>

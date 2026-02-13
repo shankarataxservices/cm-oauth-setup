@@ -1,0 +1,160 @@
+1) Template Download button name and file name should be changed to 'Client_Tasks_Import_Template'
+
+2) Manager email adding says save manager email failed, manageremail not found in users
+
+3) if the person forgets the password, then he has to somehow be able to recover it and stuff, like, in the firestore if i put something or do something then he has to be able to login back again with a new password, so password change also has to be there
+
+4) menu collapsible, with icons
+
+5) after import message should stay and we need to say ok for the message. message should contain how many tasks were imported, and also, how many serieses
+
+6) ya, i have to be able to filter in EVERY column wise, due date, on or before, status, when is it due, all tasks on or bfore some date, task status, and all, if not existing add them
+
+7) batch selection and editing also has to be there
+
+8) in excel, the content and stuff should be as is, like, inside excel inside a cell if i click on enter, then it moves to the next line right, tht is failing, and it shows stuff like this:- [object Object]  ALSO, enter inside the excel thingei has to be like enter in the mail only not <br><br>
+
+9) multi selection(aka reffered to as batch selection before)
+
+10) the ui should not be developer like, it has to be enduser like, technical terms like variables, and firestore, change uid and all of tht shiuld not be there, it has to be like a direct goal to end user
+
+11) Inline Editing
+Does: Edit a cell directly in the table.
+Safe add: Allow only “safe fields” inline (status note, assignee, trigger) and call /tasks_updatetask or direct Firestore only if rules permit.
+Don’t disrupt: Don’t bypass partner-only constraints; don’t allow changing due date in series inline.
+
+12) Skeleton Loading States
+Does: Placeholder while Firestore loads.
+Safe add: On initial subscription, show skeleton until first snapshot arrives.
+Don’t disrupt: None.
+
+13) Empty State Illustrations
+Does: Nice message/graphic when lists are empty.
+Safe add: UI only.
+Don’t disrupt: None. I will not give any images, as their background might not match, u have to give
+
+14) Confetti on Task Completion
+Does: Animation on completion.
+Safe add: Trigger only when status transitions to COMPLETED for current user action.
+Don’t disrupt: Don’t trigger on initial load of already completed tasks.
+
+15) Mail trail feature is not working, it is not working, it is sending a new thing and not replying to the old mail tht causes a disrupt on my thing
+
+16) Color-Coded Categories
+Does: Unique colors for GST/TDS/etc.
+Safe add: Map category -> CSS class.
+Don’t disrupt: Don’t change stored category values; just render.
+
+17) Client (not client name) also has to appear as a drop down thingie in the excel import thingie, next, client name(not client) has to appear as a filling thingie, not dropdown, got it, in the excel import as well as the individual creation
+
+18) worker has to be having dashboard access, obviously bro, he also has to have his dashboard, next, he has to be able to create individual tasks, not bulk im-port
+
+19) for worker bulk import, he can do it upon entering a password tht can be set, reset or removed anytime by the partner in his area
+
+20) calendar has to appear for worker, clients creation should not be there for worker. the drafting studio shuld be enabled for the wokrer, tas deletion shld be enabled for the worker.
+
+21) man, i need to have a thing in my thing also to like, show the tasks today due or start today, and also fr the next 7 days due comes
+
+22) user comments on tasks
+
+23) do not send any uid, or any task id or something via mails, or visible to ahyone, it comes nly in the export clients tingie and backend
+
+24) Bulk Reassign
+Does: Reassign many tasks.
+Add: New function /tasks_bulkReassign or reuse series_reassign for series only.
+Don’t disrupt: Keep assignedToUid consistent; lookup by email.
+
+25) Priority Levels
+Does: HIGH/MED/LOW.
+Add: priority: 'HIGH'|'MEDIUM'|'LOW' default MEDIUM.
+Don’t disrupt: Pure metadata; no schedule impact unless you choose.
+
+26) @Mentions in Comments
+Does: Notify mentioned users.
+Add: Parse @name of worker(set in team area, by the manager, name of manager also has to be a thing) and create notification docs (see feature 63).
+Don’t disrupt: Mentions are additive.
+
+27) Task Activity Log (timeline)
+Does: Show all changes.
+You already have auditLogs; just display per task in drawer.
+Safe add: Query auditLogs.where('taskId'==id).
+
+28) Snooze Task
+Does: Hide until date.
+Add: snoozedUntilYmd and filter it out unless partner toggles show snoozed.
+Don’t disrupt: Snoozing must NOT stop backend cron emails unless you explicitly add snooze checks.
+
+29) Task Favorites/Starred
+Does: Personal flag.
+Add: store in user profile (not task doc) to avoid conflicts.
+
+30) Task Print View
+Does: Printable page.
+Add: New route/section or window.print() with print CSS.
+Don’t disrupt: None.
+
+31) 51) Week View
+Does: 7-day grid with tasks.
+Add: UI view derived from same tasksByDueDate map.
+Don’t disrupt: Doesn’t touch Google Calendar.
+
+52) Day View
+Does: Tasks for one date.
+Add: UI list. If you want hourly, you’d need time-of-day fields (you currently only store dates).
+
+53) Agenda View
+Does: List sorted by date.
+Add: UI sorted by due/start.
+
+32) empty daily digest emails should say No Tasks To Display
+
+33) Advanced Filter Builder (AND/OR)
+Does: Complex filtering.
+Add: UI-only filter logic; avoid Firestore complex queries to prevent index pain.
+Don’t disrupt: Keep current simple filters.
+
+34) Global Search (Cmd+K)
+Does: Search tasks/clients quickly.
+Add: UI modal + index arrays in memory (visibleTasks/allClients).
+Don’t disrupt: Doesn’t change backend.
+
+35) Search History
+Does: Remember last searches.
+Add: localStorage.
+
+36) Filter by Date Range
+Does: Due between X and Y.
+Add: UI filter (or Firestore query if needed).
+Don’t disrupt: UI-only is safest.
+
+37) Filter by Assignee (multi)
+Does: select multiple assignees.
+Add: UI set of emails/uids.
+
+38) Monthly Compliance Report (PDF)
+Does: PDF summary.
+Add: New function generates PDF (Puppeteer or PDFKit).
+Don’t disrupt: Don’t remove XLSX.
+
+39) Client-wise Report
+Does: Client report.
+You already have exports_clientHistoryXlsx. Add PDF equivalent if needed.
+
+40) Export to PDF (any view)
+Does: Save view.
+Add: Client-side print-to-PDF or server PDF render.
+
+41) Custom Report Builder
+Does: Choose columns/groups.
+Add: UI selects fields, backend returns XLSX/PDF.
+Don’t disrupt: Default export stays.
+
+
+
+1) client editing opportunity - i have to have a change to edit all details of a particular client
+
+2) option checkbox to send start mail to client true/false, just like the thing
+
+3) completeion mail has to be like REPLY ALL and not only to the client, as of now to manager and worker are not getting mail trail (practically any mail) at all.. so tht is a change
+
+4) option to send mail not to default client mail(created when creating the cleint) but to someone else

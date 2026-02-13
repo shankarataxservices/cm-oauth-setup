@@ -1,0 +1,4259 @@
+--- Contents of: /home/ubuntu/cm-oauth-setup/compliance-backend/netlify/functions ---
+
+    =� _auth.js
+
+       --- File Content Start ---
+
+const { auth, db, json } = require('./_common');
+
+async function requireUser(event) {
+  const h = event.headers.authorization || event.headers.Authorization || '';
+  const token = h.startsWith('Bearer ') ? h.slice(7) : null;
+  if (!token) return { error: json(event, 401, { ok:false, error:'Missing Bearer token' }) };
+
+  const decoded = await auth().verifyIdToken(token);
+  const uSnap = await db().collection('users').doc(decoded.uid).get();
+  const u = uSnap.exists ? uSnap.data() : null;
+
+  return { user: { uid: decoded.uid, email: decoded.email, role: u?.role || 'WORKER' } };
+}
+
+function requirePartner(event, user) {
+  if (user.role !== 'PARTNER') return { error: json(event, 403, { ok:false, error:'Partner only' }) };
+  return { ok:true };
+}
+
+function requireCron(event) {
+  const s = event.headers['x-cron-secret'] || event.headers['X-Cron-Secret'];
+  if (!s || s !== process.env.CRON_SECRET) return { error: json(event, 401, { ok:false, error:'Bad cron secret' }) };
+  return { ok:true };
+}
+
+module.exports = { requireUser, requirePartner, requireCron };
+
+       --- File Content End ---
+
+
+    =� _common.js
+
+       --- File Content Start ---
+
+// netlify/functions/_common.js
+const admin = require('firebase-admin');
+const { google } = require('googleapis');
+const { Readable } = require('stream');
+
+let inited = false;
+function init() {
+  if (inited) return;
+  const sa = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+  admin.initializeApp({ credential: admin.credential.cert(sa) });
+  inited = true;
+}
+
+function db() { init(); return admin.firestore(); }
+function auth() { init(); return admin.auth(); }
+
+// ===== Google OAuth =====
+function oauthClient() {
+  const o = new google.auth.OAuth2(
+    process.env.GOOGLE_CLIENT_ID,
+    process.env.GOOGLE_CLIENT_SECRET
+  );
+  o.setCredentials({ refresh_token: process.env.GOOGLE_REFRESH_TOKEN });
+  return o;
+}
+function calendar() { return google.calendar({ version: 'v3', auth: oauthClient() }); }
+function gmail() { return google.gmail({ version: 'v1', auth: oauthClient() }); }
+function drive() { return google.drive({ version: 'v3', auth: oauthClient() }); }
+
+// ===== CORS =====
+function getAllowedOrigin(event) {
+  const origin = event?.headers?.origin || event?.headers?.Origin || '';
+  const allow = String(process.env.CORS_ALLOW_ORIGINS || '').trim();
+  if (!allow) return origin || '*';
+  const allowed = allow.split(',').map(s => s.trim()).filter(Boolean);
+  if (!origin) return allowed[0] || '*';
+  return allowed.includes(origin) ? origin : allowed[0] || '*';
+}
+function corsHeaders(event) {
+  const origin = getAllowedOrigin(event);
+  return {
+    'Access-Control-Allow-Origin': origin,
+    'Vary': 'Origin',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization, x-cron-secret',
+    'Access-Control-Allow-Methods': 'GET,POST,OPTIONS',
+    'Access-Control-Max-Age': '86400',
+  };
+}
+function json(event, statusCode, body) {
+  return {
+    statusCode,
+    headers: { ...corsHeaders(event), 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  };
+}
+function withCors(handler) {
+  return async (event, context) => {
+    if (event.httpMethod === 'OPTIONS') {
+      return { statusCode: 204, headers: corsHeaders(event), body: '' };
+    }
+    try {
+      const res = await handler(event, context);
+      res.headers = { ...corsHeaders(event), ...(res.headers || {}) };
+      return res;
+    } catch (e) {
+      console.error('Function crashed:', e);
+      return json(event, 500, { ok: false, error: e.message || String(e) });
+    }
+  };
+}
+
+// ===== Timezone-safe date helpers (IST) =====
+const IST_TZ = 'Asia/Kolkata';
+function ymdInTZ(date, timeZone) {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone, year: 'numeric', month: '2-digit', day: '2-digit',
+  }).formatToParts(date);
+  const m = Object.fromEntries(parts.map(p => [p.type, p.value]));
+  return `${m.year}-${m.month}-${m.day}`;
+}
+function ymdIST(date) { return ymdInTZ(date, IST_TZ); }
+
+function dmyToYmd(dmyStr) {
+  const s = String(dmyStr || '').trim();
+  const m = /^(\d{2})-(\d{2})-(\d{4})$/.exec(s);
+  if (!m) throw new Error(`Invalid date format "${s}". Expected DD-MM-YYYY`);
+  const dd = m[1], mm = m[2], yyyy = m[3];
+  const iso = `${yyyy}-${mm}-${dd}`;
+  const dt = new Date(`${iso}T00:00:00Z`);
+  if (Number.isNaN(dt.getTime())) throw new Error(`Invalid date: ${s}`);
+  const check = dt.toISOString().slice(0, 10);
+  if (check !== iso) throw new Error(`Invalid date: ${s}`);
+  return iso;
+}
+function ymdToDmy(ymdStr) {
+  if (!ymdStr) return '';
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(ymdStr).trim());
+  if (!m) return '';
+  return `${m[3]}-${m[2]}-${m[1]}`;
+}
+function addDays(date, days) {
+  const d = new Date(date);
+  d.setUTCDate(d.getUTCDate() + days);
+  return d;
+}
+function dateFromYmdIST(ymdStr) {
+  return new Date(`${ymdStr}T00:00:00+05:30`);
+}
+function addInterval(baseDate, recurrence, i) {
+  const d = new Date(baseDate);
+  if (i === 0) return d;
+  const r = String(recurrence || 'AD_HOC').toUpperCase();
+  if (r === 'DAILY') d.setUTCDate(d.getUTCDate() + i);
+  else if (r === 'WEEKLY') d.setUTCDate(d.getUTCDate() + i * 7);
+  else if (r === 'BIWEEKLY') d.setUTCDate(d.getUTCDate() + i * 14);
+  else if (r === 'MONTHLY') d.setUTCMonth(d.getUTCMonth() + i);
+  else if (r === 'BIMONTHLY') d.setUTCMonth(d.getUTCMonth() + i * 2);
+  else if (r === 'QUARTERLY') d.setUTCMonth(d.getUTCMonth() + i * 3);
+  else if (r === 'HALF_YEARLY') d.setUTCMonth(d.getUTCMonth() + i * 6);
+  else if (r === 'YEARLY') d.setUTCFullYear(d.getUTCFullYear() + i);
+  else d.setUTCDate(d.getUTCDate() + i);
+  return d;
+}
+
+// ===== Settings: calendar window =====
+async function getCalendarWindow() {
+  const defaults = { startHH: 10, endHH: 12, timeZone: IST_TZ };
+  try {
+    const snap = await db().collection('settings').doc('calendar').get();
+    if (!snap.exists) return defaults;
+    const s = snap.data() || {};
+    return {
+      startHH: Number.isFinite(Number(s.startHH)) ? Number(s.startHH) : defaults.startHH,
+      endHH: Number.isFinite(Number(s.endHH)) ? Number(s.endHH) : defaults.endHH,
+      timeZone: s.timeZone || defaults.timeZone,
+    };
+  } catch {
+    return defaults;
+  }
+}
+function calTimeRange(ymdStr, startHH = 10, endHH = 12, timeZone = IST_TZ) {
+  return {
+    start: { dateTime: `${ymdStr}T${String(startHH).padStart(2, '0')}:00:00`, timeZone },
+    end: { dateTime: `${ymdStr}T${String(endHH).padStart(2, '0')}:00:00`, timeZone },
+  };
+}
+
+// ===== Audit =====
+async function auditLog({ taskId, action, actorUid, actorEmail, details }) {
+  await db().collection('auditLogs').add({
+    taskId: taskId || null,
+    action,
+    actorUid: actorUid || null,
+    actorEmail: actorEmail || null,
+    timestamp: admin.firestore.FieldValue.serverTimestamp(),
+    details: details || {}
+  });
+}
+
+// ===== Email helpers =====
+function asEmailList(x) {
+  if (Array.isArray(x)) return x.map(s => String(s).trim()).filter(Boolean);
+  if (typeof x === 'string') return x.split(/[;,:]/).map(s => s.trim()).filter(Boolean);
+  return [];
+}
+function uniqEmails(arr) {
+  const out = [];
+  const seen = new Set();
+  for (const e of (arr || [])) {
+    const v = String(e || '').trim();
+    if (!v) continue;
+    const k = v.toLowerCase();
+    if (seen.has(k)) continue;
+    seen.add(k);
+    out.push(v);
+  }
+  return out;
+}
+function escapeHtml(s) {
+  return String(s || '')
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#039;');
+}
+
+// NEW: token expansion (supports \\n tokens stored in Firestore)
+function expandNewlineTokens(s) {
+  let x = String(s ?? '');
+  x = x.replaceAll('\\r\\n', '\n');
+  x = x.replaceAll('\\n', '\n');
+  return x;
+}
+
+function normalizeBodyToHtml(body) {
+  let str = expandNewlineTokens(body);
+  // If it already contains HTML tags, assume rich text
+  if (/<[a-z][\s\S]*>/i.test(str)) return str;
+  return escapeHtml(str).replace(/\r?\n/g, '<br>');
+}
+
+function renderTemplate(str, vars) {
+  let out = String(str || '');
+  for (const [k, v] of Object.entries(vars || {})) {
+    out = out.replaceAll(`{{${k}}}`, v == null ? '' : String(v));
+  }
+  return out;
+}
+
+function buildRawEmail({ from, to, cc = [], bcc = [], subject, html, inReplyTo, references }) {
+  const safeFrom = from || process.env.BOT_FROM || process.env.BOT_EMAIL || '';
+  if (!safeFrom) throw new Error('BOT_FROM or BOT_EMAIL env var is missing');
+
+  const subj = String(subject || '').replace(/\r?\n/g, ' ').trim();
+  const lines = [
+    `From: ${safeFrom}`,
+    `To: ${to.join(', ')}`,
+    cc.length ? `Cc: ${cc.join(', ')}` : null,
+    bcc.length ? `Bcc: ${bcc.join(', ')}` : null,
+    `Subject: ${subj}`,
+    `Date: ${new Date().toUTCString()}`,
+    inReplyTo ? `In-Reply-To: ${inReplyTo}` : null,
+    references ? `References: ${references}` : null,
+    'MIME-Version: 1.0',
+    'Content-Type: text/html; charset="UTF-8"',
+    '',
+    html || ''
+  ];
+  const msg = lines.filter(x => x !== null).join('\r\n');
+  return Buffer.from(msg).toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+
+// More robust: fetch both Message-ID and References
+async function getMessageHeaders(gmailMessageId, headerNames = ['Message-ID', 'References']) {
+  if (!gmailMessageId) return {};
+  const g = gmail();
+  const res = await g.users.messages.get({
+    userId: 'me',
+    id: gmailMessageId,
+    format: 'metadata',
+    metadataHeaders: headerNames,
+  });
+  const hdrs = res.data?.payload?.headers || [];
+  const out = {};
+  for (const h of hdrs) {
+    const name = String(h.name || '').toLowerCase();
+    out[name] = h.value || '';
+  }
+  return out;
+}
+
+async function sendEmail({ to, cc = [], bcc = [], subject, html }) {
+  const toU = uniqEmails(to);
+  const ccU = uniqEmails(cc);
+  const bccU = uniqEmails(bcc);
+  if (!toU.length) return null;
+
+  const g = gmail();
+  const raw = buildRawEmail({
+    from: process.env.BOT_FROM,
+    to: toU,
+    cc: ccU,
+    bcc: bccU,
+    subject,
+    html: normalizeBodyToHtml(html),
+  });
+
+  const sent = await g.users.messages.send({ userId: 'me', requestBody: { raw } });
+  const gmailId = sent.data?.id || null;
+  const threadId = sent.data?.threadId || null;
+
+  // NEW: capture RFC Message-ID + References robustly
+  let rfcMessageId = null;
+  let references = null;
+  try {
+    if (gmailId) {
+      const hdr = await getMessageHeaders(gmailId, ['Message-ID', 'References']);
+      rfcMessageId = hdr['message-id'] || null;
+      references = hdr['references'] || null;
+    }
+  } catch (e) {
+    console.warn('Could not fetch headers. Continuing.', e?.message || e);
+  }
+
+  return { gmailId, threadId, rfcMessageId, references };
+}
+
+async function sendEmailReply({ threadId, inReplyTo, references, to, cc = [], bcc = [], subject, html }) {
+  const toU = uniqEmails(to);
+  const ccU = uniqEmails(cc);
+  const bccU = uniqEmails(bcc);
+  if (!toU.length) return null;
+
+  // If no threadId, fallback to new mail
+  if (!threadId) {
+    return sendEmail({ to: toU, cc: ccU, bcc: bccU, subject, html });
+  }
+
+  const g = gmail();
+
+  const raw = buildRawEmail({
+    from: process.env.BOT_FROM,
+    to: toU,
+    cc: ccU,
+    bcc: bccU,
+    subject,
+    html: normalizeBodyToHtml(html),
+    inReplyTo,
+    references: references || inReplyTo || null,
+  });
+
+  const sent = await g.users.messages.send({ userId: 'me', requestBody: { raw, threadId } });
+  const gmailId = sent.data?.id || null;
+  const outThreadId = sent.data?.threadId || threadId;
+
+  // NEW: capture rfc message id and references for the reply too
+  let rfcMessageId = null;
+  let outReferences = null;
+  try {
+    if (gmailId) {
+      const hdr = await getMessageHeaders(gmailId, ['Message-ID', 'References']);
+      rfcMessageId = hdr['message-id'] || null;
+      outReferences = hdr['references'] || null;
+    }
+  } catch (e) {
+    console.warn('Could not fetch headers for reply. Continuing.', e?.message || e);
+  }
+
+  return { gmailId, threadId: outThreadId, rfcMessageId, references: outReferences || references || null };
+}
+
+async function driveUpload({ folderId, filename, mimeType, buffer }) {
+  const d = drive();
+  const res = await d.files.create({
+    requestBody: { name: filename, parents: [folderId] },
+    media: { mimeType, body: Readable.from(buffer) },
+    fields: 'id, webViewLink, size, mimeType, name'
+  });
+  return res.data;
+}
+
+// Helper: Create single START event with DD-MM-YYYY in description
+async function createStartCalendarEvent({ title, clientId, startDateYmd, dueDateYmd, window }) {
+  const cal = calendar();
+  const range = calTimeRange(startDateYmd, window.startHH, window.endHH, window.timeZone);
+  const res = await cal.events.insert({
+    calendarId: 'primary',
+    sendUpdates: 'none',
+    requestBody: {
+      summary: `START: ${title}`,
+      description:
+        `ClientId: ${clientId}\n` +
+        `Start: ${ymdToDmy(startDateYmd)}\n` +
+        `Due: ${ymdToDmy(dueDateYmd)}\n`,
+      ...range
+    }
+  });
+  return { calendarEventId: res.data.id, calendarHtmlLink: res.data.htmlLink || null };
+}
+
+// Helper: Build add-to-calendar URL
+function buildGoogleCalendarTemplateUrl({ title, startYmd, startHH, endHH, timeZone, details }) {
+  const ymdToCompact = (s) => String(s).replaceAll('-', '');
+  const hh2 = (h) => String(h).padStart(2, '0');
+  const start = `${ymdToCompact(startYmd)}T${hh2(startHH)}0000`;
+  const end = `${ymdToCompact(startYmd)}T${hh2(endHH)}0000`;
+  const params = new URLSearchParams({
+    action: 'TEMPLATE',
+    text: title || 'Compliance Task',
+    dates: `${start}/${end}`,
+    ctz: timeZone || 'Asia/Kolkata',
+    details: details || ''
+  });
+  return `https://calendar.google.com/calendar/render?${params.toString()}`;
+}
+
+// Helper: Logic to send start mail immediately (shared by UI create & Import)
+async function trySendStartMailImmediately({ task, client, window }) {
+  if (!task.clientStartSubject && !task.clientStartBody) return null;
+
+  // Recipients
+  const to = (task.clientToEmails && task.clientToEmails.length)
+    ? task.clientToEmails
+    : (client.primaryEmail ? [client.primaryEmail] : []);
+
+  const cc = [...(client.ccEmails || []), ...(task.clientCcEmails || [])];
+  const bcc = [...(client.bccEmails || []), ...(task.clientBccEmails || [])];
+
+  if (task.ccAssigneeOnClientStart && task.assignedToEmail) cc.push(task.assignedToEmail);
+
+  if (task.ccManagerOnClientStart && task.assignedToUid) {
+    try {
+      const u = (await db().collection('users').doc(task.assignedToUid).get()).data();
+      if (u && u.managerEmail) cc.push(u.managerEmail);
+    } catch {}
+  }
+
+  const recipients = { to: uniqEmails(to), cc: uniqEmails(cc), bcc: uniqEmails(bcc) };
+  if (!recipients.to.length) return null;
+
+  const addToCalendarUrl = buildGoogleCalendarTemplateUrl({
+    title: `START: ${task.title || 'Task'}`,
+    startYmd: task.startDateYmd,
+    startHH: window.startHH,
+    endHH: window.endHH,
+    timeZone: window.timeZone,
+    details:
+      `Client: ${client.name || ''}\n` +
+      `Task: ${task.title || ''}\n` +
+      `Start: ${ymdToDmy(task.startDateYmd)}\n` +
+      `Due: ${ymdToDmy(task.dueDateYmd)}\n`
+  });
+
+  const vars = {
+    clientName: client.name || '',
+    taskTitle: task.title || '',
+    startDate: ymdToDmy(task.startDateYmd),
+    dueDate: ymdToDmy(task.dueDateYmd),
+    addToCalendarUrl
+  };
+
+  const subject = renderTemplate(task.clientStartSubject || `We started {{taskTitle}}`, vars);
+
+  const baseBody = renderTemplate(
+    task.clientStartBody || `Dear {{clientName}},\n\nWe started work on {{taskTitle}}.\nDue: {{dueDate}}\n\nRegards,\nCompliance Team`,
+    vars
+  );
+
+  const appended = `${baseBody}\n\n---\nAdd to your Google Calendar:\n${addToCalendarUrl}`;
+
+  const mailRes = await sendEmail({
+    to: recipients.to,
+    cc: recipients.cc,
+    bcc: recipients.bcc,
+    subject,
+    html: appended
+  });
+
+  // IMPORTANT: store references too (helps mail trail)
+  return {
+    clientStartMailSent: true,
+    clientStartMailSentAt: admin.firestore.FieldValue.serverTimestamp(),
+    clientStartGmailThreadId: mailRes?.threadId || null,
+    clientStartGmailId: mailRes?.gmailId || null,
+    clientStartRfcMessageId: mailRes?.rfcMessageId || null,
+    clientStartReferences: mailRes?.references || null
+  };
+}
+
+module.exports = {
+  admin, db, auth, calendar, gmail, drive,
+  withCors, json,
+  IST_TZ,
+  ymdInTZ, ymdIST, dmyToYmd, ymdToDmy,
+  dateFromYmdIST, addDays, addInterval,
+  getCalendarWindow, calTimeRange,
+  auditLog,
+  asEmailList, uniqEmails,
+  renderTemplate,
+  sendEmail, sendEmailReply,
+  driveUpload,
+  createStartCalendarEvent,
+  trySendStartMailImmediately,
+  // exported for other files that may need it
+  expandNewlineTokens
+};
+
+       --- File Content End ---
+
+
+    =� clients_create.js
+
+       --- File Content Start ---
+
+const { withCors, json, db, admin, auditLog } = require('./_common');
+const { requireUser, requirePartner } = require('./_auth');
+
+function asEmailList(x) {
+  if (Array.isArray(x)) return x.map(s => String(s).trim()).filter(Boolean);
+  if (typeof x === 'string') return x.split(/[;,]/).map(s => s.trim()).filter(Boolean);
+  return [];
+}
+
+exports.handler = withCors(async (event) => {
+  if (event.httpMethod !== 'POST') return json(event, 405, { ok:false, error:'POST only' });
+
+  const authRes = await requireUser(event);
+  if (authRes.error) return authRes.error;
+  const { user } = authRes;
+
+  const p = requirePartner(event, user);
+  if (p.error) return p.error;
+
+  const body = JSON.parse(event.body || '{}');
+
+  const ref = db().collection('clients').doc();
+  await ref.set({
+    name: body.name || '',
+    pan: body.pan || '',
+    gstin: body.gstin || '',
+    cin: body.cin || '',
+    assessmentYear: body.assessmentYear || body.ay || '',
+    engagementType: body.engagementType || body.eng || '',
+    primaryEmail: body.primaryEmail || body.email || '',
+    ccEmails: asEmailList(body.ccEmails || body.cc),
+    bccEmails: asEmailList(body.bccEmails || body.bcc),
+    driveFolderId: null,
+    createdAt: admin.firestore.FieldValue.serverTimestamp()
+  });
+
+  await auditLog({ action:'CLIENT_CREATED', actorUid:user.uid, actorEmail:user.email, details:{ clientId: ref.id } });
+  return json(event, 200, { ok:true, clientId: ref.id });
+});
+
+       --- File Content End ---
+
+
+    =� exports_clientHistoryXlsx.js
+
+       --- File Content Start ---
+
+const { withCors, json, db, ymdToDmy } = require('./_common');
+const { requireUser, requirePartner } = require('./_auth');
+const ExcelJS = require('exceljs');
+
+exports.handler = withCors(async (event) => {
+  if (event.httpMethod !== 'POST') return json(event, 405, { ok:false, error:'POST only' });
+
+  const authRes = await requireUser(event);
+  if (authRes.error) return authRes.error;
+  const { user } = authRes;
+
+  const p = requirePartner(event, user);
+  if (p.error) return p.error;
+
+  const { clientId, fromYmd, toYmd } = JSON.parse(event.body || '{}');
+  if (!clientId || !fromYmd || !toYmd) return json(event, 400, { ok:false, error:'clientId,fromYmd,toYmd required' });
+
+  const clientSnap = await db().collection('clients').doc(clientId).get();
+  if (!clientSnap.exists) return json(event, 404, { ok:false, error:'Client not found' });
+  const client = clientSnap.data();
+
+  const tasksSnap = await db().collection('tasks')
+    .where('clientId', '==', clientId)
+    .where('dueDateYmd', '>=', fromYmd)
+    .where('dueDateYmd', '<=', toYmd)
+    .get();
+
+  const wb = new ExcelJS.Workbook();
+  const ws = wb.addWorksheet('ClientHistory'); // FIX: not "History"
+
+  ws.addRow([
+    'Client',
+    'Title',
+    'Category',
+    'Type',
+    'Recurrence',
+    'SeriesId',
+    'Occur',
+    'Start (DD-MM-YYYY)',
+    'Due (DD-MM-YYYY)',
+    'Status',
+    'Status Note'
+  ]);
+
+  for (const tDoc of tasksSnap.docs) {
+    const t = tDoc.data();
+    ws.addRow([
+      client.name,
+      t.title,
+      t.category,
+      t.type,
+      t.recurrence || '',
+      t.seriesId || '',
+      t.seriesId ? `${t.occurrenceIndex || ''}/${t.occurrenceTotal || ''}` : '',
+      ymdToDmy(t.startDateYmd),
+      ymdToDmy(t.dueDateYmd),
+      t.status,
+      t.statusNote || ''
+    ]);
+  }
+
+  const buf = await wb.xlsx.writeBuffer();
+  return json(event, 200, {
+    ok: true,
+    fileName: `${client.name}_history_${ymdToDmy(fromYmd)}_to_${ymdToDmy(toYmd)}.xlsx`,
+    base64: Buffer.from(buf).toString('base64')
+  });
+});
+
+       --- File Content End ---
+
+
+    =� exports_firmRangeWithHistoryXlsx.js
+
+       --- File Content Start ---
+
+const { withCors, json, db, dmyToYmd, ymdToDmy, IST_TZ } = require('./_common');
+const { requireUser, requirePartner } = require('./_auth');
+const ExcelJS = require('exceljs');
+
+function mustYmdFromInput({ fromDmy, toDmy, fromYmd, toYmd }) {
+  const pick = (x) => (x == null ? '' : String(x).trim());
+  if (pick(fromDmy) && pick(toDmy)) {
+    return { fromY: dmyToYmd(fromDmy), toY: dmyToYmd(toDmy) };
+  }
+  if (pick(fromYmd) && pick(toYmd)) {
+    return { fromY: pick(fromYmd), toY: pick(toYmd) };
+  }
+  throw new Error('Provide fromDmy & toDmy (DD-MM-YYYY) or fromYmd & toYmd (YYYY-MM-DD)');
+}
+
+function tsToIstString(ts) {
+  if (!ts || !ts.toDate) return '';
+  return ts.toDate().toLocaleString('en-IN', { timeZone: IST_TZ });
+}
+
+async function loadClientsMap(clientIds) {
+  const ids = [...new Set((clientIds || []).filter(Boolean))];
+  const map = new Map();
+  if (!ids.length) return map;
+  const refs = ids.map(id => db().collection('clients').doc(id));
+  const snaps = await db().getAll(...refs);
+  snaps.forEach(s => { if (s.exists) map.set(s.id, s.data()); });
+  return map;
+}
+
+exports.handler = withCors(async (event) => {
+  if (event.httpMethod !== 'POST') return json(event, 405, { ok:false, error:'POST only' });
+
+  const authRes = await requireUser(event);
+  if (authRes.error) return authRes.error;
+  const { user } = authRes;
+
+  const p = requirePartner(event, user);
+  if (p.error) return p.error;
+
+  const body = JSON.parse(event.body || '{}');
+
+  let fromY, toY;
+  try {
+    ({ fromY, toY } = mustYmdFromInput(body));
+  } catch (e) {
+    return json(event, 400, { ok:false, error: e.message });
+  }
+
+  const limitTasks = Math.min(500, Math.max(10, Number(body.limitTasks || 300))); // safety
+  const includeAudit = body.includeAudit !== false;
+
+  // Filter options (optional)
+  const clientId = body.clientId ? String(body.clientId) : null;
+  const status = body.status ? String(body.status) : null;
+  const assignedToEmail = body.assignedToEmail ? String(body.assignedToEmail) : null;
+
+  let q = db().collection('tasks')
+    .where('dueDateYmd', '>=', fromY)
+    .where('dueDateYmd', '<=', toY);
+
+  if (clientId) q = q.where('clientId', '==', clientId);
+  if (status) q = q.where('status', '==', status);
+  if (assignedToEmail) q = q.where('assignedToEmail', '==', assignedToEmail);
+
+  const tasksSnap = await q.limit(limitTasks).get();
+  const tasks = tasksSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+
+  const clientsMap = await loadClientsMap(tasks.map(t => t.clientId));
+
+  // Workbook
+  const wb = new ExcelJS.Workbook();
+  wb.creator = 'Compliance Management';
+  wb.created = new Date();
+
+  const wsT = wb.addWorksheet('Tasks');
+  wsT.views = [{ state: 'frozen', ySplit: 1 }];
+
+  wsT.addRow([
+    'TaskId','Client','Title','Category','Type','Recurrence',
+    'SeriesId','Occurrence',
+    'Start (DD-MM-YYYY)','Due (DD-MM-YYYY)',
+    'Status','Assignee',
+    'StatusNote','DelayReason','DelayNotes',
+    'CompletedRequestedAt (IST)','CompletedAt (IST)',
+    'ClientStartMailSentAt (IST)','ClientStartThreadId',
+    'SendClientCompletionMail',
+    'CalendarEventId',
+    'AttachmentLinks',
+    'CreatedAt (IST)','UpdatedAt (IST)'
+  ]);
+  wsT.getRow(1).font = { bold: true };
+  wsT.columns.forEach(c => { c.width = 22; });
+  wsT.getColumn(2).width = 30;
+  wsT.getColumn(3).width = 40;
+  wsT.getColumn(23).width = 55;
+
+  for (const t of tasks) {
+    const c = clientsMap.get(t.clientId) || {};
+    const occ = t.seriesId ? `${t.occurrenceIndex || ''}/${t.occurrenceTotal || ''}` : '';
+    const attachLinks = Array.isArray(t.attachments)
+      ? t.attachments.map(a => a.driveWebViewLink || '').filter(Boolean).join(' | ')
+      : '';
+
+    wsT.addRow([
+      t.id,
+      c.name || t.clientId || '',
+      t.title || '',
+      t.category || '',
+      t.type || '',
+      t.recurrence || '',
+      t.seriesId || '',
+      occ,
+      ymdToDmy(t.startDateYmd),
+      ymdToDmy(t.dueDateYmd),
+      t.status || '',
+      t.assignedToEmail || '',
+      t.statusNote || '',
+      t.delayReason || '',
+      t.delayNotes || '',
+      tsToIstString(t.completedRequestedAt),
+      tsToIstString(t.completedAt),
+      tsToIstString(t.clientStartMailSentAt),
+      t.clientStartGmailThreadId || '',
+      (t.sendClientCompletionMail === false) ? 'false' : 'true',
+      t.calendarEventId || t.calendarStartEventId || '',
+      attachLinks,
+      tsToIstString(t.createdAt),
+      tsToIstString(t.updatedAt)
+    ]);
+  }
+
+  // Audit sheet
+  const wsA = wb.addWorksheet('AuditLogs');
+  wsA.views = [{ state: 'frozen', ySplit: 1 }];
+  wsA.addRow(['Time (IST)','Action','TaskId','ActorEmail','Details']);
+  wsA.getRow(1).font = { bold: true };
+  wsA.getColumn(1).width = 22;
+  wsA.getColumn(2).width = 22;
+  wsA.getColumn(3).width = 26;
+  wsA.getColumn(4).width = 26;
+  wsA.getColumn(5).width = 80;
+
+  let auditRows = 0;
+  const maxAuditRows = Math.min(5000, Math.max(200, Number(body.maxAuditRows || 2000)));
+
+  if (includeAudit) {
+    // Best-effort approach (small-firm safe):
+    // fetch audit logs per task (no orderBy to avoid composite index requirement),
+    // then sort in JS.
+    for (const t of tasks) {
+      if (auditRows >= maxAuditRows) break;
+
+      const aSnap = await db().collection('auditLogs')
+        .where('taskId', '==', t.id)
+        .get();
+
+      const logs = aSnap.docs.map(d => d.data());
+      logs.sort((x,y) => {
+        const a = x.timestamp?.toMillis?.() || 0;
+        const b = y.timestamp?.toMillis?.() || 0;
+        return a - b;
+      });
+
+      for (const a of logs) {
+        if (auditRows >= maxAuditRows) break;
+        wsA.addRow([
+          a.timestamp?.toDate?.() ? a.timestamp.toDate().toLocaleString('en-IN', { timeZone: IST_TZ }) : '',
+          a.action || '',
+          a.taskId || '',
+          a.actorEmail || '',
+          JSON.stringify(a.details || {})
+        ]);
+        auditRows++;
+      }
+    }
+  }
+
+  const buf = await wb.xlsx.writeBuffer();
+
+  return json(event, 200, {
+    ok: true,
+    fileName: `firm_tasks_${ymdToDmy(fromY)}_to_${ymdToDmy(toY)}.xlsx`,
+    meta: { tasks: tasks.length, auditRows, truncatedAudit: includeAudit && auditRows >= maxAuditRows },
+    base64: Buffer.from(buf).toString('base64')
+  });
+});
+
+       --- File Content End ---
+
+
+    =� exports_myClientsTemplateXlsx.js
+
+       --- File Content Start ---
+
+// netlify/functions/exports_myClientsTemplateXlsx.js
+const { withCors, json, db } = require('./_common');
+const { requireUser, requirePartner } = require('./_auth');
+const ExcelJS = require('exceljs');
+
+function col(n) {
+  // 1 -> A, 2 -> B ...
+  let s = '';
+  while (n > 0) {
+    const m = (n - 1) % 26;
+    s = String.fromCharCode(65 + m) + s;
+    n = Math.floor((n - 1) / 26);
+  }
+  return s;
+}
+
+exports.handler = withCors(async (event) => {
+  if (event.httpMethod !== 'POST') return json(event, 405, { ok: false, error: 'POST only' });
+
+  const authRes = await requireUser(event);
+  if (authRes.error) return authRes.error;
+  const { user } = authRes;
+
+  const p = requirePartner(event, user);
+  if (p.error) return p.error;
+
+  // load clients (limit for template)
+  const snap = await db().collection('clients').limit(400).get();
+  const clients = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+
+  const wb = new ExcelJS.Workbook();
+  wb.creator = 'Compliance Management';
+  wb.created = new Date();
+
+  const ws = wb.addWorksheet('Import');
+  const lists = wb.addWorksheet('Lists');
+
+  // Dropdown lists
+  const categories = ['GST', 'TDS', 'Income Tax', 'ROC', 'Accounting', 'Audit', 'Other'];
+  const recurrences = ['AD_HOC', 'DAILY', 'WEEKLY', 'BIWEEKLY', 'MONTHLY', 'BIMONTHLY', 'QUARTERLY', 'HALF_YEARLY', 'YEARLY'];
+  const types = ['FILING', 'REVIEW', 'PAYMENT', 'FOLLOW_UP', 'CLIENT_PENDING'];
+  const priorities = ['HIGH', 'MEDIUM', 'LOW'];
+
+  lists.getCell('A1').value = 'Categories';
+  categories.forEach((v, i) => (lists.getCell(`A${i + 2}`).value = v));
+
+  lists.getCell('B1').value = 'Recurrences';
+  recurrences.forEach((v, i) => (lists.getCell(`B${i + 2}`).value = v));
+
+  lists.getCell('C1').value = 'Types';
+  types.forEach((v, i) => (lists.getCell(`C${i + 2}`).value = v));
+
+  lists.getCell('D1').value = 'Priorities';
+  priorities.forEach((v, i) => (lists.getCell(`D${i + 2}`).value = v));
+
+  // NEW: Clients list for dropdown
+  lists.getCell('E1').value = 'Clients';
+  const clientNames = clients
+    .map(c => String(c.name || '').trim())
+    .filter(Boolean)
+    .sort((a,b)=>a.localeCompare(b));
+  clientNames.forEach((v, i) => (lists.getCell(`E${i + 2}`).value = v));
+
+  lists.columns.forEach(c => (c.width = 24));
+  lists.getColumn(5).width = 42;
+
+  // Main sheet headers (parser expects these names)
+  const headers = [
+    'Title',
+    'Client', // dropdown
+    'ClientEmail',
+    'DueDate (DD-MM-YYYY)',
+    'Category',
+    'Type (you can type custom)',
+    'Recurrence',
+    'GenerateCount',
+    'TriggerDays',
+    'AssignedToEmail',
+    'Priority',
+    'ClientTo (emails ; , : separated)',
+    'ClientCC (emails ; , : separated)',
+    'ClientBCC (emails ; , : separated)',
+    'ClientStartSubject',
+    'ClientStartBody',
+    'SendClientCompletionMail (true/false)',
+    'ClientCompletionSubject',
+    'ClientCompletionBody',
+    'CcAssigneeOnClientStart (true/false)',
+    'CcManagerOnClientStart (true/false)'
+  ];
+
+  ws.addRow(headers);
+  ws.getRow(1).font = { bold: true };
+  ws.views = [{ state: 'frozen', ySplit: 1 }];
+
+  const widths = [
+    34, 32, 28, 20, 18, 24, 16, 14, 12, 22,
+    12, // priority
+    28, 28, 28, 28, 44, 26, 30, 44, 28, 28
+  ];
+
+  ws.columns = headers.map((h, i) => ({ header: h, width: widths[i] || 22 }));
+
+  // sample due date = today + 30 days
+  const pad = (n) => String(n).padStart(2, '0');
+  const d = new Date();
+  d.setDate(d.getDate() + 30);
+  const dueDmy = `${pad(d.getDate())}-${pad(d.getMonth() + 1)}-${d.getFullYear()}`;
+
+  // Add a few sample rows
+  const sampleRows = Math.min(30, clientNames.length);
+  for (let i = 0; i < sampleRows; i++) {
+    const cname = clientNames[i] || '';
+    ws.addRow([
+      `Sample Task for ${cname || 'Client'}`,
+      cname,
+      '', // client email
+      dueDmy,
+      'Other',
+      'FOLLOW_UP',
+      'AD_HOC',
+      1,
+      7,
+      '',
+      'MEDIUM',
+      '',
+      '',
+      '',
+      'We started working on {{taskTitle}}',
+      // Use \n (real newlines) in Excel cells
+      `Dear {{clientName}},\n\nWe started work on {{taskTitle}}.\nDue: {{dueDate}}.\n\nAdd to calendar: {{addToCalendarUrl}}\n\nRegards,\nYour Firm`,
+      'true',
+      'Completed: {{taskTitle}}',
+      `Dear {{clientName}},\n\nWe have completed {{taskTitle}}.\nCompleted at: {{completedAt}}\n\nRegards,\nYour Firm`,
+      'false',
+      'false'
+    ]);
+  }
+
+  // Apply dropdown validations for a reasonable range
+  const maxRows = Math.max(150, sampleRows + 80);
+  const catRange = `Lists!$A$2:$A$${categories.length + 1}`;
+  const recRange = `Lists!$B$2:$B$${recurrences.length + 1}`;
+  const typeRange = `Lists!$C$2:$C$${types.length + 1}`;
+  const priRange = `Lists!$D$2:$D$${priorities.length + 1}`;
+  const clientsRange = `Lists!$E$2:$E$${clientNames.length + 1}`;
+
+  const COL_CLIENT = headers.indexOf('Client') + 1;
+  const COL_CATEGORY = headers.indexOf('Category') + 1;
+  const COL_TYPE = headers.indexOf('Type (you can type custom)') + 1;
+  const COL_REC = headers.indexOf('Recurrence') + 1;
+  const COL_PRIORITY = headers.indexOf('Priority') + 1;
+  const COL_SENDCOMP = headers.indexOf('SendClientCompletionMail (true/false)') + 1;
+  const COL_CC_ASSIGNEE = headers.indexOf('CcAssigneeOnClientStart (true/false)') + 1;
+  const COL_CC_MANAGER = headers.indexOf('CcManagerOnClientStart (true/false)') + 1;
+
+  for (let r = 2; r <= maxRows; r++) {
+    // Client dropdown (allow blank)
+    ws.getCell(`${col(COL_CLIENT)}${r}`).dataValidation = {
+      type: 'list',
+      allowBlank: true,
+      formulae: [clientsRange],
+      showErrorMessage: false
+    };
+
+    ws.getCell(`${col(COL_CATEGORY)}${r}`).dataValidation = {
+      type: 'list',
+      allowBlank: true,
+      formulae: [catRange],
+      showErrorMessage: true
+    };
+
+    ws.getCell(`${col(COL_REC)}${r}`).dataValidation = {
+      type: 'list',
+      allowBlank: true,
+      formulae: [recRange],
+      showErrorMessage: true
+    };
+
+    // Type dropdown but allow custom typing (no error popup)
+    ws.getCell(`${col(COL_TYPE)}${r}`).dataValidation = {
+      type: 'list',
+      allowBlank: true,
+      formulae: [typeRange],
+      showErrorMessage: false
+    };
+
+    // Priority dropdown
+    ws.getCell(`${col(COL_PRIORITY)}${r}`).dataValidation = {
+      type: 'list',
+      allowBlank: true,
+      formulae: [priRange],
+      showErrorMessage: true
+    };
+
+    const tfFormula = `"true,false"`;
+    ws.getCell(`${col(COL_SENDCOMP)}${r}`).dataValidation = {
+      type: 'list',
+      allowBlank: true,
+      formulae: [tfFormula],
+      showErrorMessage: true
+    };
+    ws.getCell(`${col(COL_CC_ASSIGNEE)}${r}`).dataValidation = {
+      type: 'list',
+      allowBlank: true,
+      formulae: [tfFormula],
+      showErrorMessage: true
+    };
+    ws.getCell(`${col(COL_CC_MANAGER)}${r}`).dataValidation = {
+      type: 'list',
+      allowBlank: true,
+      formulae: [tfFormula],
+      showErrorMessage: true
+    };
+  }
+
+  const buf = await wb.xlsx.writeBuffer();
+
+  return json(event, 200, {
+    ok: true,
+    fileName: `Client_Tasks_Import_Template.xlsx`,
+    base64: Buffer.from(buf).toString('base64')
+  });
+});
+
+       --- File Content End ---
+
+
+    =� exports_quickXlsx.js
+
+       --- File Content Start ---
+
+const { withCors, json, db, ymdIST, addDays, dateFromYmdIST, ymdToDmy, IST_TZ } = require('./_common');
+const { requireUser, requirePartner } = require('./_auth');
+const ExcelJS = require('exceljs');
+
+function tsToIstString(ts) {
+  if (!ts || !ts.toDate) return '';
+  return ts.toDate().toLocaleString('en-IN', { timeZone: IST_TZ });
+}
+
+async function loadClientsMap(clientIds) {
+  const ids = [...new Set((clientIds || []).filter(Boolean))];
+  const map = new Map();
+  if (!ids.length) return map;
+  const refs = ids.map(id => db().collection('clients').doc(id));
+  const snaps = await db().getAll(...refs);
+  snaps.forEach(s => { if (s.exists) map.set(s.id, s.data()); });
+  return map;
+}
+
+exports.handler = withCors(async (event) => {
+  if (event.httpMethod !== 'POST') return json(event, 405, { ok:false, error:'POST only' });
+
+  const authRes = await requireUser(event);
+  if (authRes.error) return authRes.error;
+  const { user } = authRes;
+
+  const p = requirePartner(event, user);
+  if (p.error) return p.error;
+
+  const body = JSON.parse(event.body || '{}');
+  const mode = String(body.mode || '').toUpperCase().trim();
+  if (!mode) return json(event, 400, { ok:false, error:'mode required' });
+
+  const todayYmd = ymdIST(new Date());
+  let fromYmd = todayYmd;
+  let toYmd = todayYmd;
+
+  if (mode === 'NEXT_7') toYmd = ymdIST(addDays(dateFromYmdIST(todayYmd), 7));
+  else if (mode === 'NEXT_15') toYmd = ymdIST(addDays(dateFromYmdIST(todayYmd), 15));
+  else if (mode === 'NEXT_30') toYmd = ymdIST(addDays(dateFromYmdIST(todayYmd), 30));
+  else if (mode === 'OVERDUE') { /* handled below */ }
+  else if (mode === 'APPROVAL_PENDING') { /* handled below */ }
+  else return json(event, 400, { ok:false, error:'Invalid mode' });
+
+  let q = db().collection('tasks');
+
+  if (mode === 'OVERDUE') {
+    q = q.where('status', 'in', ['PENDING','IN_PROGRESS','CLIENT_PENDING','APPROVAL_PENDING'])
+         .where('dueDateYmd', '<', todayYmd);
+  } else if (mode === 'APPROVAL_PENDING') {
+    q = q.where('status', '==', 'APPROVAL_PENDING');
+  } else {
+    // upcoming window (exclude completed for operational list)
+    q = q.where('status', 'in', ['PENDING','IN_PROGRESS','CLIENT_PENDING','APPROVAL_PENDING'])
+         .where('dueDateYmd', '>=', fromYmd)
+         .where('dueDateYmd', '<=', toYmd);
+  }
+
+  const snap = await q.limit(800).get();
+  const tasks = snap.docs.map(d => ({ id:d.id, ...d.data() }));
+  const clientsMap = await loadClientsMap(tasks.map(t => t.clientId));
+
+  const wb = new ExcelJS.Workbook();
+  wb.creator = 'Compliance Management';
+  wb.created = new Date();
+
+  const ws = wb.addWorksheet('Tasks');
+  ws.views = [{ state: 'frozen', ySplit: 1 }];
+
+  ws.addRow([
+    'TaskId','Client','Title','Category','Type',
+    'Start (DD-MM-YYYY)','Due (DD-MM-YYYY)',
+    'Status','Assignee',
+    'StatusNote','DelayReason','DelayNotes',
+    'CompletedAt (IST)',
+    'CalendarEventId'
+  ]);
+  ws.getRow(1).font = { bold: true };
+  ws.columns.forEach(c => { c.width = 22; });
+  ws.getColumn(2).width = 30;
+  ws.getColumn(3).width = 42;
+
+  tasks.sort((a,b)=>String(a.dueDateYmd||'').localeCompare(String(b.dueDateYmd||'')));
+
+  for (const t of tasks) {
+    const c = clientsMap.get(t.clientId) || {};
+    ws.addRow([
+      t.id,
+      c.name || t.clientId || '',
+      t.title || '',
+      t.category || '',
+      t.type || '',
+      ymdToDmy(t.startDateYmd),
+      ymdToDmy(t.dueDateYmd),
+      t.status || '',
+      t.assignedToEmail || '',
+      t.statusNote || '',
+      t.delayReason || '',
+      t.delayNotes || '',
+      tsToIstString(t.completedAt),
+      t.calendarEventId || t.calendarStartEventId || ''
+    ]);
+  }
+
+  const buf = await wb.xlsx.writeBuffer();
+
+  const label =
+    mode === 'OVERDUE' ? `overdue_asof_${ymdToDmy(todayYmd)}` :
+    mode === 'APPROVAL_PENDING' ? `approval_pending_${ymdToDmy(todayYmd)}` :
+    `${ymdToDmy(fromYmd)}_to_${ymdToDmy(toYmd)}`;
+
+  return json(event, 200, {
+    ok: true,
+    fileName: `quick_${mode.toLowerCase()}_${label}.xlsx`,
+    count: tasks.length,
+    base64: Buffer.from(buf).toString('base64')
+  });
+});
+
+       --- File Content End ---
+
+
+    =� jobs_client0815.js
+
+       --- File Content Start ---
+
+// netlify/functions/jobs_client0815.js
+const {
+  withCors, json, db, admin,
+  ymdIST, ymdToDmy,
+  getCalendarWindow,
+  auditLog, renderTemplate,
+  sendEmail,
+  uniqEmails
+} = require('./_common');
+const { requireCron } = require('./_auth');
+
+async function getManagerEmailForAssignee(assignedToUid) {
+  if (!assignedToUid) return null;
+  try {
+    const snap = await db().collection('users').doc(assignedToUid).get();
+    if (!snap.exists) return null;
+    const u = snap.data() || {};
+    return u.managerEmail || null;
+  } catch {
+    return null;
+  }
+}
+
+function buildGoogleCalendarTemplateUrl({ title, startYmd, startHH, endHH, timeZone, details }) {
+  const ymdToCompact = (s) => String(s).replaceAll('-', '');
+  const hh2 = (h) => String(h).padStart(2, '0');
+  // single day timed event
+  const start = `${ymdToCompact(startYmd)}T${hh2(startHH)}0000`;
+  const end = `${ymdToCompact(startYmd)}T${hh2(endHH)}0000`;
+  const params = new URLSearchParams({
+    action: 'TEMPLATE',
+    text: title || 'Compliance Task',
+    dates: `${start}/${end}`,
+    ctz: timeZone || 'Asia/Kolkata',
+    details: details || ''
+  });
+  return `https://calendar.google.com/calendar/render?${params.toString()}`;
+}
+
+function mergeRecipients({ client, task, managerEmail }) {
+  // To: task overrides, else client.primaryEmail
+  const to = (task.clientToEmails && task.clientToEmails.length)
+    ? task.clientToEmails
+    : (client.primaryEmail ? [client.primaryEmail] : []);
+
+  // Base CC/BCC
+  const cc = [
+    ...(client.ccEmails || []),
+    ...(task.clientCcEmails || []),
+  ];
+  const bcc = [
+    ...(client.bccEmails || []),
+    ...(task.clientBccEmails || []),
+  ];
+
+  // Optional CC controls
+  if (task.ccAssigneeOnClientStart === true && task.assignedToEmail) cc.push(task.assignedToEmail);
+  if (task.ccManagerOnClientStart === true && managerEmail) cc.push(managerEmail);
+
+  return {
+    to: uniqEmails(to),
+    cc: uniqEmails(cc),
+    bcc: uniqEmails(bcc),
+  };
+}
+
+exports.handler = withCors(async (event) => {
+  if (event.httpMethod !== 'POST') return json(event, 405, { ok:false, error:'POST only' });
+
+  const cron = requireCron(event);
+  if (cron.error) return cron.error;
+
+  const body = event.body ? JSON.parse(event.body) : {};
+  const force = !!body.force;
+
+  const todayYmd = ymdIST(new Date());
+  const settingsRef = db().collection('settings').doc('notifications');
+  const settingsSnap = await settingsRef.get();
+  const settings = settingsSnap.exists ? settingsSnap.data() : {};
+  const last = settings.lastClient0815RunYmd || null;
+
+  if (!force && last === todayYmd) {
+    return json(event, 200, { ok:true, skipped:true, reason:'Already ran today', todayYmd });
+  }
+
+  const activeStatuses = ['PENDING','IN_PROGRESS','CLIENT_PENDING','APPROVAL_PENDING'];
+
+  const snap = await db().collection('tasks')
+    .where('startDateYmd', '==', todayYmd)
+    .where('clientStartMailSent', '==', false)
+    .get();
+
+  const window = await getCalendarWindow();
+
+  let sentCount = 0;
+  let skippedNoTemplate = 0;
+  let skippedNoEmail = 0;
+
+  for (const doc of snap.docs) {
+    const t = doc.data();
+
+    if (!activeStatuses.includes(t.status)) continue;
+
+    // Must have template
+    if (!t.clientStartSubject && !t.clientStartBody) {
+      skippedNoTemplate++;
+      continue;
+    }
+
+    const cSnap = await db().collection('clients').doc(t.clientId).get();
+    const client = cSnap.exists ? cSnap.data() : {};
+
+    // auto manager mapping from assignee user doc
+    const managerEmail = await getManagerEmailForAssignee(t.assignedToUid);
+    const recipients = mergeRecipients({ client, task: t, managerEmail });
+
+    if (!recipients.to.length) {
+      skippedNoEmail++;
+      continue;
+    }
+
+    const addToCalendarUrl = buildGoogleCalendarTemplateUrl({
+      title: `START: ${t.title || 'Task'}`,
+      startYmd: t.startDateYmd,
+      startHH: window.startHH,
+      endHH: window.endHH,
+      timeZone: window.timeZone,
+      details:
+        `Client: ${client.name || ''}\n` +
+        `Task: ${t.title || ''}\n` +
+        `Start: ${ymdToDmy(t.startDateYmd)}\n` +
+        `Due: ${ymdToDmy(t.dueDateYmd)}\n`
+    });
+
+    const vars = {
+      clientName: client.name || '',
+      taskTitle: t.title || '',
+      startDate: ymdToDmy(t.startDateYmd),
+      dueDate: ymdToDmy(t.dueDateYmd),
+      addToCalendarUrl
+    };
+
+    const subject = renderTemplate(
+      t.clientStartSubject || `We started {{taskTitle}}`,
+      vars
+    );
+
+    // Add calendar link even if template doesn't include it
+    const baseBody = renderTemplate(
+      t.clientStartBody || `Dear {{clientName}},\n\nWe started work on {{taskTitle}}.\nDue: {{dueDate}}\n\nRegards,\nCompliance Team`,
+      vars
+    );
+
+    const appended =
+      `${baseBody}\n\n---\n` +
+      `Add to your Google Calendar:\n` +
+      `${addToCalendarUrl}`;
+
+    const mailRes = await sendEmail({
+      to: recipients.to,
+      cc: recipients.cc,
+      bcc: recipients.bcc,
+      subject,
+      html: appended
+    });
+
+    await doc.ref.update({
+      clientStartMailSent: true,
+      clientStartMailSentAt: admin.firestore.FieldValue.serverTimestamp(),
+      clientStartGmailThreadId: mailRes?.threadId || null,
+      clientStartGmailId: mailRes?.gmailId || null,
+      clientStartRfcMessageId: mailRes?.rfcMessageId || null,
+      // NEW: store References header for stronger threading on reply
+      clientStartReferences: mailRes?.references || null,
+      updatedAt: admin.firestore.FieldValue.serverTimestamp()
+    });
+
+    await auditLog({
+      taskId: doc.id,
+      action: 'EMAIL_SENT',
+      actorUid: null,
+      actorEmail: null,
+      details: {
+        type:'CLIENT_START',
+        to: recipients.to,
+        cc: recipients.cc,
+        bcc: recipients.bcc,
+        addToCalendarUrl
+      }
+    });
+
+    sentCount++;
+  }
+
+  await settingsRef.set({ lastClient0815RunYmd: todayYmd }, { merge: true });
+
+  return json(event, 200, {
+    ok: true,
+    todayYmd,
+    sentCount,
+    skippedNoTemplate,
+    skippedNoEmail
+  });
+});
+
+       --- File Content End ---
+
+
+    =� jobs_daily.js
+
+       --- File Content Start ---
+
+const { withCors, json } = require('./_common');
+
+// Kept only to avoid confusion / older calls.
+// Use jobs_daily5am for actual scheduling.
+exports.handler = withCors(async (event) => {
+  return json(event, 200, { ok:true, note:'Use /.netlify/functions/jobs_daily5am (this one is a no-op alias).' });
+});
+
+       --- File Content End ---
+
+
+    =� jobs_daily5am.js
+
+       --- File Content Start ---
+
+// netlify/functions/jobs_daily5am.js
+const {
+  withCors, json, db,
+  ymdIST, ymdToDmy,
+  addDays, dateFromYmdIST,
+  sendEmail
+} = require('./_common');
+const { requireCron } = require('./_auth');
+
+function uniq(arr) {
+  return [...new Set((arr||[]).map(x=>String(x).trim()).filter(Boolean))];
+}
+
+function groupTasksForDigest(tasks, todayYmd) {
+  const sections = {
+    overdue: [],
+    dueToday: [],
+    dueIn3: [],
+    dueIn7: [],
+    dueIn15: [],
+    dueIn30: [],
+    approvalPending: [],
+  };
+
+  const toMidnight = (ymd) => new Date(`${ymd}T00:00:00+05:30`).getTime(); // IST anchored
+  const t0 = toMidnight(todayYmd);
+
+  for (const t of tasks) {
+    if (!t.dueDateYmd) continue;
+
+    if (t.status === 'APPROVAL_PENDING') sections.approvalPending.push(t);
+
+    const d0 = toMidnight(t.dueDateYmd);
+    const diffDays = Math.floor((d0 - t0) / (24 * 3600 * 1000));
+
+    if (t.status === 'COMPLETED') continue;
+
+    if (diffDays < 0) sections.overdue.push({ ...t, diffDays });
+    else if (diffDays === 0) sections.dueToday.push({ ...t, diffDays });
+    else if (diffDays <= 3) sections.dueIn3.push({ ...t, diffDays });
+    else if (diffDays <= 7) sections.dueIn7.push({ ...t, diffDays });
+    else if (diffDays <= 15) sections.dueIn15.push({ ...t, diffDays });
+    else if (diffDays <= 30) sections.dueIn30.push({ ...t, diffDays });
+  }
+
+  const sortByDue = (a,b)=>String(a.dueDateYmd||'').localeCompare(String(b.dueDateYmd||''));
+  Object.keys(sections).forEach(k => sections[k].sort(sortByDue));
+  return sections;
+}
+
+async function loadClientsMap(clientIds) {
+  const ids = uniq(clientIds);
+  const map = new Map();
+  if (!ids.length) return map;
+  const refs = ids.map(id => db().collection('clients').doc(id));
+  const snaps = await db().getAll(...refs);
+  snaps.forEach(s => { if (s.exists) map.set(s.id, s.data()); });
+  return map;
+}
+
+function escapeHtml(s) {
+  return String(s || '')
+    .replaceAll('&','&amp;')
+    .replaceAll('<','&lt;')
+    .replaceAll('>','&gt;')
+    .replaceAll('"','&quot;')
+    .replaceAll("'",'&#039;');
+}
+
+function renderSection(title, items, clientsMap) {
+  const li = (t) => {
+    const c = clientsMap.get(t.clientId) || {};
+    const clientName = c.name || '';
+    const due = ymdToDmy(t.dueDateYmd);
+    const start = ymdToDmy(t.startDateYmd);
+    const assignee = t.assignedToEmail || '';
+    const status = t.status || '';
+    const note = (t.statusNote || '').trim();
+
+    // IMPORTANT CHANGE: do NOT show TaskId in digest email
+    return `<li>
+      <b>${escapeHtml(t.title || '')}</b>
+      <div style="color:#555;font-size:12px;margin-top:2px">
+        Client: ${escapeHtml(clientName)} |
+        Start: ${escapeHtml(start)} |
+        Due: <b>${escapeHtml(due)}</b> |
+        Status: <b>${escapeHtml(status)}</b> |
+        Assignee: ${escapeHtml(assignee)}
+      </div>
+      ${note ? `<div style="color:#666;font-size:12px;margin-top:2px">Note: ${escapeHtml(note)}</div>` : ``}
+    </li>`;
+  };
+
+  if (!items.length) return '';
+  return `
+    <h3 style="margin:14px 0 6px">${escapeHtml(title)} (${items.length})</h3>
+    <ul style="margin:0 0 10px 18px;padding:0">${items.map(li).join('')}</ul>
+  `;
+}
+
+function isDigestEmpty(sections) {
+  return Object.values(sections).every(arr => !arr || arr.length === 0);
+}
+
+exports.handler = withCors(async (event) => {
+  if (event.httpMethod !== 'POST') return json(event, 405, { ok:false, error:'POST only' });
+
+  const cron = requireCron(event);
+  if (cron.error) return cron.error;
+
+  const body = event.body ? JSON.parse(event.body) : {};
+  const force = !!body.force;
+
+  const todayYmd = ymdIST(new Date());
+  const settingsRef = db().collection('settings').doc('notifications');
+  const settingsSnap = await settingsRef.get();
+  const settings = settingsSnap.exists ? settingsSnap.data() : {
+    dailyInternalEmails: [],
+    dailyWindowDays: 30,
+    sendDailyToAssignees: true,
+    lastDailyRunYmd: null
+  };
+
+  if (!force && settings.lastDailyRunYmd === todayYmd) {
+    return json(event, 200, { ok:true, skipped:true, reason:'Already ran today', todayYmd });
+  }
+
+  const activeStatuses = ['PENDING','IN_PROGRESS','CLIENT_PENDING','APPROVAL_PENDING'];
+  const windowDays = Number(settings.dailyWindowDays || 30);
+  const endYmd = ymdIST(addDays(dateFromYmdIST(todayYmd), windowDays));
+
+  const dueSoonSnap = await db().collection('tasks')
+    .where('status', 'in', activeStatuses)
+    .where('dueDateYmd', '>=', todayYmd)
+    .where('dueDateYmd', '<=', endYmd)
+    .get();
+
+  const overdueSnap = await db().collection('tasks')
+    .where('status', 'in', activeStatuses)
+    .where('dueDateYmd', '<', todayYmd)
+    .get();
+
+  const tasks = [
+    ...dueSoonSnap.docs.map(d => ({ id:d.id, ...d.data() })),
+    ...overdueSnap.docs.map(d => ({ id:d.id, ...d.data() })),
+  ];
+
+  const clientsMap = await loadClientsMap(tasks.map(t => t.clientId));
+  const sectionsFirm = groupTasksForDigest(tasks, todayYmd);
+
+  const byAssignee = new Map();
+  for (const t of tasks) {
+    const email = String(t.assignedToEmail || '').trim();
+    if (!email) continue;
+    if (!byAssignee.has(email)) byAssignee.set(email, []);
+    byAssignee.get(email).push(t);
+  }
+
+  const internalExtra = uniq(settings.dailyInternalEmails || []);
+  const subject = `Daily Digest (${ymdToDmy(todayYmd)})`;
+
+  const makeHtml = (list) => {
+    const s = groupTasksForDigest(list, todayYmd);
+
+    // IMPORTANT CHANGE: if empty -> "No Tasks To Display"
+    if (isDigestEmpty(s)) {
+      return `
+        <div style="font-family:Arial,sans-serif;line-height:1.35">
+          <h2 style="margin:0 0 6px">Daily Digest — ${escapeHtml(ymdToDmy(todayYmd))}</h2>
+          <div style="margin-top:10px;color:#555;font-size:13px;font-weight:700">
+            No Tasks To Display
+          </div>
+        </div>
+      `;
+    }
+
+    return `
+      <div style="font-family:Arial,sans-serif;line-height:1.35">
+        <h2 style="margin:0 0 6px">Firm Task Digest — ${escapeHtml(ymdToDmy(todayYmd))}</h2>
+        <div style="color:#555;font-size:12px;margin-bottom:10px">
+          Window: next ${windowDays} days + overdue. Statuses: ${activeStatuses.join(', ')}
+        </div>
+        ${renderSection('Overdue', s.overdue, clientsMap)}
+        ${renderSection('Due Today', s.dueToday, clientsMap)}
+        ${renderSection('Due in 1–3 days', s.dueIn3, clientsMap)}
+        ${renderSection('Due in 4–7 days', s.dueIn7, clientsMap)}
+        ${renderSection('Due in 8–15 days', s.dueIn15, clientsMap)}
+        ${renderSection('Due in 16–30 days', s.dueIn30, clientsMap)}
+        ${renderSection('Waiting for approval', s.approvalPending, clientsMap)}
+        <hr style="border:none;border-top:1px solid #ddd;margin:14px 0">
+        <div style="color:#777;font-size:12px">
+          Tip: Use the web app to filter by client, status and due date.
+        </div>
+      </div>
+    `;
+  };
+
+  let sentToAssignees = 0;
+  if (settings.sendDailyToAssignees !== false) {
+    for (const [email, list] of byAssignee.entries()) {
+      await sendEmail({ to: [email], subject, html: makeHtml(list) });
+      sentToAssignees++;
+    }
+  }
+
+  let sentToInternal = 0;
+  if (internalExtra.length) {
+    await sendEmail({
+      to: internalExtra,
+      subject: `Firm ${subject}`,
+      html: makeHtml(tasks)
+    });
+    sentToInternal = internalExtra.length;
+  }
+
+  await settingsRef.set({ lastDailyRunYmd: todayYmd }, { merge: true });
+
+  return json(event, 200, {
+    ok:true,
+    todayYmd,
+    tasksCount: tasks.length,
+    sentToAssignees,
+    sentToInternal
+  });
+});
+
+       --- File Content End ---
+
+
+    =� jobs_monthlysummary.js
+
+       --- File Content Start ---
+
+const { withCors, json, db, sendEmail } = require('./_common');
+const { requireCron } = require('./_auth');
+
+exports.handler = withCors(async (event) => {
+  if (event.httpMethod !== 'POST') return json(event, 405, { ok:false, error:'POST only' });
+
+  const cron = requireCron(event);
+  if (cron.error) return cron.error;
+
+  // Keeping this as-is, but it will run ONLY if you schedule it.
+  // If you don't want monthly mails, simply don't create a cron workflow for this.
+  return json(event, 200, { ok:true, note:'Monthly summary not enabled in this setup (no-op).' });
+});
+
+       --- File Content End ---
+
+
+    =� manifest.json
+
+       --- File Content Start ---
+
+{"functions":[{"bundler":"zisi","buildData":{"runtimeAPIVersion":1},"mainFile":"/home/ubuntu/cm-oauth-setup/compliance-backend/.netlify/functions/_auth.js","name":"_auth","priority":10,"path":"/home/ubuntu/cm-oauth-setup/compliance-backend/.netlify/functions/_auth.zip","runtime":"js"},{"bundler":"zisi","buildData":{},"mainFile":"/home/ubuntu/cm-oauth-setup/compliance-backend/.netlify/functions/_common.js","name":"_common","priority":10,"path":"/home/ubuntu/cm-oauth-setup/compliance-backend/.netlify/functions/_common.zip","runtime":"js"},{"bundler":"zisi","buildData":{"runtimeAPIVersion":1},"mainFile":"/home/ubuntu/cm-oauth-setup/compliance-backend/.netlify/functions/clients_create.js","name":"clients_create","priority":10,"path":"/home/ubuntu/cm-oauth-setup/compliance-backend/.netlify/functions/clients_create.zip","runtime":"js"},{"bundler":"zisi","buildData":{"runtimeAPIVersion":1},"mainFile":"/home/ubuntu/cm-oauth-setup/compliance-backend/.netlify/functions/exports_clientHistoryXlsx.js","name":"exports_clientHistoryXlsx","priority":10,"path":"/home/ubuntu/cm-oauth-setup/compliance-backend/.netlify/functions/exports_clientHistoryXlsx.zip","runtime":"js"},{"bundler":"zisi","buildData":{"runtimeAPIVersion":1},"mainFile":"/home/ubuntu/cm-oauth-setup/compliance-backend/.netlify/functions/jobs_daily.js","name":"jobs_daily","priority":10,"path":"/home/ubuntu/cm-oauth-setup/compliance-backend/.netlify/functions/jobs_daily.zip","runtime":"js"},{"bundler":"zisi","buildData":{"runtimeAPIVersion":1},"mainFile":"/home/ubuntu/cm-oauth-setup/compliance-backend/.netlify/functions/jobs_daily5am.js","name":"jobs_daily5am","priority":10,"path":"/home/ubuntu/cm-oauth-setup/compliance-backend/.netlify/functions/jobs_daily5am.zip","runtime":"js"},{"bundler":"zisi","buildData":{"runtimeAPIVersion":1},"mainFile":"/home/ubuntu/cm-oauth-setup/compliance-backend/.netlify/functions/jobs_monthlysummary.js","name":"jobs_monthlysummary","priority":10,"path":"/home/ubuntu/cm-oauth-setup/compliance-backend/.netlify/functions/jobs_monthlysummary.zip","runtime":"js"},{"bundler":"zisi","buildData":{"runtimeAPIVersion":1},"mainFile":"/home/ubuntu/cm-oauth-setup/compliance-backend/.netlify/functions/ping.js","name":"ping","priority":10,"path":"/home/ubuntu/cm-oauth-setup/compliance-backend/.netlify/functions/ping.zip","runtime":"js"},{"bundler":"zisi","buildData":{"runtimeAPIVersion":1},"mainFile":"/home/ubuntu/cm-oauth-setup/compliance-backend/.netlify/functions/settings_get.js","name":"settings_get","priority":10,"path":"/home/ubuntu/cm-oauth-setup/compliance-backend/.netlify/functions/settings_get.zip","runtime":"js"},{"bundler":"zisi","buildData":{"runtimeAPIVersion":1},"mainFile":"/home/ubuntu/cm-oauth-setup/compliance-backend/.netlify/functions/settings_update.js","name":"settings_update","priority":10,"path":"/home/ubuntu/cm-oauth-setup/compliance-backend/.netlify/functions/settings_update.zip","runtime":"js"},{"bundler":"zisi","buildData":{"runtimeAPIVersion":1},"mainFile":"/home/ubuntu/cm-oauth-setup/compliance-backend/.netlify/functions/tasks_bulkimportcsv.js","name":"tasks_bulkimportcsv","priority":10,"path":"/home/ubuntu/cm-oauth-setup/compliance-backend/.netlify/functions/tasks_bulkimportcsv.zip","runtime":"js"},{"bundler":"zisi","buildData":{"runtimeAPIVersion":1},"mainFile":"/home/ubuntu/cm-oauth-setup/compliance-backend/.netlify/functions/tasks_createone.js","name":"tasks_createone","priority":10,"path":"/home/ubuntu/cm-oauth-setup/compliance-backend/.netlify/functions/tasks_createone.zip","runtime":"js"},{"bundler":"zisi","buildData":{"runtimeAPIVersion":1},"mainFile":"/home/ubuntu/cm-oauth-setup/compliance-backend/.netlify/functions/tasks_updatestatus.js","name":"tasks_updatestatus","priority":10,"path":"/home/ubuntu/cm-oauth-setup/compliance-backend/.netlify/functions/tasks_updatestatus.zip","runtime":"js"},{"bundler":"zisi","buildData":{"runtimeAPIVersion":1},"mainFile":"/home/ubuntu/cm-oauth-setup/compliance-backend/.netlify/functions/tasks_uploadattachment.js","name":"tasks_uploadattachment","priority":10,"path":"/home/ubuntu/cm-oauth-setup/compliance-backend/.netlify/functions/tasks_uploadattachment.zip","runtime":"js"}],"system":{"arch":"arm64","platform":"linux"},"timestamp":1768909789240,"version":1}
+
+       --- File Content End ---
+
+
+    =� ping.js
+
+       --- File Content Start ---
+
+exports.handler = async () => {
+  return {
+    statusCode: 200,
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ ok: true, msg: "ping works" })
+  };
+};
+
+
+       --- File Content End ---
+
+
+    =� series_reassign.js
+
+       --- File Content Start ---
+
+const { withCors, json, db, admin, auditLog } = require('./_common');
+const { requireUser, requirePartner } = require('./_auth');
+
+async function findUserUidByEmail(email) {
+  if (!email) return null;
+  const snap = await db().collection('users').where('email', '==', email).limit(1).get();
+  if (snap.empty) return null;
+  return snap.docs[0].id;
+}
+
+exports.handler = withCors(async (event) => {
+  if (event.httpMethod !== 'POST') return json(event, 405, { ok:false, error:'POST only' });
+
+  const authRes = await requireUser(event);
+  if (authRes.error) return authRes.error;
+  const { user } = authRes;
+
+  const p = requirePartner(event, user);
+  if (p.error) return p.error;
+
+  const body = JSON.parse(event.body || '{}');
+  const { seriesId, assignedToEmail } = body;
+  if (!seriesId || !assignedToEmail) return json(event, 400, { ok:false, error:'seriesId and assignedToEmail required' });
+
+  const uid = await findUserUidByEmail(assignedToEmail);
+  if (!uid) return json(event, 400, { ok:false, error:'assignedToEmail not found in users collection' });
+
+  const snap = await db().collection('tasks').where('seriesId', '==', seriesId).get();
+  if (snap.empty) return json(event, 404, { ok:false, error:'No tasks found for seriesId' });
+
+  const batch = db().batch();
+  snap.docs.forEach(d => batch.update(d.ref, {
+    assignedToEmail,
+    assignedToUid: uid,
+    updatedAt: admin.firestore.FieldValue.serverTimestamp()
+  }));
+  await batch.commit();
+
+  await auditLog({
+    taskId: null,
+    action: 'SERIES_REASSIGN',
+    actorUid: user.uid,
+    actorEmail: user.email,
+    details: { seriesId, assignedToEmail }
+  });
+
+  return json(event, 200, { ok:true, updatedCount: snap.size });
+});
+
+       --- File Content End ---
+
+
+    =� series_rebuild.js
+
+       --- File Content Start ---
+
+const {
+  withCors, json, db, admin,
+  calendar, ymdIST, addDays, addInterval, dateFromYmdIST,
+  getCalendarWindow, calTimeRange,
+  auditLog
+} = require('./_common');
+const { requireUser, requirePartner } = require('./_auth');
+
+async function findUserUidByEmail(email) {
+  if (!email) return null;
+  const snap = await db().collection('users').where('email', '==', email).limit(1).get();
+  if (snap.empty) return null;
+  return snap.docs[0].id;
+}
+
+async function createStartCalendarEvent({ title, clientId, startDateYmd, dueDateYmd, window }) {
+  const cal = calendar();
+  const range = calTimeRange(startDateYmd, window.startHH, window.endHH, window.timeZone);
+
+  const res = await cal.events.insert({
+    calendarId: 'primary',
+    sendUpdates: 'none',
+    requestBody: {
+      summary: `START: ${title}`,
+      description: `ClientId: ${clientId}\nStart: ${startDateYmd}\nDue: ${dueDateYmd}`,
+      ...range
+    }
+  });
+
+  return { calendarEventId: res.data.id, calendarHtmlLink: res.data.htmlLink || null };
+}
+
+exports.handler = withCors(async (event) => {
+  if (event.httpMethod !== 'POST') return json(event, 405, { ok:false, error:'POST only' });
+
+  const authRes = await requireUser(event);
+  if (authRes.error) return authRes.error;
+  const { user } = authRes;
+
+  const p = requirePartner(event, user);
+  if (p.error) return p.error;
+
+  const body = JSON.parse(event.body || '{}');
+  const { seriesId, addCount } = body;
+
+  if (!seriesId) return json(event, 400, { ok:false, error:'seriesId required' });
+  const n = Math.max(1, parseInt(addCount || '1', 10));
+
+  // Load existing tasks in series
+  const snap = await db().collection('tasks').where('seriesId', '==', seriesId).get();
+  if (snap.empty) return json(event, 404, { ok:false, error:'No tasks found for seriesId' });
+
+  const tasks = snap.docs.map(d => ({ id:d.id, ref:d.ref, data:d.data() }));
+  const first = tasks[0].data;
+
+  // Base due date = occurrenceIndex==1 dueDateYmd if exists; else min dueDateYmd
+  let baseDueYmd = null;
+  const occ1 = tasks.find(x => x.data.occurrenceIndex === 1);
+  if (occ1) baseDueYmd = occ1.data.dueDateYmd;
+  if (!baseDueYmd) baseDueYmd = tasks.map(x => x.data.dueDateYmd).sort()[0];
+
+  const baseDueDate = dateFromYmdIST(baseDueYmd);
+
+  // Determine existing max idx
+  let maxIdx = 0;
+  const idxSet = new Set();
+  for (const t of tasks) {
+    const idx = Number(t.data.occurrenceIndex || 0);
+    if (idx > maxIdx) maxIdx = idx;
+    if (idx) idxSet.add(idx);
+  }
+
+  const recurrence = first.recurrence || 'MONTHLY';
+  const triggerDaysBefore = Number(first.triggerDaysBefore || 15);
+
+  const assignedToEmail = body.assignedToEmail || first.assignedToEmail || user.email;
+  const assignedToUid = (await findUserUidByEmail(assignedToEmail)) || first.assignedToUid || user.uid;
+
+  const window = await getCalendarWindow();
+
+  let created = 0;
+  const startIdx = maxIdx + 1;
+  const endIdx = maxIdx + n;
+
+  for (let idx = startIdx; idx <= endIdx; idx++) {
+    if (idxSet.has(idx)) continue;
+
+    const dueDate = addInterval(baseDueDate, recurrence, idx - 1);
+    const dueDateYmd = ymdIST(dueDate);
+    const startDateYmd = ymdIST(addDays(dateFromYmdIST(dueDateYmd), -triggerDaysBefore));
+
+    const ev = await createStartCalendarEvent({
+      title: first.title,
+      clientId: first.clientId,
+      startDateYmd,
+      dueDateYmd,
+      window
+    });
+
+    const tRef = db().collection('tasks').doc();
+    await tRef.set({
+      ...first,
+
+      occurrenceIndex: idx,
+      occurrenceTotal: (first.occurrenceTotal || maxIdx) + n,
+
+      dueDate: admin.firestore.Timestamp.fromDate(dateFromYmdIST(dueDateYmd)),
+      dueDateYmd,
+
+      startDate: admin.firestore.Timestamp.fromDate(dateFromYmdIST(startDateYmd)),
+      startDateYmd,
+
+      assignedToEmail,
+      assignedToUid,
+
+      calendarEventId: ev.calendarEventId,
+      calendarHtmlLink: ev.calendarHtmlLink || null,
+      calendarStartEventId: ev.calendarEventId,
+      calendarDueEventId: null,
+
+      clientStartMailSent: false,
+      clientStartMailSentAt: null,
+      clientStartGmailThreadId: null,
+      clientStartGmailId: null,
+      clientStartRfcMessageId: null,
+
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      updatedAt: admin.firestore.FieldValue.serverTimestamp()
+    });
+
+    await auditLog({
+      taskId: tRef.id,
+      action: 'SERIES_REBUILD_CREATED',
+      actorUid: user.uid,
+      actorEmail: user.email,
+      details: { seriesId, occurrenceIndex: idx, startDateYmd, dueDateYmd }
+    });
+
+    created++;
+  }
+
+  // Update occurrenceTotal on all tasks to match new endIdx
+  const newTotal = endIdx;
+  const batch = db().batch();
+  tasks.forEach(t => batch.update(t.ref, { occurrenceTotal: newTotal }));
+  await batch.commit();
+
+  return json(event, 200, { ok:true, created, newTotal });
+});
+
+       --- File Content End ---
+
+
+    =� settings_calendar_get.js
+
+       --- File Content Start ---
+
+const { withCors, json, db } = require('./_common');
+const { requireUser, requirePartner } = require('./_auth');
+
+exports.handler = withCors(async (event) => {
+  if (event.httpMethod !== 'POST') return json(event, 405, { ok:false, error:'POST only' });
+
+  const authRes = await requireUser(event);
+  if (authRes.error) return authRes.error;
+  const { user } = authRes;
+
+  const p = requirePartner(event, user);
+  if (p.error) return p.error;
+
+  const snap = await db().collection('settings').doc('calendar').get();
+  const data = snap.exists ? snap.data() : null;
+
+  return json(event, 200, {
+    ok:true,
+    data: data || { startHH: 10, endHH: 12, timeZone: 'Asia/Kolkata' }
+  });
+});
+
+       --- File Content End ---
+
+
+    =� settings_calendar_update.js
+
+       --- File Content Start ---
+
+const { withCors, json, db, admin } = require('./_common');
+const { requireUser, requirePartner } = require('./_auth');
+
+function clampHH(x, def) {
+  const n = Number(x);
+  if (!Number.isFinite(n)) return def;
+  return Math.min(23, Math.max(0, Math.floor(n)));
+}
+
+exports.handler = withCors(async (event) => {
+  if (event.httpMethod !== 'POST') return json(event, 405, { ok:false, error:'POST only' });
+
+  const authRes = await requireUser(event);
+  if (authRes.error) return authRes.error;
+  const { user } = authRes;
+
+  const p = requirePartner(event, user);
+  if (p.error) return p.error;
+
+  const body = JSON.parse(event.body || '{}');
+
+  const startHH = clampHH(body.startHH, 10);
+  const endHH = clampHH(body.endHH, 12);
+  if (endHH <= startHH) {
+    return json(event, 400, { ok:false, error:'endHH must be > startHH' });
+  }
+
+  const timeZone = String(body.timeZone || 'Asia/Kolkata').trim() || 'Asia/Kolkata';
+
+  await db().collection('settings').doc('calendar').set({
+    startHH,
+    endHH,
+    timeZone,
+    updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    updatedBy: user.email
+  }, { merge: true });
+
+  return json(event, 200, { ok:true });
+});
+
+       --- File Content End ---
+
+
+    =� settings_get.js
+
+       --- File Content Start ---
+
+const { withCors, json, db } = require('./_common');
+const { requireUser, requirePartner } = require('./_auth');
+
+exports.handler = withCors(async (event) => {
+  if (event.httpMethod !== 'POST') return json(event, 405, { ok:false, error:'POST only' });
+
+  const authRes = await requireUser(event);
+  if (authRes.error) return authRes.error;
+  const { user } = authRes;
+
+  const p = requirePartner(event, user);
+  if (p.error) return p.error;
+
+  const snap = await db().collection('settings').doc('notifications').get();
+  const data = snap.exists ? snap.data() : null;
+
+  return json(event, 200, {
+    ok:true,
+    data: data || {
+      dailyInternalEmails: [],
+      dailyWindowDays: 30,
+      sendDailyToAssignees: true,
+      lastDailyRunYmd: null
+    }
+  });
+});
+
+       --- File Content End ---
+
+
+    =� settings_update.js
+
+       --- File Content Start ---
+
+const { withCors, json, db, admin } = require('./_common');
+const { requireUser, requirePartner } = require('./_auth');
+
+function asEmailList(x) {
+  if (Array.isArray(x)) return x.map(s => String(s).trim()).filter(Boolean);
+  if (typeof x === 'string') return x.split(/[;,]/).map(s => s.trim()).filter(Boolean);
+  return [];
+}
+
+exports.handler = withCors(async (event) => {
+  if (event.httpMethod !== 'POST') return json(event, 405, { ok:false, error:'POST only' });
+
+  const authRes = await requireUser(event);
+  if (authRes.error) return authRes.error;
+  const { user } = authRes;
+
+  const p = requirePartner(event, user);
+  if (p.error) return p.error;
+
+  const body = JSON.parse(event.body || '{}');
+
+  const doc = {
+    dailyInternalEmails: asEmailList(body.dailyInternalEmails),
+    dailyWindowDays: Number(body.dailyWindowDays || 30),
+    sendDailyToAssignees: body.sendDailyToAssignees !== false,
+    updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    updatedBy: user.email
+  };
+
+  await db().collection('settings').doc('notifications').set(doc, { merge: true });
+  return json(event, 200, { ok:true });
+});
+
+       --- File Content End ---
+
+
+    =� settings_workerimportpassword_set.js
+
+       --- File Content Start ---
+
+// netlify/functions/settings_workerImportPassword_set.js
+const crypto = require('crypto');
+const { withCors, json, db, admin } = require('./_common');
+const { requireUser, requirePartner } = require('./_auth');
+
+/**
+ * We store a PBKDF2 hash so we never store plaintext password.
+ * Doc: settings/security
+ * Fields:
+ *  - workerImportEnabled: boolean
+ *  - workerImportHash: string (base64)
+ *  - workerImportSalt: string (base64)
+ *  - workerImportIter: number
+ *  - updatedAt, updatedBy
+ */
+
+function pbkdf2Hash(password, saltBuf, iter = 120000) {
+  const keyLen = 32;
+  const digest = 'sha256';
+  const derived = crypto.pbkdf2Sync(password, saltBuf, iter, keyLen, digest);
+  return derived;
+}
+
+exports.handler = withCors(async (event) => {
+  if (event.httpMethod !== 'POST') return json(event, 405, { ok:false, error:'POST only' });
+
+  const authRes = await requireUser(event);
+  if (authRes.error) return authRes.error;
+  const { user } = authRes;
+
+  const p = requirePartner(event, user);
+  if (p.error) return p.error;
+
+  const body = JSON.parse(event.body || '{}');
+  const password = String(body.password || '');
+
+  const ref = db().collection('settings').doc('security');
+
+  // Remove/disable password
+  if (!password) {
+    await ref.set({
+      workerImportEnabled: false,
+      workerImportHash: null,
+      workerImportSalt: null,
+      workerImportIter: null,
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      updatedBy: user.email
+    }, { merge: true });
+
+    return json(event, 200, { ok:true, enabled:false });
+  }
+
+  if (password.length < 4) {
+    return json(event, 400, { ok:false, error:'Password too short (min 4 characters)' });
+  }
+
+  const salt = crypto.randomBytes(16);
+  const iter = 120000;
+  const hash = pbkdf2Hash(password, salt, iter);
+
+  await ref.set({
+    workerImportEnabled: true,
+    workerImportHash: hash.toString('base64'),
+    workerImportSalt: salt.toString('base64'),
+    workerImportIter: iter,
+    updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    updatedBy: user.email
+  }, { merge: true });
+
+  return json(event, 200, { ok:true, enabled:true });
+});
+
+       --- File Content End ---
+
+
+    =� tasks_bulkUpdate.js
+
+       --- File Content Start ---
+
+// netlify/functions/tasks_bulkUpdate.js
+const { withCors, json, db, admin, auditLog, ymdIST } = require('./_common');
+const { requireUser } = require('./_auth');
+
+const ACTIVE_STATUSES = new Set(['PENDING','IN_PROGRESS','CLIENT_PENDING','APPROVAL_PENDING','COMPLETED']);
+
+function chunk(arr, size) {
+  const out = [];
+  for (let i = 0; i < arr.length; i += size) out.push(arr.slice(i, i + size));
+  return out;
+}
+
+function mustArrayIds(x) {
+  if (!Array.isArray(x)) return [];
+  return x.map(v => String(v || '').trim()).filter(Boolean);
+}
+
+function normEmail(x) {
+  return String(x || '').trim();
+}
+
+function canComplete(role) {
+  // You asked for manager delegation optionally; for now allow PARTNER and MANAGER.
+  return role === 'PARTNER' || role === 'MANAGER';
+}
+
+async function findUserUidByEmail(email) {
+  const e = String(email || '').trim().toLowerCase();
+  if (!e) return null;
+  // Prefer emailLower (your signup writes it). Fallback to email.
+  let snap = await db().collection('users').where('emailLower', '==', e).limit(1).get();
+  if (snap.empty) snap = await db().collection('users').where('email', '==', email).limit(1).get();
+  if (snap.empty) return null;
+  return snap.docs[0].id;
+}
+
+function isPrivileged(role) {
+  return role === 'PARTNER' || role === 'MANAGER';
+}
+
+exports.handler = withCors(async (event) => {
+  if (event.httpMethod !== 'POST') return json(event, 405, { ok:false, error:'POST only' });
+
+  const authRes = await requireUser(event);
+  if (authRes.error) return authRes.error;
+  const { user } = authRes;
+
+  const body = JSON.parse(event.body || '{}');
+  const op = String(body.op || '').toUpperCase().trim();
+  const taskIds = mustArrayIds(body.taskIds);
+
+  if (!op) return json(event, 400, { ok:false, error:'op required' });
+  if (!taskIds.length) return json(event, 400, { ok:false, error:'taskIds required' });
+  if (taskIds.length > 2000) return json(event, 400, { ok:false, error:'Too many tasks (max 2000)' });
+
+  // Load tasks
+  const refs = taskIds.map(id => db().collection('tasks').doc(id));
+  const snaps = await db().getAll(...refs);
+  const tasks = snaps.filter(s => s.exists).map(s => ({ id: s.id, ref: s.ref, data: s.data() }));
+
+  if (!tasks.length) return json(event, 404, { ok:false, error:'No tasks found' });
+
+  // Permission check:
+  // - PARTNER/MANAGER: allow all operations (except completion restrictions for workers, not applicable)
+  // - WORKER: can only affect tasks assigned to them; no COMPLETE; delete allowed only on their tasks.
+  const role = String(user.role || 'WORKER').toUpperCase().trim() || 'WORKER';
+  const privileged = isPrivileged(role);
+
+  if (!privileged) {
+    const notMine = tasks.filter(t => t.data.assignedToUid !== user.uid);
+    if (notMine.length) {
+      return json(event, 403, { ok:false, error:'Some selected tasks are not assigned to you' });
+    }
+  }
+
+  // Op-specific validation
+  let updatePatch = null;
+  let updatedCount = 0;
+  let deletedCount = 0;
+
+  if (op === 'STATUS') {
+    const newStatus = String(body.newStatus || '').toUpperCase().trim();
+    if (!ACTIVE_STATUSES.has(newStatus)) {
+      return json(event, 400, { ok:false, error:'Invalid newStatus' });
+    }
+    if (!privileged && newStatus === 'COMPLETED') {
+      return json(event, 403, { ok:false, error:'Only Partner/Manager can mark COMPLETED' });
+    }
+
+    updatePatch = (t) => {
+      const patch = {
+        status: newStatus,
+        updatedAt: admin.firestore.FieldValue.serverTimestamp()
+      };
+      if (newStatus === 'APPROVAL_PENDING') {
+        patch.completedRequestedAt = admin.firestore.FieldValue.serverTimestamp();
+      }
+      if (newStatus === 'COMPLETED') {
+        patch.completedAt = admin.firestore.FieldValue.serverTimestamp();
+      }
+      return patch;
+    };
+
+  } else if (op === 'REASSIGN') {
+    const assignedToEmail = normEmail(body.assignedToEmail);
+    if (!assignedToEmail) return json(event, 400, { ok:false, error:'assignedToEmail required' });
+
+    const assignedToUid = await findUserUidByEmail(assignedToEmail);
+    if (!assignedToUid) {
+      return json(event, 400, { ok:false, error:'assignedToEmail not found in users' });
+    }
+
+    updatePatch = () => ({
+      assignedToEmail,
+      assignedToUid,
+      updatedAt: admin.firestore.FieldValue.serverTimestamp()
+    });
+
+  } else if (op === 'SNOOZE') {
+    const snoozedUntilYmd = String(body.snoozedUntilYmd || '').trim();
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(snoozedUntilYmd)) {
+      return json(event, 400, { ok:false, error:'snoozedUntilYmd must be YYYY-MM-DD' });
+    }
+
+    // workers can snooze their tasks too
+    updatePatch = () => ({
+      snoozedUntilYmd,
+      updatedAt: admin.firestore.FieldValue.serverTimestamp()
+    });
+
+  } else if (op === 'DELETE') {
+    // For bulk delete we only delete Firestore docs.
+    // Calendar event deletion in bulk is possible, but can be slow and hit quotas.
+    // We keep it "data delete only" for bulk, and use single delete endpoint for full cleanup.
+    // If you want calendar cleanup here too, we can add it later.
+    if (!privileged) {
+      // Workers can bulk-delete only their own tasks (already enforced above)
+    }
+  } else {
+    return json(event, 400, { ok:false, error:'Invalid op' });
+  }
+
+  // Apply in batches (Firestore batch max 500 writes; stay below)
+  const batches = chunk(tasks, 400);
+
+  for (const group of batches) {
+    const batch = db().batch();
+
+    if (op === 'DELETE') {
+      for (const t of group) {
+        batch.delete(t.ref);
+      }
+      await batch.commit();
+      deletedCount += group.length;
+
+      // Audit logs (not batched, because auditLog writes are separate docs)
+      for (const t of group) {
+        await auditLog({
+          taskId: t.id,
+          action: 'TASK_DELETED_BULK',
+          actorUid: user.uid,
+          actorEmail: user.email,
+          details: { op:'DELETE' }
+        });
+      }
+      continue;
+    }
+
+    // STATUS/REASSIGN/SNOOZE
+    for (const t of group) {
+      batch.update(t.ref, updatePatch(t));
+    }
+    await batch.commit();
+    updatedCount += group.length;
+
+    // Audit logs (separate writes)
+    for (const t of group) {
+      await auditLog({
+        taskId: t.id,
+        action:
+          op === 'STATUS' ? 'BULK_STATUS_CHANGE' :
+          op === 'REASSIGN' ? 'BULK_REASSIGN' :
+          op === 'SNOOZE' ? 'BULK_SNOOZE' :
+          'BULK_UPDATE',
+        actorUid: user.uid,
+        actorEmail: user.email,
+        details: {
+          op,
+          ...(op === 'STATUS' ? { to: String(body.newStatus||'') } : {}),
+          ...(op === 'REASSIGN' ? { assignedToEmail: String(body.assignedToEmail||'') } : {}),
+          ...(op === 'SNOOZE' ? { snoozedUntilYmd: String(body.snoozedUntilYmd||'') } : {})
+        }
+      });
+    }
+  }
+
+  return json(event, 200, {
+    ok: true,
+    op,
+    requested: taskIds.length,
+    found: tasks.length,
+    updatedCount,
+    deletedCount
+  });
+});
+
+       --- File Content End ---
+
+
+    =� tasks_bulkimportcsv.js
+
+       --- File Content Start ---
+
+const {
+  withCors, json, db, admin,
+  calendar, ymdIST, dateFromYmdIST, addDays, addInterval,
+  getCalendarWindow, calTimeRange,
+  auditLog, asEmailList
+} = require('./_common');
+
+const { requireUser, requirePartner } = require('./_auth');
+
+async function findOrCreateClientByIdOrName({ clientId, clientName, clientEmail }) {
+  if (clientId) {
+    const cRef = db().collection('clients').doc(clientId);
+    const cSnap = await cRef.get();
+    if (!cSnap.exists) throw new Error('Client not found: ' + clientId);
+    if (clientEmail && !cSnap.data().primaryEmail) await cRef.update({ primaryEmail: clientEmail });
+    return clientId;
+  }
+
+  if (!clientName) throw new Error('clientId or clientName required');
+
+  const snap = await db().collection('clients').where('name', '==', clientName).limit(1).get();
+  if (!snap.empty) {
+    const id = snap.docs[0].id;
+    const cRef = db().collection('clients').doc(id);
+    const cSnap = await cRef.get();
+    if (clientEmail && cSnap.exists && !cSnap.data().primaryEmail) await cRef.update({ primaryEmail: clientEmail });
+    return id;
+  }
+
+  const ref = db().collection('clients').doc();
+  await ref.set({
+    name: clientName,
+    primaryEmail: clientEmail || '',
+    ccEmails: [],
+    bccEmails: [],
+    createdAt: admin.firestore.FieldValue.serverTimestamp()
+  });
+  return ref.id;
+}
+
+async function findUserUidByEmail(email) {
+  if (!email) return null;
+  const snap = await db().collection('users').where('email', '==', email).limit(1).get();
+  if (snap.empty) return null;
+  return snap.docs[0].id;
+}
+
+function normalizeRecurrence(x) {
+  const r = String(x || 'AD_HOC').toUpperCase().trim();
+  const allowed = ['AD_HOC','DAILY','WEEKLY','BIWEEKLY','MONTHLY','BIMONTHLY','QUARTERLY','HALF_YEARLY','YEARLY'];
+  return allowed.includes(r) ? r : 'AD_HOC';
+}
+
+function normalizeCategory(x) {
+  const raw = String(x || 'OTHER').trim();
+  const u = raw.toUpperCase().replace(/\s+/g, '_');
+  if (u === 'ITR' || u === 'INCOME_TAX' || u === 'INCOME-TAX') return 'INCOME_TAX';
+  if (u === 'GST') return 'GST';
+  if (u === 'TDS') return 'TDS';
+  if (u === 'ROC') return 'ROC';
+  if (u === 'ACCOUNTING') return 'ACCOUNTING';
+  if (u === 'AUDIT') return 'AUDIT';
+  return 'OTHER';
+}
+
+async function createStartCalendarEvent({ title, clientId, startDateYmd, dueDateYmd, window }) {
+  const cal = calendar();
+  const range = calTimeRange(startDateYmd, window.startHH, window.endHH, window.timeZone);
+
+  const res = await cal.events.insert({
+    calendarId: 'primary',
+    sendUpdates: 'none',
+    requestBody: {
+      summary: `START: ${title}`,
+      description:
+        `ClientId: ${clientId}\n` +
+        `Start: ${startDateYmd}\n` +
+        `Due: ${dueDateYmd}\n`,
+      ...range
+    }
+  });
+
+  return { calendarEventId: res.data.id, calendarHtmlLink: res.data.htmlLink || null };
+}
+
+exports.handler = withCors(async (event) => {
+  if (event.httpMethod !== 'POST') return json(event, 405, { ok:false, error:'POST only' });
+
+  const authRes = await requireUser(event);
+  if (authRes.error) return authRes.error;
+  const { user } = authRes;
+
+  const p = requirePartner(event, user);
+  if (p.error) return p.error;
+
+  const body = JSON.parse(event.body || '{}');
+
+  const clientId = await findOrCreateClientByIdOrName({
+    clientId: body.clientId || null,
+    clientName: body.clientName || null,
+    clientEmail: body.clientEmail || null,
+  });
+
+  const title = body.title || 'Untitled';
+
+  const dueDateYmd = String(body.dueDateYmd || '').trim();
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(dueDateYmd)) {
+    return json(event, 400, { ok:false, error:'dueDateYmd required (YYYY-MM-DD)' });
+  }
+
+  const recurrence = normalizeRecurrence(body.recurrence || 'AD_HOC');
+  const generateCount = Math.max(1, parseInt(body.generateCount || '1', 10));
+  const triggerDaysBefore = Math.max(0, parseInt(body.triggerDaysBefore ?? 15, 10));
+
+  const assignedToEmail = (body.assignedToEmail || user.email || '').trim();
+  const assignedToUid = (await findUserUidByEmail(assignedToEmail)) || user.uid;
+
+  const category = normalizeCategory(body.category || 'OTHER');
+  const type = String(body.type || 'FILING').trim(); // free text allowed
+
+  // Per-task mail controls (UI will expose later)
+  const clientToEmails = asEmailList(body.clientToEmails || body.clientTo || body.clientEmail || null);
+  const clientCcEmails = asEmailList(body.clientCcEmails || body.clientCc || null);
+  const clientBccEmails = asEmailList(body.clientBccEmails || body.clientBcc || null);
+
+  const sendClientCompletionMail = body.sendClientCompletionMail !== false;
+
+  const clientStartSubject = String(body.clientStartSubject || '').trim();
+  const clientStartBody = String(body.clientStartBody || '').trim();
+
+  const clientCompletionSubject = String(body.clientCompletionSubject || '').trim();
+  const clientCompletionBody = String(body.clientCompletionBody || '').trim();
+
+  const isSeries = recurrence !== 'AD_HOC' && generateCount > 1;
+  const seriesId = isSeries ? db().collection('taskSeries').doc().id : null;
+
+  const window = await getCalendarWindow();
+
+  let created = 0;
+
+  for (let i = 0; i < generateCount; i++) {
+    const dueDate = addInterval(dateFromYmdIST(dueDateYmd), recurrence, i);
+    const dueYmd = ymdIST(dueDate);
+
+    const startDate = addDays(dateFromYmdIST(dueYmd), -triggerDaysBefore);
+    const startYmd = ymdIST(startDate);
+
+    const ev = await createStartCalendarEvent({
+      title, clientId, startDateYmd: startYmd, dueDateYmd: dueYmd, window
+    });
+
+    const tRef = db().collection('tasks').doc();
+    await tRef.set({
+      clientId,
+      title,
+      category,
+      type,
+      recurrence,
+
+      seriesId,
+      occurrenceIndex: i + 1,
+      occurrenceTotal: generateCount,
+
+      dueDate: admin.firestore.Timestamp.fromDate(dateFromYmdIST(dueYmd)),
+      dueDateYmd: dueYmd,
+
+      triggerDaysBefore,
+      startDate: admin.firestore.Timestamp.fromDate(dateFromYmdIST(startYmd)),
+      startDateYmd: startYmd,
+
+      assignedToUid,
+      assignedToEmail,
+
+      status: 'PENDING',
+      statusNote: '',
+      delayReason: null,
+      delayNotes: '',
+
+      // NEW: single calendar event
+      calendarEventId: ev.calendarEventId,
+      calendarHtmlLink: ev.calendarHtmlLink || null,
+
+      // Back-compat fields (UI still shows start event id)
+      calendarStartEventId: ev.calendarEventId,
+      calendarDueEventId: null,
+
+      // Client mail templates + controls
+      clientToEmails,
+      clientCcEmails,
+      clientBccEmails,
+
+      clientStartSubject,
+      clientStartBody,
+      clientStartMailSent: false,
+      clientStartMailSentAt: null,
+      clientStartGmailThreadId: null,
+      clientStartGmailId: null,
+      clientStartRfcMessageId: null,
+
+      sendClientCompletionMail,
+      clientCompletionSubject,
+      clientCompletionBody,
+
+      createdByUid: user.uid,
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+
+      completedRequestedAt: null,
+      completedAt: null,
+
+      attachments: []
+    });
+
+    await auditLog({
+      taskId: tRef.id,
+      action: 'TASK_CREATED',
+      actorUid: user.uid,
+      actorEmail: user.email,
+      details: { source:'UI_CREATE', seriesId, occurrenceIndex: i+1, startDateYmd: startYmd, dueDateYmd: dueYmd }
+    });
+
+    created++;
+  }
+
+  return json(event, 200, { ok:true, created, seriesId });
+});
+
+       --- File Content End ---
+
+
+    =� tasks_bulkimportxlsx.js
+
+       --- File Content Start ---
+
+// netlify/functions/tasks_bulkimportxlsx.js
+const Busboy = require('busboy');
+const ExcelJS = require('exceljs');
+const crypto = require('crypto');
+
+const {
+  withCors, json, db, admin,
+  dmyToYmd, ymdIST, dateFromYmdIST,
+  addInterval, addDays,
+  getCalendarWindow,
+  auditLog, asEmailList,
+  createStartCalendarEvent, trySendStartMailImmediately
+} = require('./_common');
+
+const { requireUser } = require('./_auth');
+
+// ===== Worker import password verify (PBKDF2, matches settings_workerImportPassword_set.js) =====
+function pbkdf2Hash(password, saltBuf, iter) {
+  const keyLen = 32;
+  const digest = 'sha256';
+  return crypto.pbkdf2Sync(password, saltBuf, iter, keyLen, digest);
+}
+async function verifyWorkerImportPassword(plainPassword) {
+  const sSnap = await db().collection('settings').doc('security').get();
+  if (!sSnap.exists) return false;
+  const s = sSnap.data() || {};
+  if (s.workerImportEnabled !== true) return false;
+  if (!s.workerImportHash || !s.workerImportSalt || !s.workerImportIter) return false;
+
+  const salt = Buffer.from(String(s.workerImportSalt), 'base64');
+  const iter = Number(s.workerImportIter || 0);
+  const expected = Buffer.from(String(s.workerImportHash), 'base64');
+  if (!salt.length || !iter || !expected.length) return false;
+
+  const got = pbkdf2Hash(String(plainPassword || ''), salt, iter);
+  // timing-safe compare
+  if (got.length !== expected.length) return false;
+  return crypto.timingSafeEqual(got, expected);
+}
+
+// ===== Helpers =====
+async function findOrCreateClientByName(clientName) {
+  const snap = await db().collection('clients').where('name', '==', clientName).limit(1).get();
+  if (!snap.empty) return { id: snap.docs[0].id, data: snap.docs[0].data() };
+
+  const ref = db().collection('clients').doc();
+  const newData = {
+    name: clientName,
+    pan: '', gstin: '', cin: '',
+    assessmentYear: '', engagementType: '',
+    primaryEmail: '',
+    ccEmails: [], bccEmails: [],
+    driveFolderId: null,
+    createdAt: admin.firestore.FieldValue.serverTimestamp()
+  };
+  await ref.set(newData);
+  return { id: ref.id, data: newData };
+}
+
+async function findUserUidByEmail(email) {
+  if (!email) return null;
+  const e = String(email).trim().toLowerCase();
+  let snap = await db().collection('users').where('emailLower', '==', e).limit(1).get();
+  if (snap.empty) snap = await db().collection('users').where('email', '==', email).limit(1).get();
+  if (snap.empty) return null;
+  return snap.docs[0].id;
+}
+
+function normalizeRecurrence(x) {
+  const r = String(x || 'AD_HOC').toUpperCase().trim();
+  const allowed = ['AD_HOC','DAILY','WEEKLY','BIWEEKLY','MONTHLY','BIMONTHLY','QUARTERLY','HALF_YEARLY','YEARLY'];
+  return allowed.includes(r) ? r : 'AD_HOC';
+}
+
+function normalizeCategory(x) {
+  const raw = String(x || 'OTHER').trim();
+  const u = raw.toUpperCase().replace(/\s+/g, '_');
+  if (u === 'ITR' || u === 'INCOME_TAX' || u === 'INCOME-TAX' || u === 'INCOME' || u === 'INCOME_TAX_RETURN') return 'INCOME_TAX';
+  if (String(x).trim().toLowerCase() === 'income tax') return 'INCOME_TAX';
+  if (u === 'GST') return 'GST';
+  if (u === 'TDS') return 'TDS';
+  if (u === 'ROC') return 'ROC';
+  if (u === 'ACCOUNTING') return 'ACCOUNTING';
+  if (u === 'AUDIT') return 'AUDIT';
+  return 'OTHER';
+}
+
+function truthy(x) {
+  const s = String(x ?? '').trim().toLowerCase();
+  if (!s) return false;
+  return ['1','true','yes','y'].includes(s);
+}
+
+function getCellString(cell) {
+  if (!cell) return '';
+  const v = cell.value;
+  if (v == null) return '';
+  if (typeof v === 'string') return v.trim();
+  if (typeof v === 'number') return String(v);
+  if (v instanceof Date) return v.toISOString();
+  // ExcelJS may provide {text, richText, hyperlink, ...}
+  if (typeof v === 'object') {
+    if (v.text) return String(v.text).trim();
+    if (v.richText && Array.isArray(v.richText)) {
+      return v.richText.map(r => r.text || '').join('').trim();
+    }
+  }
+  return String(v).trim();
+}
+
+function parseDueDateDmyFromExcel(cell) {
+  if (!cell || cell.value == null) return null;
+  const v = cell.value;
+  if (v instanceof Date) {
+    const yyyy = v.getFullYear();
+    const mm = String(v.getMonth() + 1).padStart(2,'0');
+    const dd = String(v.getDate()).padStart(2,'0');
+    return `${dd}-${mm}-${yyyy}`;
+  }
+  const s = getCellString(cell);
+  if (!s) return null;
+  return s;
+}
+
+function normalizePriority(x) {
+  const v = String(x || 'MEDIUM').trim().toUpperCase();
+  if (v === 'HIGH' || v === 'LOW') return v;
+  return 'MEDIUM';
+}
+
+exports.handler = withCors(async (event) => {
+  if (event.httpMethod !== 'POST') return json(event, 405, { ok:false, error:'POST only' });
+
+  const authRes = await requireUser(event);
+  if (authRes.error) return authRes.error;
+  const { user } = authRes;
+
+  // Parse multipart (file + optional importPassword)
+  const busboy = Busboy({ headers: event.headers });
+
+  let fileBuffer = Buffer.alloc(0);
+  let importPassword = '';
+
+  busboy.on('field', (name, val) => {
+    if (name === 'importPassword') importPassword = String(val || '');
+  });
+
+  busboy.on('file', (name, file) => {
+    file.on('data', (d) => { fileBuffer = Buffer.concat([fileBuffer, d]); });
+  });
+
+  const done = new Promise((resolve, reject) => {
+    busboy.on('finish', resolve);
+    busboy.on('error', reject);
+  });
+
+  const bodyBuf = event.isBase64Encoded ? Buffer.from(event.body, 'base64') : Buffer.from(event.body || '');
+  busboy.end(bodyBuf);
+  await done;
+
+  if (!fileBuffer.length) return json(event, 400, { ok:false, error:'XLSX file missing' });
+
+  // Authorization:
+  // - PARTNER/MANAGER can import
+  // - WORKER can import only if importPassword matches settings/security
+  const role = String(user.role || 'WORKER').toUpperCase().trim();
+  const privileged = (role === 'PARTNER' || role === 'MANAGER');
+
+  if (!privileged) {
+    const okPwd = await verifyWorkerImportPassword(importPassword);
+    if (!okPwd) {
+      return json(event, 403, { ok:false, error:'Worker import password required or incorrect' });
+    }
+  }
+
+  const wb = new ExcelJS.Workbook();
+  await wb.xlsx.load(fileBuffer);
+  const ws = wb.getWorksheet('Import') || wb.worksheets[0];
+  if (!ws) return json(event, 400, { ok:false, error:'No worksheet found' });
+
+  const headerRow = ws.getRow(1);
+  const headers = {};
+  headerRow.eachCell((cell, colNumber) => {
+    const key = getCellString(cell);
+    if (key) headers[key] = colNumber;
+  });
+
+  function colOf(names) {
+    for (const n of names) { if (headers[n]) return headers[n]; }
+    return null;
+  }
+
+  const cTitle = colOf(['Title']);
+  const cClient = colOf(['Client']); // client name text (dropdown in template, but still text)
+  const cClientEmail = colOf(['ClientEmail']);
+  const cDue = colOf(['DueDate (DD-MM-YYYY)','DueDate','Due']);
+  const cCategory = colOf(['Category']);
+  const cType = colOf(['Type (you can type custom)','Type']);
+  const cRec = colOf(['Recurrence']);
+  const cGen = colOf(['GenerateCount']);
+  const cTrig = colOf(['TriggerDays']);
+  const cAssigned = colOf(['AssignedToEmail']);
+  const cPriority = colOf(['Priority']); // optional column (template can add later)
+
+  const cTo = colOf(['ClientTo (emails ; , : separated)','ClientTo']);
+  const cCc = colOf(['ClientCC (emails ; , : separated)','ClientCC']);
+  const cBcc = colOf(['ClientBCC (emails ; , : separated)','ClientBCC']);
+
+  const cStartSub = colOf(['ClientStartSubject']);
+  const cStartBody = colOf(['ClientStartBody']);
+  const cSendComp = colOf(['SendClientCompletionMail (true/false)','SendClientCompletionMail']);
+  const cCompSub = colOf(['ClientCompletionSubject']);
+  const cCompBody = colOf(['ClientCompletionBody']);
+  const cCcAssignee = colOf(['CcAssigneeOnClientStart (true/false)','CcAssigneeOnClientStart']);
+  const cCcManager = colOf(['CcManagerOnClientStart (true/false)','CcManagerOnClientStart']);
+
+  if (!cTitle || !cClient || !cDue) {
+    return json(event, 400, { ok:false, error:'Missing required columns (Title, Client, DueDate)' });
+  }
+
+  const window = await getCalendarWindow();
+  const todayYmd = ymdIST(new Date());
+
+  let created = 0;
+  const seriesIdsCreated = new Set();
+
+  const startRow = 2;
+  const lastRow = ws.lastRow ? ws.lastRow.number : 1;
+
+  for (let r = startRow; r <= lastRow; r++) {
+    const row = ws.getRow(r);
+
+    const title = getCellString(row.getCell(cTitle));
+    const clientName = getCellString(row.getCell(cClient));
+    const dueDmy = parseDueDateDmyFromExcel(row.getCell(cDue));
+
+    if (!title || !clientName || !dueDmy) continue;
+
+    const dueBaseYmd = dmyToYmd(dueDmy);
+    const dueBase = dateFromYmdIST(dueBaseYmd);
+
+    const recurrence = normalizeRecurrence(getCellString(row.getCell(cRec)) || 'AD_HOC');
+    const generateCount = Math.max(1, parseInt(getCellString(row.getCell(cGen)) || '1', 10));
+    const triggerDaysBefore = Math.max(0, parseInt(getCellString(row.getCell(cTrig)) || '15', 10));
+    const category = normalizeCategory(getCellString(row.getCell(cCategory)) || 'OTHER');
+    const type = getCellString(row.getCell(cType)) || 'FILING';
+
+    const priority = cPriority ? normalizePriority(getCellString(row.getCell(cPriority))) : 'MEDIUM';
+
+    const assignedEmail = (getCellString(row.getCell(cAssigned)) || '').trim() || null;
+    const clientEmail = (getCellString(row.getCell(cClientEmail)) || '').trim() || null;
+
+    const clientToEmails = asEmailList(getCellString(row.getCell(cTo)) || clientEmail || null);
+    const clientCcEmails = asEmailList(getCellString(row.getCell(cCc)) || null);
+    const clientBccEmails = asEmailList(getCellString(row.getCell(cBcc)) || null);
+
+    const clientStartSubject = getCellString(row.getCell(cStartSub)) || '';
+    const clientStartBody = getCellString(row.getCell(cStartBody)) || '';
+
+    const sendClientCompletionMail = (cSendComp ? truthy(getCellString(row.getCell(cSendComp)) || 'true') : true);
+    const clientCompletionSubject = getCellString(row.getCell(cCompSub)) || '';
+    const clientCompletionBody = getCellString(row.getCell(cCompBody)) || '';
+
+    const ccAssigneeOnClientStart = cCcAssignee ? truthy(getCellString(row.getCell(cCcAssignee)) || 'false') : false;
+    const ccManagerOnClientStart = cCcManager ? truthy(getCellString(row.getCell(cCcManager)) || 'false') : false;
+
+    // Get or Create Client
+    const { id: clientId, data: clientData0 } = await findOrCreateClientByName(clientName);
+    const clientData = { ...(clientData0 || {}) };
+
+    if (clientEmail && !clientData.primaryEmail) {
+      await db().collection('clients').doc(clientId).update({ primaryEmail: clientEmail });
+      clientData.primaryEmail = clientEmail;
+    }
+
+    // Determine assignee uid
+    let assignedToUid = null;
+    let assignedToEmailFinal = assignedEmail || user.email;
+
+    if (role === 'WORKER') {
+      // Worker import: force to self
+      assignedToUid = user.uid;
+      assignedToEmailFinal = user.email;
+    } else {
+      // Partner/manager can assign
+      assignedToUid = (await findUserUidByEmail(assignedEmail)) || user.uid;
+    }
+
+    const isSeries = recurrence !== 'AD_HOC' && generateCount > 1;
+    const seriesId = isSeries ? db().collection('taskSeries').doc().id : null;
+    if (seriesId) seriesIdsCreated.add(seriesId);
+
+    for (let i = 0; i < generateCount; i++) {
+      const dueDate = addInterval(dueBase, recurrence, i);
+      const dueDateYmd = ymdIST(dueDate);
+
+      const startDate = addDays(dateFromYmdIST(dueDateYmd), -triggerDaysBefore);
+      const startDateYmd = ymdIST(startDate);
+
+      const ev = await createStartCalendarEvent({
+        title, clientId, startDateYmd, dueDateYmd, window
+      });
+
+      // Mail logic check (send now if start is today)
+      const taskMailObj = {
+        title,
+        startDateYmd,
+        dueDateYmd,
+        clientStartSubject,
+        clientStartBody,
+        clientToEmails, clientCcEmails, clientBccEmails,
+        ccAssigneeOnClientStart,
+        ccManagerOnClientStart,
+        assignedToEmail: assignedToEmailFinal,
+        assignedToUid
+      };
+
+      let mailResult = null;
+      if (startDateYmd === todayYmd) {
+        mailResult = await trySendStartMailImmediately({
+          task: taskMailObj,
+          client: clientData,
+          window
+        });
+      }
+
+      const tRef = db().collection('tasks').doc();
+      await tRef.set({
+        clientId,
+        title,
+        category,
+        type,
+        priority,
+        recurrence,
+        seriesId,
+        occurrenceIndex: i + 1,
+        occurrenceTotal: generateCount,
+
+        dueDate: admin.firestore.Timestamp.fromDate(dateFromYmdIST(dueDateYmd)),
+        dueDateYmd,
+        triggerDaysBefore,
+
+        startDate: admin.firestore.Timestamp.fromDate(dateFromYmdIST(startDateYmd)),
+        startDateYmd,
+
+        assignedToUid,
+        assignedToEmail: assignedToEmailFinal,
+
+        status: 'PENDING',
+        statusNote: '',
+        delayReason: null,
+        delayNotes: '',
+
+        snoozedUntilYmd: null,
+
+        calendarEventId: ev.calendarEventId,
+        calendarHtmlLink: ev.calendarHtmlLink || null,
+        calendarStartEventId: ev.calendarEventId,
+        calendarDueEventId: null,
+
+        clientToEmails, clientCcEmails, clientBccEmails,
+        ccAssigneeOnClientStart, ccManagerOnClientStart,
+
+        clientStartSubject,
+        clientStartBody,
+
+        clientStartMailSent: mailResult ? true : false,
+        clientStartMailSentAt: mailResult?.clientStartMailSentAt || null,
+        clientStartGmailThreadId: mailResult?.clientStartGmailThreadId || null,
+        clientStartGmailId: mailResult?.clientStartGmailId || null,
+        clientStartRfcMessageId: mailResult?.clientStartRfcMessageId || null,
+        clientStartReferences: mailResult?.clientStartReferences || null,
+
+        sendClientCompletionMail,
+        clientCompletionSubject,
+        clientCompletionBody,
+
+        createdByUid: user.uid,
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+
+        completedRequestedAt: null,
+        completedAt: null,
+        attachments: []
+      });
+
+      await auditLog({
+        taskId: tRef.id,
+        action: 'TASK_CREATED',
+        actorUid: user.uid,
+        actorEmail: user.email,
+        details: {
+          source: 'XLSX',
+          seriesId,
+          occurrenceIndex: i + 1,
+          startDateYmd,
+          sentMailNow: !!mailResult
+        }
+      });
+
+      created++;
+    }
+  }
+
+  return json(event, 200, {
+    ok:true,
+    created,
+    seriesCreated: seriesIdsCreated.size
+  });
+});
+
+       --- File Content End ---
+
+
+    =� tasks_createone.js
+
+       --- File Content Start ---
+
+// netlify/functions/tasks_createone.js
+const {
+  withCors, json, db, admin,
+  ymdIST, dateFromYmdIST, addDays, addInterval,
+  getCalendarWindow,
+  auditLog, asEmailList,
+  createStartCalendarEvent, trySendStartMailImmediately
+} = require('./_common');
+
+const { requireUser } = require('./_auth');
+
+async function findOrCreateClientByIdOrName({ clientId, clientName, clientEmail }) {
+  if (clientId) {
+    const cRef = db().collection('clients').doc(clientId);
+    const cSnap = await cRef.get();
+    if (!cSnap.exists) throw new Error('Client not found: ' + clientId);
+    if (clientEmail && !cSnap.data().primaryEmail) await cRef.update({ primaryEmail: clientEmail });
+    return { id: clientId, data: cSnap.data() };
+  }
+  if (!clientName) throw new Error('clientId or clientName required');
+
+  const snap = await db().collection('clients').where('name', '==', clientName).limit(1).get();
+  if (!snap.empty) {
+    const id = snap.docs[0].id;
+    const cRef = db().collection('clients').doc(id);
+    const cSnap = await cRef.get();
+    if (clientEmail && cSnap.exists && !cSnap.data().primaryEmail) await cRef.update({ primaryEmail: clientEmail });
+    return { id, data: cSnap.data() };
+  }
+
+  const ref = db().collection('clients').doc();
+  const newData = {
+    name: clientName,
+    primaryEmail: clientEmail || '',
+    ccEmails: [],
+    bccEmails: [],
+    createdAt: admin.firestore.FieldValue.serverTimestamp()
+  };
+  await ref.set(newData);
+  return { id: ref.id, data: newData };
+}
+
+async function findUserUidByEmail(email) {
+  if (!email) return null;
+  const e = String(email).trim().toLowerCase();
+  let snap = await db().collection('users').where('emailLower', '==', e).limit(1).get();
+  if (snap.empty) snap = await db().collection('users').where('email', '==', email).limit(1).get();
+  if (snap.empty) return null;
+  return snap.docs[0].id;
+}
+
+function normalizeRecurrence(x) {
+  const r = String(x || 'AD_HOC').toUpperCase().trim();
+  const allowed = ['AD_HOC','DAILY','WEEKLY','BIWEEKLY','MONTHLY','BIMONTHLY','QUARTERLY','HALF_YEARLY','YEARLY'];
+  return allowed.includes(r) ? r : 'AD_HOC';
+}
+
+function normalizeCategory(x) {
+  const raw = String(x || 'OTHER').trim();
+  const u = raw.toUpperCase().replace(/\s+/g, '_');
+  if (u === 'ITR' || u === 'INCOME_TAX' || u === 'INCOME-TAX' || raw.toLowerCase() === 'income tax') return 'INCOME_TAX';
+  if (u === 'GST') return 'GST';
+  if (u === 'TDS') return 'TDS';
+  if (u === 'ROC') return 'ROC';
+  if (u === 'ACCOUNTING') return 'ACCOUNTING';
+  if (u === 'AUDIT') return 'AUDIT';
+  return 'OTHER';
+}
+
+function normalizePriority(x) {
+  const v = String(x || 'MEDIUM').trim().toUpperCase();
+  if (v === 'HIGH' || v === 'LOW') return v;
+  return 'MEDIUM';
+}
+
+exports.handler = withCors(async (event) => {
+  if (event.httpMethod !== 'POST') return json(event, 405, { ok:false, error:'POST only' });
+
+  const authRes = await requireUser(event);
+  if (authRes.error) return authRes.error;
+  const { user } = authRes;
+
+  const role = String(user.role || 'WORKER').toUpperCase().trim();
+
+  const body = JSON.parse(event.body || '{}');
+
+  const { id: clientId, data: clientData } = await findOrCreateClientByIdOrName({
+    clientId: body.clientId || null,
+    clientName: body.clientName || null,
+    clientEmail: body.clientEmail || null,
+  });
+
+  const title = body.title || 'Untitled';
+
+  const dueDateYmd = String(body.dueDateYmd || '').trim();
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(dueDateYmd)) {
+    return json(event, 400, { ok:false, error:'dueDateYmd required (YYYY-MM-DD)' });
+  }
+
+  const recurrence = normalizeRecurrence(body.recurrence || 'AD_HOC');
+  const generateCount = Math.max(1, parseInt(body.generateCount || '1', 10));
+  const triggerDaysBefore = Math.max(0, parseInt(body.triggerDaysBefore ?? 15, 10));
+
+  const category = normalizeCategory(body.category || 'OTHER');
+  const type = String(body.type || 'FILING').trim();
+  const priority = normalizePriority(body.priority || 'MEDIUM');
+
+  // Assignment rules:
+  // - WORKER: must assign to self
+  // - MANAGER/PARTNER: can assign to anyone (if email exists), otherwise fallback to self
+  let assignedToEmail = (body.assignedToEmail || user.email || '').trim();
+  let assignedToUid = user.uid;
+
+  if (role === 'WORKER') {
+    assignedToEmail = user.email;
+    assignedToUid = user.uid;
+  } else {
+    const uid = assignedToEmail ? (await findUserUidByEmail(assignedToEmail)) : null;
+    assignedToUid = uid || user.uid;
+    if (!uid) assignedToEmail = user.email; // avoid dangling unknown assignee
+  }
+
+  // Mails
+  const clientToEmails = asEmailList(body.clientToEmails || body.clientTo || body.clientEmail || null);
+  const clientCcEmails = asEmailList(body.clientCcEmails || body.clientCc || null);
+  const clientBccEmails = asEmailList(body.clientBccEmails || body.clientBcc || null);
+
+  const sendClientCompletionMail = body.sendClientCompletionMail !== false;
+  const ccAssigneeOnClientStart = body.ccAssigneeOnClientStart === true;
+  const ccManagerOnClientStart = body.ccManagerOnClientStart === true;
+
+  const clientStartSubject = String(body.clientStartSubject || '').trim();
+  const clientStartBody = String(body.clientStartBody || '').trim();
+  const clientCompletionSubject = String(body.clientCompletionSubject || '').trim();
+  const clientCompletionBody = String(body.clientCompletionBody || '').trim();
+
+  const isSeries = recurrence !== 'AD_HOC' && generateCount > 1;
+  const seriesId = isSeries ? db().collection('taskSeries').doc().id : null;
+  const seriesCreated = seriesId ? 1 : 0;
+
+  const window = await getCalendarWindow();
+  const todayYmd = ymdIST(new Date());
+
+  let created = 0;
+
+  for (let i = 0; i < generateCount; i++) {
+    const dueDate = addInterval(dateFromYmdIST(dueDateYmd), recurrence, i);
+    const dueYmd = ymdIST(dueDate);
+
+    const startDate = addDays(dateFromYmdIST(dueYmd), -triggerDaysBefore);
+    const startYmd = ymdIST(startDate);
+
+    const ev = await createStartCalendarEvent({
+      title, clientId, startDateYmd: startYmd, dueDateYmd: dueYmd, window
+    });
+
+    // Construct partial task object for mailing
+    const taskObj = {
+      title,
+      startDateYmd: startYmd,
+      dueDateYmd: dueYmd,
+      clientStartSubject,
+      clientStartBody,
+      clientToEmails, clientCcEmails, clientBccEmails,
+      ccAssigneeOnClientStart, ccManagerOnClientStart,
+      assignedToEmail, assignedToUid
+    };
+
+    // Immediate mail if start is today
+    let mailResult = null;
+    if (startYmd === todayYmd) {
+      mailResult = await trySendStartMailImmediately({
+        task: taskObj,
+        client: {
+          name: clientData.name,
+          primaryEmail: clientData.primaryEmail,
+          ccEmails: clientData.ccEmails,
+          bccEmails: clientData.bccEmails
+        },
+        window
+      });
+    }
+
+    const tRef = db().collection('tasks').doc();
+    await tRef.set({
+      clientId,
+      title,
+      category,
+      type,
+      priority,
+      recurrence,
+      seriesId,
+
+      occurrenceIndex: i + 1,
+      occurrenceTotal: generateCount,
+
+      dueDate: admin.firestore.Timestamp.fromDate(dateFromYmdIST(dueYmd)),
+      dueDateYmd,
+      triggerDaysBefore,
+
+      startDate: admin.firestore.Timestamp.fromDate(dateFromYmdIST(startYmd)),
+      startDateYmd: startYmd,
+
+      assignedToUid,
+      assignedToEmail,
+
+      status: 'PENDING',
+      statusNote: '',
+      delayReason: null,
+      delayNotes: '',
+
+      snoozedUntilYmd: null,
+
+      calendarEventId: ev.calendarEventId,
+      calendarHtmlLink: ev.calendarHtmlLink || null,
+      calendarStartEventId: ev.calendarEventId,
+      calendarDueEventId: null,
+
+      clientToEmails,
+      clientCcEmails,
+      clientBccEmails,
+      ccAssigneeOnClientStart,
+      ccManagerOnClientStart,
+
+      clientStartSubject,
+      clientStartBody,
+
+      clientStartMailSent: mailResult ? true : false,
+      clientStartMailSentAt: mailResult?.clientStartMailSentAt || null,
+      clientStartGmailThreadId: mailResult?.clientStartGmailThreadId || null,
+      clientStartGmailId: mailResult?.clientStartGmailId || null,
+      clientStartRfcMessageId: mailResult?.clientStartRfcMessageId || null,
+
+      sendClientCompletionMail,
+      clientCompletionSubject,
+      clientCompletionBody,
+
+      createdByUid: user.uid,
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+
+      completedRequestedAt: null,
+      completedAt: null,
+      attachments: []
+    });
+
+    await auditLog({
+      taskId: tRef.id,
+      action: 'TASK_CREATED',
+      actorUid: user.uid,
+      actorEmail: user.email,
+      details: { source:'UI_CREATE', seriesId, occurrenceIndex: i+1, startDateYmd: startYmd, sentMailNow: !!mailResult }
+    });
+
+    created++;
+  }
+
+  return json(event, 200, { ok:true, created, seriesId, seriesCreated });
+});
+
+       --- File Content End ---
+
+
+    =� tasks_delete.js
+
+       --- File Content Start ---
+
+// netlify/functions/tasks_delete.js
+const { withCors, json, db, calendar, auditLog } = require('./_common');
+const { requireUser } = require('./_auth');
+
+async function deleteEvent(eventId) {
+  if (!eventId) return;
+  try {
+    await calendar().events.delete({
+      calendarId: 'primary',
+      eventId,
+      sendUpdates: 'none'
+    });
+  } catch {
+    // ignore if already deleted / not found
+  }
+}
+
+function roleOf(user) {
+  return String(user?.role || 'WORKER').toUpperCase().trim() || 'WORKER';
+}
+
+function isPrivileged(role) {
+  return role === 'PARTNER' || role === 'MANAGER';
+}
+
+exports.handler = withCors(async (event) => {
+  if (event.httpMethod !== 'POST') return json(event, 405, { ok:false, error:'POST only' });
+
+  const authRes = await requireUser(event);
+  if (authRes.error) return authRes.error;
+  const { user } = authRes;
+
+  const role = roleOf(user);
+
+  const body = JSON.parse(event.body || '{}');
+  const taskId = String(body.taskId || '').trim();
+  const applyToSeries = !!body.applyToSeries;
+
+  if (!taskId) return json(event, 400, { ok:false, error:'taskId required' });
+
+  const baseRef = db().collection('tasks').doc(taskId);
+  const baseSnap = await baseRef.get();
+  if (!baseSnap.exists) return json(event, 404, { ok:false, error:'Task not found' });
+  const base = baseSnap.data();
+
+  // Permission:
+  // - PARTNER/MANAGER: can delete any task, series allowed
+  // - WORKER: can delete only tasks assigned to them; series delete NOT allowed
+  if (!isPrivileged(role)) {
+    const isAssignee = base.assignedToUid === user.uid;
+    if (!isAssignee) return json(event, 403, { ok:false, error:'Not allowed' });
+    if (applyToSeries) return json(event, 403, { ok:false, error:'Workers cannot delete entire series' });
+  }
+
+  let targets = [];
+  if (applyToSeries && base.seriesId) {
+    const snap = await db().collection('tasks').where('seriesId', '==', base.seriesId).get();
+    targets = snap.docs.map(d => ({ id: d.id, ref: d.ref, data: d.data() }));
+  } else {
+    targets = [{ id: taskId, ref: baseRef, data: base }];
+  }
+
+  // For workers, enforce again for every target (series delete already blocked, but keep safe)
+  if (!isPrivileged(role)) {
+    const bad = targets.find(t => t.data.assignedToUid !== user.uid);
+    if (bad) return json(event, 403, { ok:false, error:'Not allowed on some tasks' });
+  }
+
+  for (const t of targets) {
+    // Single event model: calendarEventId preferred
+    const singleId = t.data.calendarEventId || t.data.calendarStartEventId || null;
+    await deleteEvent(singleId);
+
+    // Backward compatibility
+    await deleteEvent(t.data.calendarDueEventId || null);
+
+    await t.ref.delete();
+
+    await auditLog({
+      taskId: t.id,
+      action: 'TASK_DELETED',
+      actorUid: user.uid,
+      actorEmail: user.email,
+      details: { applyToSeries: !!applyToSeries, seriesId: base.seriesId || null, role }
+    });
+  }
+
+  if (applyToSeries && base.seriesId) {
+    try { await db().collection('taskSeries').doc(base.seriesId).delete(); } catch {}
+  }
+
+  return json(event, 200, { ok:true, deletedCount: targets.length });
+});
+
+       --- File Content End ---
+
+
+    =� tasks_updatestatus.js
+
+       --- File Content Start ---
+
+// netlify/functions/tasks_updatestatus.js
+const {
+  withCors, json, db, admin,
+  calendar, getCalendarWindow, calTimeRange,
+  sendEmailReply, sendEmail,
+  auditLog, renderTemplate, ymdToDmy, uniqEmails
+} = require('./_common');
+
+const { requireUser } = require('./_auth');
+
+async function patchEvent({ eventId, whenYmd, summary, description, colorId=null, window }) {
+  if (!eventId) return;
+  const cal = calendar();
+  const range = calTimeRange(whenYmd, window.startHH, window.endHH, window.timeZone);
+  await cal.events.patch({
+    calendarId: 'primary',
+    eventId,
+    sendUpdates: 'none',
+    requestBody: {
+      summary,
+      description,
+      ...range,
+      ...(colorId ? { colorId } : {})
+    }
+  });
+}
+
+function mergeRecipients({ client, task }) {
+  const to = (task.clientToEmails && task.clientToEmails.length)
+    ? task.clientToEmails
+    : (client.primaryEmail ? [client.primaryEmail] : []);
+
+  const cc = [
+    ...(client.ccEmails || []),
+    ...(task.clientCcEmails || []),
+  ];
+
+  const bcc = [
+    ...(client.bccEmails || []),
+    ...(task.clientBccEmails || []),
+  ];
+
+  return {
+    to: uniqEmails(to),
+    cc: uniqEmails(cc),
+    bcc: uniqEmails(bcc),
+  };
+}
+
+exports.handler = withCors(async (event) => {
+  if (event.httpMethod !== 'POST') return json(event, 405, { ok:false, error:'POST only' });
+
+  const authRes = await requireUser(event);
+  if (authRes.error) return authRes.error;
+  const { user } = authRes;
+
+  const role = String(user.role || 'WORKER').toUpperCase().trim();
+
+  const body = JSON.parse(event.body || '{}');
+  const { taskId, newStatus, statusNote, delayReason, delayNotes } = body;
+
+  if (!taskId || !newStatus) return json(event, 400, { ok:false, error:'taskId,newStatus required' });
+
+  const tRef = db().collection('tasks').doc(taskId);
+  const tSnap = await tRef.get();
+  if (!tSnap.exists) return json(event, 404, { ok:false, error:'Task not found' });
+
+  const task = tSnap.data();
+
+  const isPartnerOrManager = (role === 'PARTNER' || role === 'MANAGER');
+  const isAssignee = task.assignedToUid === user.uid;
+  if (!isPartnerOrManager && !isAssignee) return json(event, 403, { ok:false, error:'Not allowed' });
+
+  // Completion permission
+  if (!isPartnerOrManager && String(newStatus).toUpperCase() === 'COMPLETED') {
+    return json(event, 403, { ok:false, error:'Only partner/manager can mark COMPLETED' });
+  }
+
+  const updates = {
+    status: newStatus,
+    updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+  };
+
+  if (typeof statusNote === 'string') updates.statusNote = statusNote;
+  if (delayReason !== undefined) updates.delayReason = delayReason || null;
+  if (typeof delayNotes === 'string') updates.delayNotes = delayNotes;
+
+  if (newStatus === 'APPROVAL_PENDING') updates.completedRequestedAt = admin.firestore.FieldValue.serverTimestamp();
+  if (newStatus === 'COMPLETED') updates.completedAt = admin.firestore.FieldValue.serverTimestamp();
+
+  await tRef.update(updates);
+
+  await auditLog({
+    taskId,
+    action: 'STATUS_CHANGE',
+    actorUid: user.uid,
+    actorEmail: user.email,
+    details: { from: task.status, to: newStatus, statusNote: statusNote || '' }
+  });
+
+  // ===== On COMPLETED =====
+  if (newStatus === 'COMPLETED') {
+    const window = await getCalendarWindow();
+
+    const desc =
+      `ClientId: ${task.clientId}\n` +
+      `Start: ${task.startDateYmd}\n` +
+      `Due: ${task.dueDateYmd}\n`;
+
+    // Patch calendar event (single event). Also patch old fields if task created earlier.
+    const eventId = task.calendarEventId || task.calendarStartEventId || null;
+
+    try {
+      if (eventId) {
+        await patchEvent({
+          eventId,
+          whenYmd: task.startDateYmd,
+          summary: `[COMPLETED] START: ${task.title}`,
+          description: desc,
+          colorId: '2',
+          window
+        });
+      }
+      if (task.calendarDueEventId) {
+        await patchEvent({
+          eventId: task.calendarDueEventId,
+          whenYmd: task.dueDateYmd,
+          summary: `[COMPLETED] DUE: ${task.title}`,
+          description: desc,
+          colorId: '2',
+          window
+        });
+      }
+    } catch (e) {
+      console.warn('Calendar patch failed (ignored):', e.message || e);
+    }
+
+    // Respect per-task flag
+    if (task.sendClientCompletionMail === false) {
+      return json(event, 200, { ok:true, note:'Completed. Client completion email disabled for this task.' });
+    }
+
+    // Load client
+    const cSnap = await db().collection('clients').doc(task.clientId).get();
+    const client = cSnap.exists ? cSnap.data() : {};
+
+    const { to, cc, bcc } = mergeRecipients({ client, task });
+    if (!to.length) {
+      return json(event, 200, { ok:true, note:'Completed. No client email found to send completion email.' });
+    }
+
+    const vars = {
+      clientName: client.name || '',
+      taskTitle: task.title || '',
+      startDate: ymdToDmy(task.startDateYmd),
+      dueDate: ymdToDmy(task.dueDateYmd),
+      completedAt: new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' }),
+      statusNote: (typeof updates.statusNote === 'string' ? updates.statusNote : (task.statusNote || '')),
+    };
+
+    const subject = renderTemplate(
+      task.clientCompletionSubject || `Completed: {{taskTitle}}`,
+      vars
+    );
+
+    const html = renderTemplate(
+      task.clientCompletionBody || (
+        `Dear {{clientName}},\n\n` +
+        `We have completed: {{taskTitle}}\n` +
+        `Due date: {{dueDate}}\n` +
+        `Completed at: {{completedAt}}\n` +
+        `Status note: {{statusNote}}\n\n` +
+        `Regards,\n${process.env.MAIL_SIGNATURE || 'Compliance Team'}`
+      ),
+      vars
+    );
+
+    // ===== Mail trail fix =====
+    // Reply in same thread if we have it.
+    // Prefer stored threadId + RFC Message-ID; also keep "References" if stored.
+    const threadId = task.clientStartGmailThreadId || null;
+    const inReplyTo = task.clientStartRfcMessageId || null;
+    const references = task.clientStartReferences || inReplyTo || null;
+
+    if (threadId) {
+      await sendEmailReply({
+        threadId,
+        inReplyTo,
+        references,
+        to, cc, bcc,
+        subject,
+        html
+      });
+    } else {
+      // fallback: send as new mail
+      await sendEmail({ to, cc, bcc, subject, html });
+    }
+
+    await auditLog({
+      taskId,
+      action: 'EMAIL_SENT',
+      actorUid: null,
+      actorEmail: null,
+      details: { type:'CLIENT_COMPLETION', repliedToStartThread: !!threadId }
+    });
+  }
+
+  return json(event, 200, { ok:true });
+});
+
+       --- File Content End ---
+
+
+    =� tasks_updatetask.js
+
+       --- File Content Start ---
+
+// netlify/functions/tasks_updatetask.js
+const {
+  withCors, json, db, admin,
+  calendar, ymdIST, addDays, dateFromYmdIST,
+  getCalendarWindow, calTimeRange,
+  auditLog
+} = require('./_common');
+
+const { requireUser } = require('./_auth');
+
+async function findUserUidByEmail(email) {
+  if (!email) return null;
+  const e = String(email).trim().toLowerCase();
+  let snap = await db().collection('users').where('emailLower', '==', e).limit(1).get();
+  if (snap.empty) snap = await db().collection('users').where('email', '==', email).limit(1).get();
+  if (snap.empty) return null;
+  return snap.docs[0].id;
+}
+
+function normalizeCategory(x) {
+  const raw = String(x || 'OTHER').trim();
+  const u = raw.toUpperCase().replace(/\s+/g, '_');
+  if (u === 'ITR' || u === 'INCOME_TAX' || raw.toLowerCase() === 'income tax') return 'INCOME_TAX';
+  if (u === 'GST') return 'GST';
+  if (u === 'TDS') return 'TDS';
+  if (u === 'ROC') return 'ROC';
+  if (u === 'ACCOUNTING') return 'ACCOUNTING';
+  if (u === 'AUDIT') return 'AUDIT';
+  return 'OTHER';
+}
+
+function normalizePriority(x) {
+  const v = String(x || 'MEDIUM').trim().toUpperCase();
+  if (v === 'HIGH' || v === 'LOW') return v;
+  return 'MEDIUM';
+}
+
+function asEmailListLoose(x) {
+  if (Array.isArray(x)) return x.map(s => String(s).trim()).filter(Boolean);
+  if (typeof x === 'string') return x.split(/[;,:]/).map(s => s.trim()).filter(Boolean);
+  return [];
+}
+
+async function patchEvent({ eventId, whenYmd, summary, description, colorId=null, window }) {
+  if (!eventId) return;
+  const cal = calendar();
+  const range = calTimeRange(whenYmd, window.startHH, window.endHH, window.timeZone);
+  await cal.events.patch({
+    calendarId: 'primary',
+    eventId,
+    sendUpdates: 'none',
+    requestBody: {
+      summary,
+      description,
+      ...range,
+      ...(colorId ? { colorId } : {})
+    }
+  });
+}
+
+function completedPrefix(status) {
+  return status === 'COMPLETED' ? '[COMPLETED] ' : '';
+}
+
+exports.handler = withCors(async (event) => {
+  if (event.httpMethod !== 'POST') return json(event, 405, { ok:false, error:'POST only' });
+
+  const authRes = await requireUser(event);
+  if (authRes.error) return authRes.error;
+  const { user } = authRes;
+
+  const role = String(user.role || 'WORKER').toUpperCase().trim();
+  const canEdit = (role === 'PARTNER' || role === 'MANAGER');
+  if (!canEdit) return json(event, 403, { ok:false, error:'Partner/Manager only' });
+
+  const body = JSON.parse(event.body || '{}');
+  const taskId = String(body.taskId || '').trim();
+  if (!taskId) return json(event, 400, { ok:false, error:'taskId required' });
+
+  const baseRef = db().collection('tasks').doc(taskId);
+  const baseSnap = await baseRef.get();
+  if (!baseSnap.exists) return json(event, 404, { ok:false, error:'Task not found' });
+  const base = baseSnap.data();
+
+  const applyToSeries = !!body.applyToSeries && !!base.seriesId;
+
+  // Editable fields
+  const newTitle = String(body.title ?? base.title ?? '').trim() || base.title || 'Untitled';
+  const newCategory = normalizeCategory(body.category ?? base.category ?? 'OTHER');
+  const newType = String(body.type ?? base.type ?? 'FILING').trim();
+  const newPriority = normalizePriority(body.priority ?? base.priority ?? 'MEDIUM');
+
+  const newTrigger = body.triggerDaysBefore !== undefined
+    ? Math.max(0, parseInt(body.triggerDaysBefore, 10))
+    : (base.triggerDaysBefore ?? 15);
+
+  const newAssignedEmail = String(body.assignedToEmail ?? base.assignedToEmail ?? '').trim();
+  const newAssignedUid = newAssignedEmail
+    ? ((await findUserUidByEmail(newAssignedEmail)) || base.assignedToUid)
+    : base.assignedToUid;
+
+  // Mail templates + controls
+  const newClientStartSubject = String(body.clientStartSubject ?? base.clientStartSubject ?? '');
+  const newClientStartBody = String(body.clientStartBody ?? base.clientStartBody ?? '');
+
+  const sendClientCompletionMail =
+    body.sendClientCompletionMail === undefined
+      ? base.sendClientCompletionMail
+      : (body.sendClientCompletionMail !== false);
+
+  const newClientCompletionSubject = String(body.clientCompletionSubject ?? base.clientCompletionSubject ?? '');
+  const newClientCompletionBody = String(body.clientCompletionBody ?? base.clientCompletionBody ?? '');
+
+  // Recipient controls (now server-side)
+  const clientToEmails = asEmailListLoose(body.clientToEmails ?? base.clientToEmails ?? []);
+  const clientCcEmails = asEmailListLoose(body.clientCcEmails ?? base.clientCcEmails ?? []);
+  const clientBccEmails = asEmailListLoose(body.clientBccEmails ?? base.clientBccEmails ?? []);
+  const ccAssigneeOnClientStart = body.ccAssigneeOnClientStart === true ? true : (body.ccAssigneeOnClientStart === false ? false : !!base.ccAssigneeOnClientStart);
+  const ccManagerOnClientStart = body.ccManagerOnClientStart === true ? true : (body.ccManagerOnClientStart === false ? false : !!base.ccManagerOnClientStart);
+
+  // Snooze
+  const snoozedUntilYmd = (body.snoozedUntilYmd === null || body.snoozedUntilYmd === undefined)
+    ? (base.snoozedUntilYmd || null)
+    : String(body.snoozedUntilYmd || '').trim() || null;
+
+  if (snoozedUntilYmd && !/^\d{4}-\d{2}-\d{2}$/.test(snoozedUntilYmd)) {
+    return json(event, 400, { ok:false, error:'snoozedUntilYmd must be YYYY-MM-DD or null' });
+  }
+
+  // Due date change allowed ONLY for single occurrence
+  const newDueDateYmd = (!applyToSeries && body.dueDateYmd)
+    ? String(body.dueDateYmd).trim()
+    : base.dueDateYmd;
+
+  // Targets
+  let targets = [];
+  if (applyToSeries) {
+    const snap = await db().collection('tasks').where('seriesId', '==', base.seriesId).get();
+    targets = snap.docs.map(d => ({ id: d.id, ref: d.ref, data: d.data() }));
+  } else {
+    targets = [{ id: taskId, ref: baseRef, data: base }];
+  }
+
+  const window = await getCalendarWindow();
+  let updatedCount = 0;
+
+  for (const t of targets) {
+    const old = t.data;
+
+    const dueYmd = (t.id === taskId) ? newDueDateYmd : old.dueDateYmd;
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(dueYmd)) {
+      return json(event, 400, { ok:false, error:`Invalid dueDateYmd for task ${t.id}` });
+    }
+
+    const startYmd = ymdIST(addDays(dateFromYmdIST(dueYmd), -newTrigger));
+
+    const updateDoc = {
+      title: newTitle,
+      category: newCategory,
+      type: newType,
+      priority: newPriority,
+      triggerDaysBefore: newTrigger,
+
+      assignedToEmail: newAssignedEmail || old.assignedToEmail || '',
+      assignedToUid: newAssignedUid || old.assignedToUid || null,
+
+      clientStartSubject: newClientStartSubject,
+      clientStartBody: newClientStartBody,
+
+      sendClientCompletionMail,
+      clientCompletionSubject: newClientCompletionSubject,
+      clientCompletionBody: newClientCompletionBody,
+
+      clientToEmails,
+      clientCcEmails,
+      clientBccEmails,
+      ccAssigneeOnClientStart,
+      ccManagerOnClientStart,
+
+      snoozedUntilYmd: snoozedUntilYmd || null,
+
+      startDateYmd: startYmd,
+      startDate: admin.firestore.Timestamp.fromDate(dateFromYmdIST(startYmd)),
+
+      updatedAt: admin.firestore.FieldValue.serverTimestamp()
+    };
+
+    if (t.id === taskId) {
+      updateDoc.dueDateYmd = dueYmd;
+      updateDoc.dueDate = admin.firestore.Timestamp.fromDate(dateFromYmdIST(dueYmd));
+    }
+
+    await t.ref.update(updateDoc);
+
+    // Patch single calendar event
+    const prefix = completedPrefix(old.status);
+    const desc =
+      `ClientId: ${old.clientId}\n` +
+      `Start: ${startYmd}\n` +
+      `Due: ${dueYmd}\n`;
+
+    const eventId = old.calendarEventId || old.calendarStartEventId || null;
+    await patchEvent({
+      eventId,
+      whenYmd: startYmd,
+      summary: `${prefix}START: ${newTitle}`,
+      description: desc,
+      colorId: (old.status === 'COMPLETED') ? '2' : null,
+      window
+    });
+
+    // Backward compatibility: if old due event exists
+    if (old.calendarDueEventId) {
+      await patchEvent({
+        eventId: old.calendarDueEventId,
+        whenYmd: dueYmd,
+        summary: `${prefix}DUE: ${newTitle}`,
+        description: desc,
+        colorId: (old.status === 'COMPLETED') ? '2' : null,
+        window
+      });
+    }
+
+    await auditLog({
+      taskId: t.id,
+      action: 'TASK_EDITED',
+      actorUid: user.uid,
+      actorEmail: user.email,
+      details: { applyToSeries, baseTaskId: taskId }
+    });
+
+    updatedCount++;
+  }
+
+  return json(event, 200, {
+    ok:true,
+    updatedCount,
+    applyToSeries,
+    seriesId: base.seriesId || null
+  });
+});
+
+       --- File Content End ---
+
+
+    =� tasks_uploadattachment.js
+
+       --- File Content Start ---
+
+const Busboy = require('busboy');
+const { withCors, json, db, admin, drive, auditLog } = require('./_common');
+const { requireUser } = require('./_auth');
+
+async function ensureRootFolder() {
+  const d = drive();
+  const name = process.env.DRIVE_ROOT_FOLDER_NAME || 'ComplianceManagement';
+
+  const res = await d.files.list({
+    q: `mimeType='application/vnd.google-apps.folder' and name='${name}' and trashed=false`,
+    fields: 'files(id,name)',
+    spaces: 'drive'
+  });
+
+  if (res.data.files && res.data.files.length) return res.data.files[0].id;
+
+  const created = await d.files.create({
+    requestBody: { name, mimeType: 'application/vnd.google-apps.folder' },
+    fields: 'id'
+  });
+  return created.data.id;
+}
+
+async function ensureClientFolder(clientId) {
+  const cRef = db().collection('clients').doc(clientId);
+  const cSnap = await cRef.get();
+  const client = cSnap.data();
+  if (client.driveFolderId) return client.driveFolderId;
+
+  const rootId = await ensureRootFolder();
+  const folderName = `${client.name || 'Client'}_${clientId}`;
+
+  const d = drive();
+  const created = await d.files.create({
+    requestBody: {
+      name: folderName,
+      mimeType: 'application/vnd.google-apps.folder',
+      parents: [rootId]
+    },
+    fields: 'id'
+  });
+
+  await cRef.update({ driveFolderId: created.data.id });
+  return created.data.id;
+}
+
+exports.handler = withCors(async (event) => {
+  if (event.httpMethod !== 'POST') return json(event, 405, { ok:false, error:'POST only' });
+
+  const authRes = await requireUser(event);
+  if (authRes.error) return authRes.error;
+  const { user } = authRes;
+
+  const busboy = Busboy({ headers: event.headers });
+
+  let taskId = null;
+  let attachmentType = 'OTHER';
+  let fileBuffer = Buffer.alloc(0);
+  let fileName = 'file';
+  let mimeType = 'application/octet-stream';
+
+  busboy.on('field', (name, val) => {
+    if (name === 'taskId') taskId = val;
+    if (name === 'type') attachmentType = String(val || 'OTHER').toUpperCase();
+  });
+
+  busboy.on('file', (name, file, info) => {
+    fileName = info.filename || 'file';
+    mimeType = info.mimeType || 'application/octet-stream';
+    file.on('data', (d) => { fileBuffer = Buffer.concat([fileBuffer, d]); });
+  });
+
+  const done = new Promise((resolve, reject) => {
+    busboy.on('finish', resolve);
+    busboy.on('error', reject);
+  });
+
+  const bodyBuf = event.isBase64Encoded ? Buffer.from(event.body, 'base64') : Buffer.from(event.body || '');
+  busboy.end(bodyBuf);
+  await done;
+
+  if (!taskId) return json(event, 400, { ok:false, error:'taskId required' });
+
+  const tRef = db().collection('tasks').doc(taskId);
+  const tSnap = await tRef.get();
+  if (!tSnap.exists) return json(event, 404, { ok:false, error:'Task not found' });
+
+  const task = tSnap.data();
+  const isPartner = user.role === 'PARTNER';
+  const isAssignee = task.assignedToUid === user.uid;
+  if (!isPartner && !isAssignee) return json(event, 403, { ok:false, error:'Not allowed' });
+
+  const folderId = await ensureClientFolder(task.clientId);
+
+  const created = await drive().files.create({
+    requestBody: { name: fileName, parents: [folderId] },
+    media: { mimeType, body: Buffer.from(fileBuffer) },
+    fields: 'id, webViewLink'
+  });
+
+  const attachment = {
+    type: attachmentType,
+    fileName,
+    mimeType,
+    driveFileId: created.data.id,
+    driveWebViewLink: created.data.webViewLink,
+    uploadedByUid: user.uid,
+    uploadedAt: admin.firestore.FieldValue.serverTimestamp()
+  };
+
+  await tRef.update({
+    attachments: admin.firestore.FieldValue.arrayUnion(attachment),
+    updatedAt: admin.firestore.FieldValue.serverTimestamp()
+  });
+
+  await auditLog({ taskId, action:'ATTACHMENT_UPLOAD', actorUid:user.uid, actorEmail:user.email, details:{ fileName, type: attachmentType } });
+
+  return json(event, 200, { ok:true, attachment });
+});
+
+       --- File Content End ---
+
+
+    =� users_list.js
+
+       --- File Content Start ---
+
+const { withCors, json, db } = require('./_common');
+const { requireUser, requirePartner } = require('./_auth');
+
+exports.handler = withCors(async (event) => {
+  if (event.httpMethod !== 'POST') return json(event, 405, { ok:false, error:'POST only' });
+
+  const authRes = await requireUser(event);
+  if (authRes.error) return authRes.error;
+  const { user } = authRes;
+
+  const p = requirePartner(event, user);
+  if (p.error) return p.error;
+
+  const body = event.body ? JSON.parse(event.body) : {};
+  const onlyActive = body.onlyActive === true;
+
+  let q = db().collection('users');
+  if (onlyActive) q = q.where('active', '==', true);
+
+  // orderBy on email is fine (single-field index)
+  const snap = await q.orderBy('email', 'asc').limit(500).get();
+
+  const users = snap.docs.map(d => ({ uid: d.id, ...d.data() }));
+  return json(event, 200, { ok:true, users });
+});
+
+       --- File Content End ---
+
+
+    =� users_setDisplayName.js
+
+       --- File Content Start ---
+
+// netlify/functions/users_setdisplayname.js
+const { withCors, json, db, admin } = require('./_common');
+const { requireUser, requirePartner } = require('./_auth');
+
+exports.handler = withCors(async (event) => {
+  if (event.httpMethod !== 'POST') return json(event, 405, { ok:false, error:'POST only' });
+
+  const authRes = await requireUser(event);
+  if (authRes.error) return authRes.error;
+  const { user } = authRes;
+
+  const p = requirePartner(event, user);
+  if (p.error) return p.error;
+
+  const body = JSON.parse(event.body || '{}');
+  const uid = String(body.uid || '').trim();
+  const displayName = String(body.displayName || '').trim();
+
+  if (!uid) return json(event, 400, { ok:false, error:'uid required' });
+  if (!displayName) return json(event, 400, { ok:false, error:'displayName required' });
+  if (displayName.length > 60) return json(event, 400, { ok:false, error:'displayName too long (max 60)' });
+
+  await db().collection('users').doc(uid).set({
+    displayName,
+    updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    updatedBy: user.email
+  }, { merge: true });
+
+  return json(event, 200, { ok:true, uid, displayName });
+});
+
+       --- File Content End ---
+
+
+    =� users_setManager.js
+
+       --- File Content Start ---
+
+// netlify/functions/users_setmanager.js
+const { withCors, json, db, admin } = require('./_common');
+const { requireUser, requirePartner } = require('./_auth');
+
+/**
+ * Fix: previously it failed when managerEmail wasn't present as a user.
+ * New behavior:
+ * - Allow saving ANY managerEmail (even if manager user not created yet)
+ * - If managerEmail exists in users (emailLower match), also store managerUid
+ * - If managerEmail is empty => clear managerEmail + managerUid
+ */
+
+async function findUserByEmailLower(email) {
+  const e = String(email || '').trim().toLowerCase();
+  if (!e) return null;
+  const snap = await db().collection('users').where('emailLower', '==', e).limit(1).get();
+  if (snap.empty) return null;
+  return { uid: snap.docs[0].id, ...snap.docs[0].data() };
+}
+
+async function findUserByUid(uid) {
+  const s = await db().collection('users').doc(uid).get();
+  if (!s.exists) return null;
+  return { uid: s.id, ...s.data() };
+}
+
+exports.handler = withCors(async (event) => {
+  if (event.httpMethod !== 'POST') return json(event, 405, { ok:false, error:'POST only' });
+
+  const authRes = await requireUser(event);
+  if (authRes.error) return authRes.error;
+  const { user } = authRes;
+
+  const p = requirePartner(event, user);
+  if (p.error) return p.error;
+
+  const body = JSON.parse(event.body || '{}');
+  const targetUid = body.uid || null;
+  const targetEmail = body.email || null;
+  const managerEmailRaw = String(body.managerEmail || '').trim(); // can be empty to clear
+
+  if (!targetUid && !targetEmail) {
+    return json(event, 400, { ok:false, error:'uid or email required' });
+  }
+
+  const target = targetUid ? await findUserByUid(targetUid) : await findUserByEmailLower(targetEmail);
+  if (!target) return json(event, 404, { ok:false, error:'Target user not found' });
+
+  // Clear manager mapping
+  if (!managerEmailRaw) {
+    await db().collection('users').doc(target.uid).set({
+      managerEmail: null,
+      managerUid: null,
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      updatedBy: user.email
+    }, { merge: true });
+
+    return json(event, 200, { ok:true, uid: target.uid, managerEmail: null, managerUid: null });
+  }
+
+  // Validate email format lightly (optional but helpful)
+  const managerEmail = managerEmailRaw;
+  const looksLikeEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(managerEmail);
+  if (!looksLikeEmail) {
+    return json(event, 400, { ok:false, error:'managerEmail is not a valid email address' });
+  }
+
+  // Best-effort: resolve managerUid if manager is already in users
+  let managerUid = null;
+  let managerRole = null;
+
+  const mgr = await findUserByEmailLower(managerEmail);
+  if (mgr) {
+    managerUid = mgr.uid;
+    managerRole = String(mgr.role || 'WORKER').toUpperCase();
+    // Optional safety: allow only PARTNER/MANAGER as managers
+    if (!['PARTNER','MANAGER'].includes(managerRole)) {
+      // Still allow saving managerEmail, but don't link uid (prevents invalid role mapping)
+      managerUid = null;
+    }
+  }
+
+  await db().collection('users').doc(target.uid).set({
+    managerEmail,
+    managerUid: managerUid || null,
+    updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    updatedBy: user.email
+  }, { merge: true });
+
+  return json(event, 200, {
+    ok:true,
+    uid: target.uid,
+    managerEmail,
+    managerUid: managerUid || null,
+    note: mgr ? 'manager resolved' : 'manager email saved (user not found yet)'
+  });
+});
+
+       --- File Content End ---
+
+
+    =� users_setmanager.js
+
+       --- File Content Start ---
+
+const { withCors, json, db, admin } = require('./_common');
+const { requireUser, requirePartner } = require('./_auth');
+
+async function findUserByEmailLower(email) {
+  const e = String(email || '').trim().toLowerCase();
+  if (!e) return null;
+  const snap = await db().collection('users').where('emailLower', '==', e).limit(1).get();
+  if (snap.empty) return null;
+  return { uid: snap.docs[0].id, ...snap.docs[0].data() };
+}
+
+async function findUserByUid(uid) {
+  const s = await db().collection('users').doc(uid).get();
+  if (!s.exists) return null;
+  return { uid: s.id, ...s.data() };
+}
+
+exports.handler = withCors(async (event) => {
+  if (event.httpMethod !== 'POST') return json(event, 405, { ok:false, error:'POST only' });
+
+  const authRes = await requireUser(event);
+  if (authRes.error) return authRes.error;
+  const { user } = authRes;
+
+  const p = requirePartner(event, user);
+  if (p.error) return p.error;
+
+  const body = JSON.parse(event.body || '{}');
+  const targetUid = body.uid || null;
+  const targetEmail = body.email || null;
+
+  const managerEmail = (body.managerEmail || '').trim(); // can be empty to clear
+
+  if (!targetUid && !targetEmail) return json(event, 400, { ok:false, error:'uid or email required' });
+
+  const target = targetUid ? await findUserByUid(targetUid) : await findUserByEmailLower(targetEmail);
+  if (!target) return json(event, 404, { ok:false, error:'Target user not found' });
+
+  let managerUid = null;
+  let managerRole = null;
+
+  if (managerEmail) {
+    const mgr = await findUserByEmailLower(managerEmail);
+    if (!mgr) return json(event, 400, { ok:false, error:'managerEmail not found in users' });
+
+    managerUid = mgr.uid;
+    managerRole = mgr.role || 'WORKER';
+
+    // Allow manager to be PARTNER or MANAGER (recommended)
+    if (!['PARTNER','MANAGER'].includes(String(managerRole).toUpperCase())) {
+      return json(event, 400, { ok:false, error:'managerEmail must belong to a PARTNER or MANAGER user' });
+    }
+  }
+
+  await db().collection('users').doc(target.uid).set({
+    managerEmail: managerEmail || null,
+    managerUid: managerUid || null,
+    updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    updatedBy: user.email
+  }, { merge: true });
+
+  return json(event, 200, { ok:true, uid: target.uid, managerEmail: managerEmail || null, managerUid: managerUid || null });
+});
+
+       --- File Content End ---
+
+
+    =� users_setrole.js
+
+       --- File Content Start ---
+
+const { withCors, json, db, admin } = require('./_common');
+const { requireUser, requirePartner } = require('./_auth');
+
+const ROLES = new Set(['PARTNER','MANAGER','WORKER']);
+
+async function findUserUidByEmail(email) {
+  if (!email) return null;
+  const e = String(email).trim().toLowerCase();
+  const snap = await db().collection('users').where('emailLower', '==', e).limit(1).get();
+  if (snap.empty) return null;
+  return snap.docs[0].id;
+}
+
+exports.handler = withCors(async (event) => {
+  if (event.httpMethod !== 'POST') return json(event, 405, { ok:false, error:'POST only' });
+
+  const authRes = await requireUser(event);
+  if (authRes.error) return authRes.error;
+  const { user } = authRes;
+
+  const p = requirePartner(event, user);
+  if (p.error) return p.error;
+
+  const body = JSON.parse(event.body || '{}');
+  const uid = body.uid || null;
+  const email = body.email || null;
+  const role = String(body.role || '').toUpperCase().trim();
+  const active = body.active !== false;
+
+  if (!uid && !email) return json(event, 400, { ok:false, error:'uid or email required' });
+  if (!ROLES.has(role)) return json(event, 400, { ok:false, error:'role must be PARTNER / MANAGER / WORKER' });
+
+  const targetUid = uid || await findUserUidByEmail(email);
+  if (!targetUid) return json(event, 404, { ok:false, error:'User not found' });
+
+  await db().collection('users').doc(targetUid).set({
+    role,
+    active,
+    updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    updatedBy: user.email
+  }, { merge: true });
+
+  return json(event, 200, { ok:true, uid: targetUid, role, active });
+});
+
+       --- File Content End ---
+

@@ -1,0 +1,68 @@
+[STEP ] Select UI root folder (contains index.html)...
+[INFO ] UI folder: /home/ubuntu/cm-oauth-setup
+
+[STEP ] Select Backend root folder (contains netlify/functions)...
+[INFO ] Backend folder: /home/ubuntu/cm-oauth-setup/compliance-backend
+
+[STEP ] Validating folder structure...
+[    >]   UI index.html: NOT FOUND
+[FAIL ]   index.html not found in UI folder!
+[FAIL ] Folder validation failed. Exiting.
+
+
+[═══] ════════════════════════════════════════════════════════════
+[═══]   PHASE 1: UI PATCHES (index.html)
+[═══] ════════════════════════════════════════════════════════════
+[    >] Reading: /home/ubuntu/cm-oauth-setup/index.html
+[FAIL ] File NOT FOUND: /home/ubuntu/cm-oauth-setup/index.html
+[FAIL ] Cannot read index.html. Aborting UI patches.
+
+[═══] ════════════════════════════════════════════════════════════
+[═══]   PHASE 2: BACKEND PATCHES
+[═══] ════════════════════════════════════════════════════════════
+
+
+[═══] ════════════════════════════════════════════════════════════
+[═══]   File: netlify/functions/tasks_updatestatus.js
+[═══] ════════════════════════════════════════════════════════════
+[WARN ] File not found: /home/ubuntu/cm-oauth-setup/netlify/functions/tasks_updatestatus.js — skipping all patches for this file
+[SKIP ] Skipped (file missing): BE-1: Calendar completion patch Client NAME
+
+
+[═══] ════════════════════════════════════════════════════════════
+[═══]   File: netlify/functions/series_rebuild.js
+[═══] ════════════════════════════════════════════════════════════
+[WARN ] File not found: /home/ubuntu/cm-oauth-setup/netlify/functions/series_rebuild.js — skipping all patches for this file
+[SKIP ] Skipped (file missing): BE-2A: series_rebuild imports update
+[SKIP ] Skipped (file missing): BE-2B: Remove local createStartCalendarEvent from series_rebuild
+[SKIP ] Skipped (file missing): BE-2C: Load clientName in series_rebuild
+[SKIP ] Skipped (file missing): BE-2D: series_rebuild calendar event creation call
+[SKIP ] Skipped (file missing): BE-2E: series_rebuild store clientNameSnapshot
+
+
+[═══] ════════════════════════════════════════════════════════════
+[═══]   File: netlify/functions/tasks_bulkimportcsv.js
+[═══] ════════════════════════════════════════════════════════════
+[WARN ] File not found: /home/ubuntu/cm-oauth-setup/netlify/functions/tasks_bulkimportcsv.js — skipping all patches for this file
+[SKIP ] Skipped (file missing): BE-3A: bulkimport imports update
+[SKIP ] Skipped (file missing): BE-3B: Remove local createStartCalendarEvent from bulkimport
+[SKIP ] Skipped (file missing): BE-3C: bulkimport pass clientName to calendar
+
+
+[═══] ════════════════════════════════════════════════════════════
+[═══]   File: netlify/functions/tasks_createone.js
+[═══] ════════════════════════════════════════════════════════════
+[WARN ] File not found: /home/ubuntu/cm-oauth-setup/netlify/functions/tasks_createone.js — skipping all patches for this file
+[SKIP ] Skipped (file missing): BE-4A: createone define calendarDescription
+[SKIP ] Skipped (file missing): BE-4B: createone pass clientName to calendar
+[SKIP ] Skipped (file missing): BE-4C: createone store clientNameSnapshot
+
+
+[═══] ════════════════════════════════════════════════════════════
+[═══]   FINAL SUMMARY
+[═══] ════════════════════════════════════════════════════════════
+[INFO ] Successful replacements : 0
+[INFO ] Skipped (already done?) : 12
+[INFO ] Warnings                : 4
+[INFO ] Failures                : 4
+[FAIL ] SOME PATCHES FAILED — review log above!

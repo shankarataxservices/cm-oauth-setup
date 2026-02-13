@@ -1,0 +1,120 @@
+
+[═══] ════════════════════════════════════════════════════════════
+[═══]   TASK MANAGEMENT APP — PENDING CHANGES PATCHER
+[═══] ════════════════════════════════════════════════════════════
+[INFO ] Started at: 2026-02-14 00:08:25
+
+[STEP ] Opening folder picker...
+[INFO ] Selected folder: /home/ubuntu/cm-oauth-setup/compliance-frontend/public
+
+[STEP ] Validating folder structure...
+[    >]   index.html: FOUND
+[    >]   netlify/functions/tasks_updatestatus.js: NOT FOUND
+[    >]   netlify/functions/series_rebuild.js: NOT FOUND
+[    >]   netlify/functions/tasks_bulkimportcsv.js: NOT FOUND
+[    >]   netlify/functions/tasks_createone.js: NOT FOUND
+[WARN ] Missing backend files: ['netlify/functions/tasks_updatestatus.js', 'netlify/functions/series_rebuild.js', 'netlify/functions/tasks_bulkimportcsv.js', 'netlify/functions/tasks_createone.js']
+[WARN ] Will skip patches for missing files.
+
+
+[═══] ════════════════════════════════════════════════════════════
+[═══]   PHASE 1: UI PATCHES (index.html)
+[═══] ════════════════════════════════════════════════════════════
+[    >] Reading: /home/ubuntu/cm-oauth-setup/compliance-frontend/public/index.html
+[    >] Read 222421 chars, 5617 lines
+[STEP ] Creating backup of index.html...
+[    >] Backup created: /home/ubuntu/cm-oauth-setup/compliance-frontend/public/index.html.20260214_000834.bak
+[STEP ] Patch: UI-1: Bulk status dropdown include COMPLETED
+[    >]   Exact match failed, trying line-stripped matching...
+[    >]   Line-stripped match found at lines 2083-2087
+[ OK  ]   Applied via line-stripped match: UI-1: Bulk status dropdown include COMPLETED
+
+[STEP ] Patch: UI-2: Help text role statement update
+[    >]   Exact match failed, trying line-stripped matching...
+[    >]   Line-stripped match found at lines 2438-2439
+[ OK  ]   Applied via line-stripped match: UI-2: Help text role statement update
+
+[STEP ] Patch: UI-3: Task Drawer status dropdown COMPLETED for all
+[    >]   Exact match failed, trying line-stripped matching...
+[    >]   Line-stripped match found at lines 3594-3598
+[ OK  ]   Applied via line-stripped match: UI-3: Task Drawer status dropdown COMPLETED for all
+
+[STEP ] Patch: UI-4: Drawer dropdown width/overflow CSS fix
+[    >]   Exact match at position 129702
+[ OK  ]   Applied via exact match: UI-4: Drawer dropdown width/overflow CSS fix
+
+[STEP ] Patch: UI-5A: Expose __cos_openCreateOneTask
+[    >]   Exact match failed, trying line-stripped matching...
+[    >]   Line-stripped match found at lines 4473-4475
+[ OK  ]   Applied via line-stripped match: UI-5A: Expose __cos_openCreateOneTask
+
+[STEP ] Patch: UI-5B: renderCreateDrawer support oneOnly
+[    >]   Exact match failed, trying line-stripped matching...
+[    >]   Line-stripped match found at lines 4461-4471
+[ OK  ]   Applied via line-stripped match: UI-5B: renderCreateDrawer support oneOnly
+
+[STEP ] Patch: UI-5C: mountCreatePanel accept oneOnly
+[    >]   Exact match at position 161690
+[ OK  ]   Applied via exact match: UI-5C: mountCreatePanel accept oneOnly
+
+[STEP ] Patch: UI-5D: Force recurrence/count when oneOnly
+[    >]   Exact match at position 164445
+[ OK  ]   Applied via exact match: UI-5D: Force recurrence/count when oneOnly
+
+[STEP ] Patch: UI-5E: Force payload for oneOnly
+[    >]   Exact match failed, trying line-stripped matching...
+[    >]   Line-stripped match found at lines 4324-4325
+[ OK  ]   Applied via line-stripped match: UI-5E: Force payload for oneOnly
+
+[    >] Written 223315 chars to /home/ubuntu/cm-oauth-setup/compliance-frontend/public/index.html
+[ OK  ] index.html written with all applied UI patches
+
+[═══] ════════════════════════════════════════════════════════════
+[═══]   PHASE 2: BACKEND PATCHES
+[═══] ════════════════════════════════════════════════════════════
+
+
+[═══] ════════════════════════════════════════════════════════════
+[═══]   File: netlify/functions/tasks_updatestatus.js
+[═══] ════════════════════════════════════════════════════════════
+[WARN ] File not found: /home/ubuntu/cm-oauth-setup/compliance-frontend/public/netlify/functions/tasks_updatestatus.js — skipping all patches for this file
+[SKIP ] Skipped (file missing): BE-1: Calendar completion patch Client NAME
+
+
+[═══] ════════════════════════════════════════════════════════════
+[═══]   File: netlify/functions/series_rebuild.js
+[═══] ════════════════════════════════════════════════════════════
+[WARN ] File not found: /home/ubuntu/cm-oauth-setup/compliance-frontend/public/netlify/functions/series_rebuild.js — skipping all patches for this file
+[SKIP ] Skipped (file missing): BE-2A: series_rebuild imports update
+[SKIP ] Skipped (file missing): BE-2B: Remove local createStartCalendarEvent from series_rebuild
+[SKIP ] Skipped (file missing): BE-2C: Load clientName in series_rebuild
+[SKIP ] Skipped (file missing): BE-2D: series_rebuild calendar event creation call
+[SKIP ] Skipped (file missing): BE-2E: series_rebuild store clientNameSnapshot
+
+
+[═══] ════════════════════════════════════════════════════════════
+[═══]   File: netlify/functions/tasks_bulkimportcsv.js
+[═══] ════════════════════════════════════════════════════════════
+[WARN ] File not found: /home/ubuntu/cm-oauth-setup/compliance-frontend/public/netlify/functions/tasks_bulkimportcsv.js — skipping all patches for this file
+[SKIP ] Skipped (file missing): BE-3A: bulkimport imports update
+[SKIP ] Skipped (file missing): BE-3B: Remove local createStartCalendarEvent from bulkimport
+[SKIP ] Skipped (file missing): BE-3C: bulkimport pass clientName to calendar
+
+
+[═══] ════════════════════════════════════════════════════════════
+[═══]   File: netlify/functions/tasks_createone.js
+[═══] ════════════════════════════════════════════════════════════
+[WARN ] File not found: /home/ubuntu/cm-oauth-setup/compliance-frontend/public/netlify/functions/tasks_createone.js — skipping all patches for this file
+[SKIP ] Skipped (file missing): BE-4A: createone define calendarDescription
+[SKIP ] Skipped (file missing): BE-4B: createone pass clientName to calendar
+[SKIP ] Skipped (file missing): BE-4C: createone store clientNameSnapshot
+
+
+[═══] ════════════════════════════════════════════════════════════
+[═══]   FINAL SUMMARY
+[═══] ════════════════════════════════════════════════════════════
+[INFO ] Successful replacements : 10
+[INFO ] Skipped (already done?) : 12
+[INFO ] Warnings                : 6
+[INFO ] Failures                : 0
+[ OK  ] ALL PATCHES APPLIED SUCCESSFULLY

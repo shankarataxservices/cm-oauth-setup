@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Compliance Management — Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/styles.css">
+</head>
+<body class="logged-out" data-page="dashboard">
+<div class="appShell">
+
+  <header>
+    <div class="brand">
+      <div class="brandMark"></div>
+      <div class="brandTitle">
+        <div>Compliance Management</div>
+        <small>IST • Tasks • Calendar • Mail Automation</small>
+      </div>
+    </div>
+    <div class="headerRight">
+      <button class="btn iconBtn" id="themeToggle" type="button">
+        <span class="icon" id="themeIcon">☾</span>
+        <span id="themeLabel">Dark</span>
+      </button>
+      <button class="btn small" id="sidebarToggle" type="button">Menu</button>
+      <div id="topUser"></div>
+    </div>
+  </header>
+
+  <div class="layout">
+    <aside id="sidebar">
+      <div class="navHint" id="navRoleHint">Not signed in</div>
+      <div class="navGroup" id="navGroup">
+        <a class="navItem active" href="dashboard.html" id="navDash">Dashboard</a>
+        <a class="navItem" href="calendar.html" id="navCal">Calendar</a>
+        <a class="navItem" href="tasks.html" id="navTasks">Tasks / Create / Import</a>
+        <a class="navItem" href="draft.html" id="navDraft">Drafting Studio</a>
+        <a class="navItem" href="admin.html" id="navAdmin">Admin (Team/Settings/Audit)</a>
+      </div>
+
+      <div class="sidebarCard hidden" id="tasksSidebarCard">
+        <div class="sidebarCardHead">
+          <div class="t">Tasks</div>
+          <div class="badgeCount" id="sidebarTaskCount">0</div>
+        </div>
+        <div class="sidebarCardBody">
+          <div class="label">Needs action in (days)</div>
+          <input id="sbDays" type="number" value="7" min="0">
+          <div class="sub" style="margin-top:8px">Overdue + due within N days. Click to open drawer.</div>
+          <div style="height:10px"></div>
+          <div class="taskList" id="sidebarTasks"></div>
+        </div>
+      </div>
+    </aside>
+
+    <main>
+      <!-- LOGIN (hidden after auth) -->
+      <section id="loginCard" class="card">
+        <div class="cardHeader">
+          <div><h3 class="title">Login / Signup</h3></div>
+        </div>
+        <div class="cardBody">
+          <div class="label">Email</div><input id="email" type="email">
+          <div class="label" style="margin-top:10px">Password</div><input id="pass" type="password">
+          <div style="display:flex;gap:10px;margin-top:10px">
+            <button class="btn primary" id="btnLogin" type="button">Login</button>
+            <button class="btn" id="btnSignup" type="button">Signup</button>
+          </div>
+        </div>
+      </section>
+
+      <section id="partnerUI" class="hidden">
+        <div id="p_dashboard" class="page active">
+          <div class="grid">
+            <div class="col-12 card">
+              <div class="cardHeader">
+                <div><h3 class="title">KPIs</h3><p class="sub">Based on loaded tasks (Firestore live).</p></div>
+              </div>
+              <div class="cardBody">
+                <div class="grid">
+                  <div class="col-4 card"><div class="cardBody"><div class="label">Total</div><div class="kpi" id="kTotal">0</div></div></div>
+                  <div class="col-4 card"><div class="cardBody"><div class="label">Upcoming 7d</div><div class="kpi" id="k7">0</div></div></div>
+                  <div class="col-4 card"><div class="cardBody"><div class="label">Upcoming 15d</div><div class="kpi" id="k15">0</div></div></div>
+                  <div class="col-4 card"><div class="cardBody"><div class="label">Upcoming 30d</div><div class="kpi" id="k30">0</div></div></div>
+                  <div class="col-4 card"><div class="cardBody"><div class="label">Overdue</div><div class="kpi" id="kOverdue">0</div></div></div>
+                  <div class="col-4 card"><div class="cardBody"><div class="label">Approval Pending</div><div class="kpi" id="kAppr">0</div></div></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-12 card">
+              <div class="cardHeader">
+                <div><h3 class="title">Quick Alerts</h3><p class="sub">Click a row to open drawer.</p></div>
+                <button class="btn small" id="btnOpenTasksFromDash" type="button">Open Tasks</button>
+              </div>
+              <div class="cardBody">
+                <div class="tableWrap">
+                  <table>
+                    <thead><tr><th>Alert</th><th>Client</th><th>Title</th><th>Start</th><th>Due</th><th>Status</th></tr></thead>
+                    <tbody id="dashAlerts"></tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </section>
+
+      <section id="workerUI" class="hidden"></section>
+    </main>
+  </div>
+</div>
+
+<!-- shared drawer/toast/loading + firebase + app.js -->
+<div class="overlay" id="overlay"></div>
+<div class="drawer" id="drawer">
+  <div class="drawerHead">
+    <div>
+      <div class="drawerTitle" id="dTitle">Task</div>
+      <div class="drawerSub" id="dSub">—</div>
+    </div>
+    <div style="display:flex;gap:10px">
+      <button class="btn small" id="btnExpandDrawer" title="Toggle Fullscreen">⤢</button>
+      <button class="btn small" id="btnCloseDrawer">Close</button>
+    </div>
+  </div>
+  <div class="drawerBody">
+    <!-- Paste your FULL drawerBody here (same as current) -->
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+<div id="loadingOverlay" class="loadingOverlay hidden">
+  <div class="loadingCard">
+    <div class="loadingSpinner"></div>
+    <div>
+      <div style="font-weight:950;font-size:14px" id="loadingTitle">Working…</div>
+      <div class="sub" id="loadingMsg" style="margin-top:6px">Please wait</div>
+    </div>
+  </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+<script>window.DEFAULT_PAGE_ID = 'p_dashboard';</script>
+<script src="assets/app.js"></script>
+</body>
+</html>

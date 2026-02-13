@@ -1,0 +1,2775 @@
+<!-- index.html (PART 1/3) -->
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Compliance Management</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+  <style>
+    /* ================================
+       Windows 11 Palette (REPLACED :root)
+       ================================ */
+    :root {
+      --radius-sm: 6px; --radius-md: 12px; --radius-lg: 18px; --radius-xl: 24px;
+      --primary: #0078D4; --primary-hover: #006cc1; --primary-soft: rgba(0, 120, 212, 0.1);
+      --bg-app: #f3f3f3; --bg-card: rgba(255, 255, 255, 0.7); --bg-card-hover: rgba(255, 255, 255, 0.85);
+      --text-main: #1b1b1b; --text-muted: #5d5d5d;
+      --border-subtle: rgba(0, 0, 0, 0.06); --border-highlight: rgba(255, 255, 255, 0.6);
+      --shadow-sm: 0 2px 4px rgba(0,0,0,0.04); --shadow-md: 0 8px 16px rgba(0,0,0,0.06);
+      --shadow-glass: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
+      --backdrop-blur: blur(20px);
+      --noise: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.05'/%3E%3C/svg%3E");
+    }
+
+    /* Compatibility aliases so the rest of your existing CSS keeps working */
+    :root{
+      --radius: var(--radius-lg);
+      --sidebarW: 290px;
+      --headerH: 72px;
+
+      --bg0: var(--bg-app);
+      --bg1: color-mix(in srgb, var(--bg-app) 92%, #ffffff);
+      --panel: var(--bg-card);
+      --panel2: rgba(255,255,255,.62);
+      --panelSolid: rgba(255,255,255,.92);
+
+      --text: var(--text-main);
+      --muted: var(--text-muted);
+      --border: var(--border-subtle);
+
+      --shadow: var(--shadow-md);
+      --shadow2: var(--shadow-sm);
+
+      --grad: linear-gradient(135deg, var(--primary), #5aa7ff 55%, #64d2ff);
+
+      /* keep your decorative background but allow Win11 noise on top */
+      --bgDecor:
+        var(--noise),
+        radial-gradient(900px 520px at 12% 10%, rgba(0,120,212,.14), transparent 55%),
+        radial-gradient(900px 520px at 88% 15%, rgba(0,120,212,.10), transparent 55%),
+        radial-gradient(900px 520px at 40% 92%, rgba(100,210,255,.10), transparent 60%);
+
+      --danger:#ef4444;
+      --warning:#f59e0b;
+      --ok:#16a34a;
+
+      --headerBg: var(--bg-card);
+      --headerBorder: var(--border-subtle);
+      --sidebarBg: var(--bg-card);
+      --sidebarBorder: var(--border-subtle);
+
+      --inputBg: rgba(255,255,255,.85);
+      --inputBorder: rgba(0,0,0,.10);
+      --inputFocus: var(--primary-soft);
+    }
+
+    /* (Optional but recommended) Dark-mode overrides for the new Win11 vars */
+    body.dark-mode{
+      --bg-app: #0f0f10;
+      --bg-card: rgba(25, 25, 28, 0.60);
+      --bg-card-hover: rgba(25, 25, 28, 0.75);
+      --text-main: #f4f4f5;
+      --text-muted: #b6b6b6;
+      --border-subtle: rgba(255,255,255,0.10);
+      --border-highlight: rgba(255,255,255,0.16);
+      --shadow-glass: 0 8px 32px 0 rgba(0,0,0,0.35);
+
+      /* keep your existing aliases consistent */
+      --panelSolid:#111114;
+      --panel2: rgba(255,255,255,.06);
+      --inputBg: rgba(255,255,255,.06);
+      --inputBorder: rgba(255,255,255,.12);
+
+      --bgDecor:
+        var(--noise),
+        radial-gradient(1200px 600px at 10% 10%, rgba(0,120,212,.22), transparent 55%),
+        radial-gradient(1000px 500px at 90% 20%, rgba(90,167,255,.18), transparent 55%),
+        radial-gradient(900px 500px at 40% 90%, rgba(100,210,255,.14), transparent 60%);
+    }
+
+    *{ box-sizing:border-box; }
+    html,body{ height:100%; }
+    body{
+      margin:0;
+      font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      color: var(--text);
+      background: var(--bgDecor), linear-gradient(180deg, var(--bg0), var(--bg1));
+      overflow-x:hidden;
+      transition: background .25s ease, color .25s ease;
+    }
+
+    .appShell{ min-height: 100vh; display:flex; flex-direction:column; }
+
+    header{
+      height: var(--headerH);
+      position: sticky;
+      top:0;
+      z-index: 50;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      padding: 0 18px;
+      border-bottom: 1px solid var(--headerBorder);
+      backdrop-filter: blur(12px);
+      background: var(--headerBg);
+    }
+
+    .brand{ display:flex; align-items:center; gap:12px; user-select:none; font-weight:900; letter-spacing:.2px; }
+    .brandMark{ width:42px;height:42px;border-radius:14px;background: var(--grad); box-shadow: 0 10px 24px rgba(0,120,212,.18); }
+    .brandTitle{ display:flex; flex-direction:column; line-height:1.1; }
+    .brandTitle small{ font-weight:700; color: var(--muted); letter-spacing:.2px; }
+
+    .headerRight{ display:flex; align-items:center; gap:10px; }
+
+    .btn{
+      border: 1px solid var(--border);
+      background: var(--panel2);
+      color: var(--text);
+      padding: 10px 12px;
+      border-radius: 12px;
+      cursor:pointer;
+      transition: transform .12s ease, background .2s ease;
+      font-weight: 800;
+    }
+    .btn:hover{ transform: translateY(-1px); background: var(--panel); }
+    .btn.primary{ background: var(--grad); border-color: transparent; color: white; }
+    .btn.small{ padding: 8px 10px; border-radius: 10px; font-size: 13px; }
+    .btn.danger{ background: color-mix(in srgb, var(--danger) 85%, #0000); color: white; border-color: transparent; }
+    .btn.ghost{ background: transparent; border-color: var(--border); }
+
+    .iconBtn{ display:inline-flex; align-items:center; gap:10px; white-space:nowrap; }
+    .icon{ width:34px;height:34px;border-radius:12px;display:grid;place-items:center; background: color-mix(in srgb, var(--panel) 70%, transparent); border: 1px solid var(--border); font-size: 16px; }
+
+    #topUser{ display:flex; align-items:center; gap:10px; font-weight:700; }
+    .pillUser{ display:flex; align-items:center; gap:10px; padding: 10px 12px; border-radius:999px; background: var(--panel2); border: 1px solid var(--border); }
+    .avatar{ width:36px;height:36px;border-radius:999px;background: color-mix(in srgb, var(--panel) 85%, transparent);display:grid;place-items:center;font-weight:900; }
+
+    .layout{ display:flex; min-height: calc(100vh - var(--headerH)); }
+
+    aside{
+      width: var(--sidebarW);
+      padding: 14px;
+      position: sticky;
+      top: var(--headerH);
+      height: calc(100vh - var(--headerH));
+      overflow:auto;
+      transition: transform .25s ease;
+      border-right: 1px solid var(--sidebarBorder);
+    }
+
+    .navGroup{ margin-top: 8px; display:flex; flex-direction:column; gap: 8px; }
+    .navItem{
+      padding: 12px 12px;
+      border-radius: 14px;
+      cursor:pointer;
+      border: 1px solid transparent;
+      background: transparent;
+      color: var(--muted);
+      font-weight: 850;
+      display:flex; align-items:center; justify-content:space-between;
+    }
+    .navItem:hover{ background: var(--panel2); color: var(--text); border-color: var(--border); }
+    .navItem.active{ background: color-mix(in srgb, var(--primary) 18%, transparent); border-color: color-mix(in srgb, var(--primary) 35%, transparent); color: var(--text); }
+    .navHint{ font-size: 12px; color: var(--muted); padding: 10px 10px 0; font-weight: 800; }
+
+    .sidebarCard{ margin-top: 12px; border-radius: 16px; border: 1px solid var(--border); background: var(--panel); box-shadow: var(--shadow2); overflow:hidden; }
+    .sidebarCardHead{ padding: 12px 12px 10px; border-bottom: 1px solid color-mix(in srgb, var(--border) 70%, transparent); display:flex; justify-content:space-between; align-items:center; gap: 10px; }
+    .sidebarCardHead .t{ font-weight: 950; }
+    .sidebarCardBody{ padding: 12px; }
+
+    main{ flex:1; padding: 18px; }
+
+    body.logged-out aside{ display:none; }
+    body.logged-out main{ padding: 22px 16px; display:flex; align-items:center; justify-content:center; min-height: calc(100vh - var(--headerH)); }
+    body.logged-out .layout{ display:block; }
+    body.logged-out #topUser{ display:none; }
+
+    /* ===== Glass effect update (as requested) ===== */
+    .card, aside {
+      background: var(--bg-card);
+      backdrop-filter: var(--backdrop-blur);
+      border: 1px solid var(--border-subtle);
+      border-top: 1px solid var(--border-highlight);
+      box-shadow: var(--shadow-glass);
+    }
+
+    .card{ border-radius: var(--radius); }
+    .cardHeader{ padding: 16px 16px 0; display:flex; align-items:flex-start; justify-content:space-between; gap: 12px; }
+    .cardBody{ padding: 16px; }
+
+    .title{ margin:0; font-size: 18px; font-weight: 950; }
+    .sub{ margin:6px 0 0; color: var(--muted); font-size: 13px; font-weight: 650; }
+
+    .grid{ display:grid; grid-template-columns: repeat(12, 1fr); gap: 14px; }
+    .col-12{ grid-column: span 12; }
+    .col-6{ grid-column: span 6; }
+    .col-4{ grid-column: span 4; }
+    .col-3{ grid-column: span 3; }
+    @media (max-width: 980px){ .col-6,.col-4,.col-3{ grid-column: span 12; } }
+
+    input, select, textarea{
+      width:100%;
+      padding: 12px 12px;
+      border-radius: 12px;
+      border: 1px solid var(--inputBorder);
+      background: var(--inputBg);
+      color: var(--text);
+      outline:none;
+      font-size: 14px;
+      font-weight: 650;
+    }
+
+    .label{ font-size: 12px; color: var(--muted); font-weight: 900; margin: 2px 0 6px; letter-spacing: .2px; }
+
+    .tableWrap{ overflow:auto; border-radius: 14px; border: 1px solid var(--border); background: color-mix(in srgb, var(--panel2) 75%, transparent); }
+    table{ width:100%; border-collapse: collapse; min-width: 980px; }
+    th, td{ padding: 12px 12px; border-bottom: 1px solid color-mix(in srgb, var(--border) 70%, transparent); font-size: 13px; vertical-align: top; font-weight: 650; }
+    th{ position: sticky; top: 0; background: color-mix(in srgb, var(--panelSolid) 92%, transparent); text-align:left; font-weight: 950; z-index: 1; }
+
+    .pill{ display:inline-flex; align-items:center; padding: 4px 10px; border-radius: 999px; border: 1px solid color-mix(in srgb, var(--border) 85%, transparent); background: var(--panel2); font-size: 12px; font-weight: 950; }
+    .pill.danger{ border-color: color-mix(in srgb, var(--danger) 55%, transparent); background: color-mix(in srgb, var(--danger) 18%, transparent); }
+    .pill.warn{ border-color: color-mix(in srgb, var(--warning) 55%, transparent); background: color-mix(in srgb, var(--warning) 18%, transparent); }
+    .pill.ok{ border-color: color-mix(in srgb, var(--ok) 55%, transparent); background: color-mix(in srgb, var(--ok) 18%, transparent); }
+
+    .kpi{ font-size: 28px; font-weight: 950; background: var(--grad); -webkit-background-clip:text; background-clip:text; color: transparent; }
+
+    .hidden{ display:none !important; }
+    .page{ display:none; }
+    .page.active{ display:block; }
+
+    #sidebarToggle{ display:none; }
+    @media (max-width: 980px){
+      aside{ position: fixed; left:0; transform: translateX(-105%); z-index: 80; }
+      body.sidebar-open aside{ transform: translateX(0); }
+      #sidebarToggle{ display:inline-flex; }
+    }
+
+    /* Sidebar task list */
+    .taskList{ display:flex; flex-direction:column; gap:10px; }
+    .taskItem{ padding: 10px 10px; border-radius: 14px; border: 1px solid var(--border); background: var(--panel2); cursor:pointer; }
+    .taskItem .top{ display:flex; justify-content:space-between; gap: 8px; align-items:flex-start; }
+    .taskItem .name{ font-weight: 950; font-size: 13px; line-height:1.25; }
+    .taskItem .meta{ color: var(--muted); font-size: 12px; margin-top: 4px; font-weight: 700; }
+
+    .badgeCount{ min-width: 24px; height: 24px; border-radius: 999px; display:grid; place-items:center; font-weight: 950; font-size: 12px; background: color-mix(in srgb, var(--primary) 18%, transparent); border: 1px solid color-mix(in srgb, var(--primary) 35%, transparent); }
+
+    /* Calendar (month grid) */
+    .calTop{ display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; }
+    .calGrid{ margin-top: 12px; display:grid; grid-template-columns: repeat(7, 1fr); gap: 10px; }
+    .calDow{ font-size: 12px; color: var(--muted); font-weight: 900; padding: 8px 6px; text-align:center; }
+    .calCell{ border: 1px solid var(--border); background: var(--panel2); border-radius: 14px; min-height: 92px; padding: 10px; cursor:pointer; position: relative; }
+    .calCell.muted{ opacity: .55; }
+    .calCell.today{ border-color: color-mix(in srgb, var(--primary) 55%, transparent); box-shadow: 0 0 0 4px color-mix(in srgb, var(--primary) 16%, transparent); }
+    .calDayNum{ font-weight: 950; }
+    .calDotRow{ position:absolute; left:10px; bottom:10px; right:10px; display:flex; align-items:center; justify-content:space-between; gap:10px; }
+    .calDots{ display:flex; gap:6px; }
+    .dot{ width: 8px; height: 8px; border-radius:999px; background: color-mix(in srgb, var(--muted) 50%, transparent); }
+    .dot.warn{ background: var(--warning); }
+    .dot.danger{ background: var(--danger); }
+    .dot.ok{ background: var(--ok); }
+    .calCount{ font-size: 12px; font-weight: 950; color: var(--muted); }
+
+    /* Drawer */
+    .overlay{ position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 90; display:none; }
+    .overlay.show{ display:block; }
+
+    .drawer{
+      position: fixed; top: 0; right: 0; height: 100vh; width: min(700px, 94vw);
+      background: var(--panelSolid); border-left: 1px solid var(--border); z-index: 100;
+      transform: translateX(102%); transition: transform .2s ease; box-shadow: var(--shadow);
+      display:flex; flex-direction:column;
+    }
+    body.dark-mode .drawer{ background: #0f172a; }
+    .drawer.show{ transform: translateX(0); }
+
+    /* Fullscreen Drawer Modifier (ADDED) */
+    .drawer.fullscreen {
+      width: 100vw !important;
+      max-width: none !important;
+      border-left: none;
+    }
+
+    .drawerHead{ padding: 16px; border-bottom: 1px solid var(--border); display:flex; justify-content:space-between; gap: 10px; align-items:flex-start; }
+    .drawerTitle{ font-weight: 950; font-size: 16px; }
+    .drawerSub{ margin-top: 6px; color: var(--muted); font-size: 12px; font-weight: 700; }
+    .drawerBody{ padding: 16px; overflow:auto; flex:1; }
+
+    /* Toast */
+    .toast{
+      position: fixed; left: 50%; bottom: 18px; transform: translateX(-50%);
+      background: rgba(17,24,39,.95); color: #fff; padding: 10px 14px; border-radius: 12px;
+      font-weight: 800; font-size: 13px; z-index: 200; display:none;
+      max-width: min(820px, 92vw); word-break: break-word;
+    }
+    .toast.show{ display:block; }
+
+    a.link { color: var(--primary); font-weight: 900; text-decoration:none; }
+    a.link:hover { text-decoration:underline; }
+    .muted { color: var(--muted); }
+    .hr { border:none;border-top:1px solid var(--border);margin:14px 0; }
+
+    /* ===== Loading Overlay (global) ===== */
+    .loadingOverlay{
+      position: fixed;
+      inset: 0;
+      z-index: 1000;
+      display: grid;
+      place-items: center;
+      background: rgba(0,0,0,.45);
+      backdrop-filter: blur(3px);
+    }
+    .loadingCard{
+      width: min(420px, 92vw);
+      border-radius: 16px;
+      border: 1px solid var(--border);
+      background: var(--panelSolid);
+      box-shadow: var(--shadow);
+      padding: 16px;
+      display:flex;
+      align-items:center;
+      gap: 14px;
+    }
+    body.dark-mode .loadingCard{ background: #0f172a; }
+    .loadingSpinner{
+      width: 34px;
+      height: 34px;
+      border-radius: 999px;
+      border: 4px solid color-mix(in srgb, var(--primary) 25%, transparent);
+      border-top-color: var(--primary);
+      animation: spin 0.9s linear infinite;
+      flex: 0 0 auto;
+    }
+    @keyframes spin{ to { transform: rotate(360deg); } }
+
+    body.is-loading{ pointer-events: none; }
+    body.is-loading .loadingOverlay{ pointer-events: all; }
+
+    /* ===== Drafting Studio ===== */
+    .draftToolbar{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+      justify-content:space-between;
+      margin-bottom: 10px;
+    }
+    .draftLeft{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+    .chip{
+      display:inline-flex; align-items:center; gap:8px;
+      padding: 8px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: var(--panel2);
+      font-weight: 900;
+      font-size: 12px;
+      color: var(--text);
+      user-select:none;
+    }
+    .mono{
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    }
+    .draftVarMenu{ position: relative; display:inline-block; }
+    .varDropdown{
+      position: absolute;
+      top: 46px;
+      left: 0;
+      width: min(520px, 86vw);
+      max-height: 360px;
+      overflow:auto;
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      background: var(--panelSolid);
+      box-shadow: var(--shadow);
+      display:none;
+      z-index: 1200;
+      padding: 10px;
+    }
+    body.dark-mode .varDropdown{ background: #0f172a; }
+    .varDropdown.show{ display:block; }
+    .varSearch{ margin-bottom: 10px; }
+    .varItem{
+      padding: 10px;
+      border-radius: 12px;
+      border: 1px solid transparent;
+      cursor:pointer;
+      background: transparent;
+    }
+    .varItem:hover{
+      border-color: var(--border);
+      background: var(--panel2);
+    }
+    .varTop{
+      display:flex;
+      justify-content:space-between;
+      gap:10px;
+      align-items:flex-start;
+    }
+    .varName{ font-weight: 950; font-size: 13px; }
+    .varKey{ font-weight: 950; font-size: 12px; color: var(--primary); }
+    .varDesc{ margin-top: 6px; color: var(--muted); font-size: 12px; font-weight: 650; line-height: 1.35; }
+    .draftEditor{
+      border-radius: 16px;
+      border: 1px solid var(--border);
+      background: color-mix(in srgb, var(--panel2) 75%, transparent);
+      padding: 12px;
+    }
+    .draftEditor textarea{
+      min-height: 220px;
+      resize: vertical;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      line-height: 1.45;
+    }
+    .kbd{
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      border: 1px solid var(--border);
+      background: var(--panel2);
+      border-radius: 8px;
+      padding: 2px 6px;
+      font-size: 12px;
+      font-weight: 900;
+    }
+  </style>
+</head>
+
+<body class="logged-out">
+<div class="appShell">
+
+  <header>
+    <div class="brand">
+      <div class="brandMark"></div>
+      <div class="brandTitle">
+        <div>Compliance Management</div>
+        <small>IST • Tasks • Calendar • Mail Automation</small>
+      </div>
+    </div>
+
+    <div class="headerRight">
+      <button class="btn iconBtn" id="themeToggle" type="button">
+        <span class="icon" id="themeIcon">☾</span>
+        <span id="themeLabel">Dark</span>
+      </button>
+
+      <button class="btn small" id="sidebarToggle" type="button">Menu</button>
+      <div id="topUser"></div>
+    </div>
+  </header>
+
+  <div class="layout">
+    <aside id="sidebar">
+      <div class="navHint" id="navRoleHint">Not signed in</div>
+
+      <div class="navGroup" id="navGroup">
+        <!-- Partner -->
+        <div class="navItem active" data-target="p_dashboard" id="navDash">Dashboard</div>
+        <div class="navItem" data-target="p_calendar" id="navCal">Calendar</div>
+        <div class="navItem" data-target="p_clients" id="navClients">Clients</div>
+        <div class="navItem" data-target="p_tasks" id="navTasks">Tasks</div>
+        <div class="navItem" data-target="p_create_task" id="navCreateTask">Create Task</div>
+        <div class="navItem" data-target="p_import_export" id="navImportExport">Import / Export</div>
+
+        <!-- NEW -->
+        <div class="navItem" data-target="p_draft" id="navDraft">Drafting Studio</div>
+        <div class="navItem" data-target="p_team" id="navTeam">Team</div>
+
+        <div class="navItem" data-target="p_settings" id="navSettings">Settings</div>
+        <div class="navItem" data-target="p_audit" id="navAudit">Audit Logs</div>
+
+        <!-- Worker -->
+        <div class="navItem hidden" id="navWorkerTasks" data-target="w_tasks">My Tasks</div>
+      </div>
+
+      <div class="sidebarCard hidden" id="tasksSidebarCard">
+        <div class="sidebarCardHead">
+          <div class="t">Tasks</div>
+          <div class="badgeCount" id="sidebarTaskCount">0</div>
+        </div>
+        <div class="sidebarCardBody">
+          <div class="label">Needs action in (days)</div>
+          <input id="sbDays" type="number" value="7" min="0">
+          <div class="sub" style="margin-top:8px">Overdue + due within N days. Click to open drawer.</div>
+          <div style="height:10px"></div>
+          <div class="taskList" id="sidebarTasks"></div>
+        </div>
+      </div>
+    </aside>
+
+    <main>
+      <!-- LOGIN -->
+      <section id="loginCard" class="card">
+        <div class="cardHeader">
+          <div>
+            <h3 class="title">Login / Signup</h3>
+            <p class="sub">Signup creates WORKER. Partner can promote roles in <b>Team</b> page.</p>
+          </div>
+        </div>
+        <div class="cardBody">
+          <div class="label">Email</div>
+          <input id="email" type="email" placeholder="name@firm.com">
+          <div class="label" style="margin-top:10px">Password</div>
+          <input id="pass" type="password" placeholder="••••••••">
+          <div style="display:flex;gap:10px;margin-top:10px">
+            <button class="btn primary" id="btnLogin" type="button">Login</button>
+            <button class="btn" id="btnSignup" type="button">Signup</button>
+          </div>
+          <div class="sub" style="margin-top:10px">
+            Timezone: <b>Asia/Kolkata (IST)</b>. Dates in UI are <b>DD-MM-YYYY</b>.
+          </div>
+        </div>
+      </section>
+
+      <!-- PARTNER UI -->
+      <section id="partnerUI" class="hidden">
+
+        <!-- DASHBOARD -->
+        <div id="p_dashboard" class="page active">
+          <div class="grid">
+            <div class="col-12 card">
+              <div class="cardHeader">
+                <div><h3 class="title">KPIs</h3><p class="sub">Based on loaded tasks (Firestore live).</p></div>
+              </div>
+              <div class="cardBody">
+                <div class="grid">
+                  <div class="col-4 card"><div class="cardBody"><div class="label">Total</div><div class="kpi" id="kTotal">0</div></div></div>
+                  <div class="col-4 card"><div class="cardBody"><div class="label">Upcoming 7d</div><div class="kpi" id="k7">0</div></div></div>
+                  <div class="col-4 card"><div class="cardBody"><div class="label">Upcoming 15d</div><div class="kpi" id="k15">0</div></div></div>
+                  <div class="col-4 card"><div class="cardBody"><div class="label">Upcoming 30d</div><div class="kpi" id="k30">0</div></div></div>
+                  <div class="col-4 card"><div class="cardBody"><div class="label">Overdue</div><div class="kpi" id="kOverdue">0</div></div></div>
+                  <div class="col-4 card"><div class="cardBody"><div class="label">Approval Pending</div><div class="kpi" id="kAppr">0</div></div></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-12 card">
+              <div class="cardHeader">
+                <div><h3 class="title">Quick Alerts</h3><p class="sub">Click a row to open drawer.</p></div>
+                <button class="btn small" id="btnOpenTasksFromDash" type="button">Open Tasks</button>
+              </div>
+              <div class="cardBody">
+                <div class="tableWrap">
+                  <table>
+                    <thead><tr><th>Alert</th><th>Client</th><th>Title</th><th>Start</th><th>Due</th><th>Status</th></tr></thead>
+                    <tbody id="dashAlerts"></tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- index.html (PART 2/3) -->
+
+                <!-- CALENDAR (UI VIEW) -->
+                <div id="p_calendar" class="page">
+                  <div class="grid">
+                    <div class="col-12 card">
+                      <div class="cardHeader">
+                        <div><h3 class="title">Calendar (UI)</h3><p class="sub">Click date → filters tasks by <b>due date</b>.</p></div>
+                      </div>
+                      <div class="cardBody">
+                        <div class="calTop">
+                          <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+                            <button class="btn small" id="calPrev" type="button">Prev</button>
+                            <button class="btn small" id="calToday" type="button">Today</button>
+                            <button class="btn small" id="calNext" type="button">Next</button>
+                            <div class="pill" id="calLabel">Month YYYY</div>
+                          </div>
+                          <div class="sub">Dots: overdue / due soon / done</div>
+                        </div>
+                        <div class="calGrid" id="calGrid"></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+        
+                <!-- CLIENTS -->
+                <div id="p_clients" class="page">
+                  <div class="grid">
+                    <div class="col-12 card">
+                      <div class="cardHeader"><div><h3 class="title">Create Client</h3><p class="sub">Creates client master profile.</p></div></div>
+                      <div class="cardBody">
+                        <div class="grid">
+                          <div class="col-6"><div class="label">Client name</div><input id="cName"></div>
+                          <div class="col-6"><div class="label">PAN</div><input id="cPAN"></div>
+                          <div class="col-6"><div class="label">GSTIN</div><input id="cGSTIN"></div>
+                          <div class="col-6"><div class="label">CIN</div><input id="cCIN"></div>
+                          <div class="col-6"><div class="label">Assessment Year</div><input id="cAY"></div>
+                          <div class="col-6"><div class="label">Engagement Type</div><input id="cEng"></div>
+                          <div class="col-12"><div class="label">Primary Email</div><input id="cEmail"></div>
+                          <div class="col-6"><div class="label">CC Emails (; , : separated)</div><input id="cCC"></div>
+                          <div class="col-6"><div class="label">BCC Emails (; , : separated)</div><input id="cBCC"></div>
+                          <div class="col-12"><button class="btn primary" id="btnCreateClient" type="button">Create Client</button></div>
+                        </div>
+                      </div>
+                    </div>
+        
+                    <div class="col-12 card">
+                      <div class="cardHeader"><div><h3 class="title">Client List</h3><p class="sub">Read-only from Firestore</p></div></div>
+                      <div class="cardBody">
+                        <div class="tableWrap">
+                          <table>
+                            <thead><tr><th>Name</th><th>Email</th><th>PAN</th><th>GSTIN</th><th>Engagement</th></tr></thead>
+                            <tbody id="clientTable"></tbody>
+                          </table>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+        
+                <!-- TASKS -->
+                <div id="p_tasks" class="page">
+                  <div class="grid">
+                    <div class="col-12 card">
+                      <div class="cardHeader"><div><h3 class="title">Filters</h3><p class="sub">Dates are DD-MM-YYYY in UI.</p></div></div>
+                      <div class="cardBody">
+                        <div class="grid">
+                          <div class="col-3"><div class="label">Client</div><select id="filterClient"></select></div>
+                          <div class="col-3"><div class="label">Status</div>
+                            <select id="filterStatus">
+                              <option value="">All Status</option>
+                              <option>PENDING</option><option>IN_PROGRESS</option><option>CLIENT_PENDING</option>
+                              <option>APPROVAL_PENDING</option><option>COMPLETED</option>
+                            </select>
+                          </div>
+                          <div class="col-3"><div class="label">Category</div>
+                            <select id="filterCategory">
+                              <option value="">All</option>
+                              <option>GST</option><option>TDS</option><option>INCOME_TAX</option><option>ROC</option>
+                              <option>ACCOUNTING</option><option>AUDIT</option><option>OTHER</option>
+                            </select>
+                          </div>
+                          <div class="col-3"><div class="label">Search</div><input id="filterSearch" placeholder="Search title/client"></div>
+        
+                          <div class="col-3"><div class="label">Due on (DD-MM-YYYY)</div><input id="filterDueOn" placeholder="DD-MM-YYYY"></div>
+                          <div class="col-3"><div class="label">Needs action in (days)</div><input id="filterNeedDays" type="number" value="7" min="0"></div>
+                          <div class="col-6"><div class="label">Mode</div>
+                            <select id="filterMode">
+                              <option value="ALL">All tasks</option>
+                              <option value="NEEDS_ACTION">Only overdue + due within N days</option>
+                              <option value="APPROVAL">Approval pending</option>
+                            </select>
+                          </div>
+        
+                          <div class="col-12" style="display:flex;gap:10px;flex-wrap:wrap">
+                            <button class="btn" id="btnResetFilters" type="button">Reset</button>
+                            <button class="btn small" id="btnClearDueOn" type="button">Clear Due-on</button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+        
+                    <div class="col-12 card">
+                      <div class="cardHeader"><div><h3 class="title">Tasks</h3><p class="sub">Click row to open drawer.</p></div></div>
+                      <div class="cardBody">
+                        <div class="tableWrap">
+                          <table>
+                            <thead>
+                              <tr>
+                                <th>Alert</th><th>Client</th><th>Title</th><th>Series</th>
+                                <th>Cat/Type</th><th>Start</th><th>Due</th><th>Status</th><th>Assignee</th>
+                              </tr>
+                            </thead>
+                            <tbody id="partnerTasks"></tbody>
+                          </table>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+        
+                <!-- CREATE TASK -->
+                <div id="p_create_task" class="page">
+                  <div class="grid">
+                    <div class="col-12 card">
+                      <div class="cardHeader"><div><h3 class="title">Create Task</h3><p class="sub">DD-MM-YYYY dates. Single Google Calendar event is created on START date only.</p></div></div>
+                      <div class="cardBody">
+                        <div class="grid">
+                          <div class="col-6"><div class="label">Client (existing)</div><select id="ctClientId"></select></div>
+                          <div class="col-6"><div class="label">Client name (optional)</div><input id="ctClientName"></div>
+                          <div class="col-6"><div class="label">Client email (optional)</div><input id="ctClientEmail"></div>
+                          <div class="col-6"><div class="label">Assigned to email</div><input id="ctAssignedToEmail" placeholder="worker@firm.com"></div>
+        
+                          <div class="col-12"><div class="label">Title</div><input id="ctTitle"></div>
+        
+                          <div class="col-3">
+                            <div class="label">Category</div>
+                            <select id="ctCategory">
+                              <option>GST</option><option>TDS</option><option>Income Tax</option><option>ROC</option>
+                              <option>Accounting</option><option>Audit</option><option>Other</option>
+                            </select>
+                          </div>
+        
+                          <div class="col-3">
+                            <div class="label">Type (free text)</div>
+                            <input id="ctType" list="typeSuggestions" placeholder="FILING / REVIEW / PAYMENT ...">
+                            <datalist id="typeSuggestions">
+                              <option value="FILING"></option>
+                              <option value="REVIEW"></option>
+                              <option value="PAYMENT"></option>
+                              <option value="FOLLOW_UP"></option>
+                              <option value="CLIENT_PENDING"></option>
+                            </datalist>
+                          </div>
+        
+                          <div class="col-3"><div class="label">Due date (DD-MM-YYYY)</div><input id="ctDueDate" placeholder="DD-MM-YYYY"></div>
+                          <div class="col-3"><div class="label">Trigger days before</div><input id="ctTrigger" type="number" value="15"></div>
+        
+                          <div class="col-6"><div class="label">Recurrence</div>
+                            <select id="ctRecurrence">
+                              <option value="AD_HOC">AD_HOC</option>
+                              <option value="DAILY">DAILY</option>
+                              <option value="WEEKLY">WEEKLY</option>
+                              <option value="BIWEEKLY">BIWEEKLY</option>
+                              <option value="MONTHLY">MONTHLY</option>
+                              <option value="BIMONTHLY">BIMONTHLY</option>
+                              <option value="QUARTERLY">QUARTERLY</option>
+                              <option value="HALF_YEARLY">HALF_YEARLY</option>
+                              <option value="YEARLY">YEARLY</option>
+                            </select>
+                          </div>
+                          <div class="col-6"><div class="label">Generate Count</div><input id="ctGenerateCount" type="number" value="1" min="1"></div>
+        
+                          <div class="col-12">
+                            <div class="label">Client Mail Recipients (override / additional)</div>
+                            <div class="sub">Supports multiple emails separated by <b>;</b> or <b>,</b> or <b>:</b></div>
+                          </div>
+                          <div class="col-4"><div class="label">Client To</div><input id="ctClientTo" placeholder="client@abc.com; director@abc.com"></div>
+                          <div class="col-4"><div class="label">Client CC</div><input id="ctClientCc" placeholder="staff@firm.com"></div>
+                          <div class="col-4"><div class="label">Client BCC</div><input id="ctClientBcc" placeholder="partner@firm.com"></div>
+        
+                          <div class="col-6">
+                            <label style="display:flex;gap:10px;align-items:center;font-weight:900">
+                              <input id="ctCcAssignee" type="checkbox" style="width:auto">
+                              CC assignee on client start mail
+                            </label>
+                          </div>
+                          <div class="col-6">
+                            <label style="display:flex;gap:10px;align-items:center;font-weight:900">
+                              <input id="ctCcManager" type="checkbox" style="width:auto">
+                              CC assignee’s manager on client start mail
+                            </label>
+                          </div>
+        
+                          <div class="col-12"><div class="label">Client Start Subject</div><input id="ctStartSubject" placeholder="We started {{taskTitle}}"></div>
+                          <div class="col-12"><div class="label">Client Start Body</div><textarea id="ctStartBody" rows="6" placeholder="Use variables: {{clientName}} {{taskTitle}} {{startDate}} {{dueDate}} {{addToCalendarUrl}}"></textarea></div>
+        
+                          <div class="col-6">
+                            <label style="display:flex;gap:10px;align-items:center;font-weight:900">
+                              <input id="ctSendCompletion" type="checkbox" style="width:auto" checked>
+                              Send completion mail to client (partner approval)
+                            </label>
+                            <div class="sub">If unchecked, completion mail is not sent to client.</div>
+                          </div>
+        
+                          <div class="col-12"><div class="label">Client Completion Subject (optional)</div><input id="ctCompletionSubject" placeholder="Completed: {{taskTitle}}"></div>
+                          <div class="col-12"><div class="label">Client Completion Body (optional)</div><textarea id="ctCompletionBody" rows="6" placeholder="Use {{completedAt}} too"></textarea></div>
+        
+                          <div class="col-12" style="display:flex;gap:10px;flex-wrap:wrap">
+                            <button class="btn primary" id="btnCreateTaskOne" type="button">Create</button>
+                            <button class="btn" id="btnGoTasks" type="button">Go to Tasks</button>
+                          </div>
+        
+                          <div class="col-12">
+                            <div class="sub">
+                              Google Calendar: <b>only START event</b> is created, using global time window in Settings.
+                              Due date is included in event description and in email templates.
+                            </div>
+                          </div>
+        
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+        
+                <!-- IMPORT / EXPORT -->
+                <div id="p_import_export" class="page">
+                  <div class="grid">
+        
+                    <div class="col-12 card">
+                      <div class="cardHeader">
+                        <div>
+                          <h3 class="title">XLSX Import</h3>
+                          <p class="sub">Upload Excel (.xlsx). Dates inside file must be DD-MM-YYYY (or Excel date type).</p>
+                        </div>
+                      </div>
+                      <div class="cardBody">
+                        <div class="grid">
+                          <div class="col-12">
+                            <button class="btn" id="btnDownloadMyClientsXlsx" type="button">Download “My Clients” Import Template (XLSX)</button>
+                            <div class="sub" style="margin-top:8px">
+                              Template includes dropdowns: Category/Recurrence/Type + mail flags + CC/BCC columns.
+                            </div>
+                          </div>
+        
+                          <div class="col-12"><input type="file" id="xlsxFile" accept=".xlsx"></div>
+        
+                          <div class="col-12" style="display:flex;gap:10px;flex-wrap:wrap">
+                            <button class="btn primary" id="btnImportXlsx" type="button">Import XLSX</button>
+                          </div>
+        
+                          <div class="col-12">
+                            <div class="sub">
+                              Import creates tasks in Firestore + creates <b>only START calendar events</b>.
+                              Client start mails are sent by GitHub Action at <b>08:15 IST</b>.
+                            </div>
+                          </div>
+        
+                        </div>
+                      </div>
+                    </div>
+        
+                    <div class="col-12 card">
+                      <div class="cardHeader">
+                        <div>
+                          <h3 class="title">Firm Export (Tasks + History)</h3>
+                          <p class="sub">Exports tasks by Due Date range and includes audit history in another sheet.</p>
+                        </div>
+                      </div>
+                      <div class="cardBody">
+                        <div class="grid">
+                          <div class="col-4"><div class="label">From (DD-MM-YYYY)</div><input id="exportFrom" value="01-01-2026"></div>
+                          <div class="col-4"><div class="label">To (DD-MM-YYYY)</div><input id="exportTo" value="31-12-2026"></div>
+                          <div class="col-4"><div class="label">Include audit history</div>
+                            <select id="exportIncludeAudit">
+                              <option value="true">true</option>
+                              <option value="false">false</option>
+                            </select>
+                          </div>
+        
+                          <div class="col-12" style="display:flex;gap:10px;flex-wrap:wrap">
+                            <button class="btn primary" id="btnExportFirmRange" type="button">Download Firm Export (XLSX)</button>
+                            <button class="btn" id="btnExportNext7" type="button">Next 7 days</button>
+                            <button class="btn" id="btnExportNext15" type="button">Next 15 days</button>
+                            <button class="btn" id="btnExportNext30" type="button">Next 30 days</button>
+                            <button class="btn" id="btnExportOverdue" type="button">Overdue</button>
+                            <button class="btn" id="btnExportApproval" type="button">Approval Pending</button>
+                          </div>
+        
+                        </div>
+                      </div>
+                    </div>
+        
+                  </div>
+                </div>
+        
+                <!-- DRAFTING STUDIO (NEW PAGE) -->
+                <div id="p_draft" class="page">
+                  <div class="grid">
+                    <div class="col-12 card">
+                      <div class="cardHeader">
+                        <div>
+                          <h3 class="title">Mail Drafting Studio</h3>
+                          <p class="sub">
+                            Draft subject/body, insert variables, and copy-paste safely into XLSX import fields.
+                            Default mode uses <span class="kbd">\n</span> tokens so Excel won’t break rows.
+                          </p>
+                        </div>
+                      </div>
+        
+                      <div class="cardBody">
+                        <div class="draftToolbar">
+                          <div class="draftLeft">
+                            <div class="draftVarMenu">
+                              <button class="btn" id="btnVarMenu" type="button">+ Add Variable</button>
+        
+                              <div class="varDropdown" id="varDropdown">
+                                <input class="varSearch" id="varSearch" placeholder="Search variables...">
+                                <div id="varList"></div>
+                                <div class="sub" style="margin-top:8px">
+                                  Click a variable to insert at cursor of the focused field (Subject/Body).
+                                </div>
+                              </div>
+                            </div>
+        
+                            <span class="chip">
+                              Insert mode:
+                              <select id="draftNewlineMode" style="width:auto;padding:6px 8px;border-radius:10px">
+                                <option value="TOKEN" selected>\n tokens</option>
+                                <option value="REAL">Real new lines</option>
+                              </select>
+                            </span>
+        
+                            <span class="chip">
+                              Tip: <span class="kbd">Enter</span> inserts <span class="kbd">\n</span> tokens.
+                              Use <span class="kbd">Shift</span>+<span class="kbd">Enter</span> for real newline.
+                            </span>
+                          </div>
+        
+                          <div style="display:flex; gap:10px; flex-wrap:wrap">
+                            <button class="btn primary" id="btnDraftCopyForImport" type="button">Copy Body (for Import)</button>
+                            <button class="btn" id="btnDraftCopySubject" type="button">Copy Subject</button>
+                            <button class="btn" id="btnDraftCopyBodyRaw" type="button">Copy Body (raw)</button>
+                          </div>
+                        </div>
+        
+                        <div class="grid">
+                          <div class="col-12">
+                            <div class="label">Subject</div>
+                            <input id="draftSubject" placeholder="Example: We started {{taskTitle}} for {{clientName}}">
+                          </div>
+        
+                          <div class="col-12">
+                            <div class="label">Body</div>
+                            <div class="draftEditor">
+                              <textarea id="draftBody" rows="12" placeholder="Type your email body here..."></textarea>
+                              <div class="sub" style="margin-top:10px">
+                                “Copy Body (for Import)” converts line breaks into <b>\n</b> tokens so you can paste into a single XLSX cell.
+                              </div>
+                            </div>
+                          </div>
+        
+                          <div class="col-12">
+                            <div class="label">Preview (sample values)</div>
+                            <div class="card" style="padding:12px">
+                              <div class="sub" id="draftPreview" style="white-space:pre-wrap"></div>
+                            </div>
+                            <div class="sub" style="margin-top:8px">
+                              Variables will remain as-is if not replaced.
+                            </div>
+                          </div>
+                        </div>
+        
+                      </div>
+                    </div>
+                  </div>
+                </div>
+        
+                <!-- TEAM -->
+                <div id="p_team" class="page">
+                  <div class="grid">
+                    <div class="col-12 card">
+                      <div class="cardHeader">
+                        <div><h3 class="title">Team Management</h3><p class="sub">Partner-only. Manage roles and manager mapping.</p></div>
+                        <button class="btn small" id="btnReloadTeam" type="button">Reload</button>
+                      </div>
+                      <div class="cardBody">
+                        <div class="sub">
+                          Roles: <b>PARTNER</b>, <b>MANAGER</b>, <b>WORKER</b>. Manager mapping is used for client start mail CC when enabled.
+                        </div>
+                        <div style="height:10px"></div>
+                        <div class="tableWrap">
+                          <table>
+                            <thead>
+                              <tr>
+                                <th>Email</th><th>Role</th><th>Active</th><th>Manager Email</th><th>Actions</th>
+                              </tr>
+                            </thead>
+                            <tbody id="teamTable"></tbody>
+                          </table>
+                        </div>
+                        <div class="sub" style="margin-top:10px">
+                          Note: New signups store <code>emailLower</code>. Existing users can be updated in Firestore once.
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+        
+                <!-- SETTINGS -->
+                <div id="p_settings" class="page">
+                  <div class="grid">
+        
+                    <div class="col-12 card">
+                      <div class="cardHeader">
+                        <div><h3 class="title">Calendar Settings</h3><p class="sub">Controls Google Calendar event time window (START events only).</p></div>
+                        <button class="btn small" id="btnReloadCalSettings" type="button">Reload</button>
+                      </div>
+                      <div class="cardBody">
+                        <div class="grid">
+                          <div class="col-4"><div class="label">Start Hour (0–23)</div><input id="calSetStartHH" type="number" min="0" max="23"></div>
+                          <div class="col-4"><div class="label">End Hour (0–23)</div><input id="calSetEndHH" type="number" min="0" max="23"></div>
+                          <div class="col-4"><div class="label">Time Zone</div><input id="calSetTz" value="Asia/Kolkata"></div>
+                          <div class="col-12"><button class="btn primary" id="btnSaveCalSettings" type="button">Save Calendar Settings</button></div>
+                          <div class="col-12"><div class="sub">These settings affect: create task, bulk import, series rebuild, task edits, completion color patch.</div></div>
+                        </div>
+                      </div>
+                    </div>
+        
+                    <div class="col-12 card">
+                      <div class="cardHeader">
+                        <div><h3 class="title">Daily Digest Settings</h3><p class="sub">Edits settings/notifications (internal digest at 05:00 IST).</p></div>
+                        <button class="btn small" id="btnReloadSettings" type="button">Reload</button>
+                      </div>
+                      <div class="cardBody">
+                        <div class="grid">
+                          <div class="col-6">
+                            <div class="label">Daily Internal Emails (; , : separated)</div>
+                            <textarea id="setDailyEmails" rows="4"></textarea>
+                          </div>
+                          <div class="col-3"><div class="label">Daily Window Days</div><input id="setDailyWindowDays" type="number" value="30"></div>
+                          <div class="col-3"><div class="label">Send digest to assignees</div>
+                            <select id="setSendToAssignees"><option value="true">true</option><option value="false">false</option></select>
+                          </div>
+                          <div class="col-12"><div class="label">Last Digest Run (YMD)</div><input id="setLastRun" disabled></div>
+                          <div class="col-12"><button class="btn primary" id="btnSaveSettings" type="button">Save Digest Settings</button></div>
+                        </div>
+                      </div>
+                    </div>
+        
+                    <div class="col-12 card">
+                      <div class="cardHeader">
+                        <div><h3 class="title">Cron Notes</h3><p class="sub">GitHub Actions should call backend cron endpoints.</p></div>
+                      </div>
+                      <div class="cardBody">
+                        <div class="sub">
+                          <b>Internal digest:</b> call <code>/jobs_daily5am</code> at 05:00 IST.<br>
+                          <b>Client start mails:</b> call <code>/jobs_client0815</code> at 08:15 IST.<br>
+                        </div>
+                      </div>
+                    </div>
+        
+                  </div>
+                </div>
+        
+                <!-- AUDIT -->
+                <div id="p_audit" class="page">
+                  <div class="grid">
+                    <div class="col-12 card">
+                      <div class="cardHeader"><div><h3 class="title">Audit Logs (latest 50)</h3><p class="sub">Trace feed</p></div></div>
+                      <div class="cardBody">
+                        <div class="tableWrap" style="max-height:520px;">
+                          <table>
+                            <thead><tr><th>Time</th><th>Action</th><th>TaskId</th><th>Actor</th><th>Details</th></tr></thead>
+                            <tbody id="auditTable"></tbody>
+                          </table>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+        
+              </section>
+        
+              <!-- WORKER UI -->
+              <section id="workerUI" class="hidden">
+                <div id="w_tasks" class="page active">
+                  <div class="grid">
+                    <div class="col-12 card">
+                      <div class="cardHeader"><div><h3 class="title">My Tasks</h3><p class="sub">Click row to open drawer</p></div></div>
+                      <div class="cardBody">
+                        <div class="tableWrap">
+                          <table>
+                            <thead><tr><th>Alert</th><th>Client</th><th>Title</th><th>Series</th><th>Start</th><th>Due</th><th>Status</th></tr></thead>
+                            <tbody id="workerTasks"></tbody>
+                          </table>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </section>
+        
+            </main>
+          </div>
+        </div>
+        
+        <!-- Drawer -->
+        <div class="overlay" id="overlay"></div>
+        <div class="drawer" id="drawer">
+          <div class="drawerHead">
+            <div>
+              <div class="drawerTitle" id="dTitle">Task</div>
+              <div class="drawerSub" id="dSub">—</div>
+            </div>
+        
+            <!-- UPDATED: Fullscreen + Close buttons -->
+            <div style="display:flex;gap:10px">
+              <button class="btn small" id="btnExpandDrawer" title="Toggle Fullscreen">⤢</button>
+              <button class="btn small" id="btnCloseDrawer">Close</button>
+            </div>
+          </div>
+        
+          <div class="drawerBody">
+            <div class="card" style="padding:12px;margin-bottom:12px">
+              <div class="label">Quick Info</div>
+              <div id="dInfo" class="sub"></div>
+        
+              <div style="margin-top:10px;display:flex;gap:10px;flex-wrap:wrap">
+                <a class="btn small" id="btnOpenCalEvent" target="_blank" rel="noopener">Open Calendar Event</a>
+                <a class="btn small" id="btnAddToMyCal" target="_blank" rel="noopener">Add to My Calendar</a>
+              </div>
+        
+              <div class="sub" style="margin-top:8px">
+                Note: Only one Google Calendar event is created (START date). Due date is in description.
+              </div>
+            </div>
+        
+            <div class="card" style="padding:12px;margin-bottom:12px">
+              <div class="label">Update Status</div>
+              <select id="uStatus"></select>
+        
+              <div class="label" style="margin-top:10px">Status Note</div>
+              <textarea id="uStatusNote" rows="3"></textarea>
+        
+              <div class="label" style="margin-top:10px">Delay Reason</div>
+              <select id="uDelayReason">
+                <option value="">(none)</option>
+                <option value="CLIENT_DELAY">CLIENT_DELAY</option>
+                <option value="INTERNAL_DELAY">INTERNAL_DELAY</option>
+              </select>
+        
+              <div class="label" style="margin-top:10px">Delay Notes</div>
+              <textarea id="uDelayNotes" rows="3"></textarea>
+        
+              <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:10px">
+                <button class="btn primary" id="btnSaveTaskStatus" type="button">Save Status</button>
+                <button class="btn" id="btnUploadDoc" type="button">Upload Document</button>
+              </div>
+            </div>
+        
+            <div class="card" style="padding:12px;margin-bottom:12px" id="partnerOnlyBox">
+              <div class="label">Edit Details (Partner)</div>
+              <label style="display:flex;gap:10px;align-items:center;font-weight:900">
+                <input id="uApplyToSeries" type="checkbox" style="width:auto">
+                Edit ALL occurrences in series (if available)
+              </label>
+        
+              <div class="label" style="margin-top:10px">Title</div>
+              <input id="uTitle">
+        
+              <div class="grid" style="margin-top:10px">
+                <div class="col-6">
+                  <div class="label">Category</div>
+                  <select id="uCategory">
+                    <option>GST</option><option>TDS</option><option>Income Tax</option><option>ROC</option>
+                    <option>Accounting</option><option>Audit</option><option>Other</option>
+                  </select>
+                </div>
+                <div class="col-6">
+                  <div class="label">Type (free text)</div>
+                  <input id="uType" list="typeSuggestions2">
+                  <datalist id="typeSuggestions2">
+                    <option value="FILING"></option>
+                    <option value="REVIEW"></option>
+                    <option value="PAYMENT"></option>
+                    <option value="FOLLOW_UP"></option>
+                    <option value="CLIENT_PENDING"></option>
+                  </datalist>
+                </div>
+              </div>
+        
+              <div class="grid" style="margin-top:10px">
+                <div class="col-6">
+                  <div class="label">Trigger days before</div>
+                  <input id="uTrigger" type="number" min="0">
+                </div>
+                <div class="col-6">
+                  <div class="label">Assigned To Email</div>
+                  <input id="uAssignedToEmail">
+                </div>
+              </div>
+        
+              <div class="label" style="margin-top:10px">Due date (DD-MM-YYYY) (single only)</div>
+              <input id="uDueDateDmy" placeholder="DD-MM-YYYY">
+        
+              <div class="hr"></div>
+        
+              <div class="label">Mail Templates & Controls (Partner)</div>
+        
+              <div class="grid" style="margin-top:10px">
+                <div class="col-4"><div class="label">Client To</div><input id="uClientTo"></div>
+                <div class="col-4"><div class="label">Client CC</div><input id="uClientCc"></div>
+                <div class="col-4"><div class="label">Client BCC</div><input id="uClientBcc"></div>
+        
+                <div class="col-6">
+                  <label style="display:flex;gap:10px;align-items:center;font-weight:900">
+                    <input id="uCcAssignee" type="checkbox" style="width:auto">
+                    CC assignee on client start mail
+                  </label>
+                </div>
+                <div class="col-6">
+                  <label style="display:flex;gap:10px;align-items:center;font-weight:900">
+                    <input id="uCcManager" type="checkbox" style="width:auto">
+                    CC assignee’s manager on client start mail
+                  </label>
+                </div>
+        
+                <div class="col-6">
+                  <label style="display:flex;gap:10px;align-items:center;font-weight:900">
+                    <input id="uSendCompletion" type="checkbox" style="width:auto">
+                    Send completion mail to client
+                  </label>
+                </div>
+              </div>
+        
+              <div class="label" style="margin-top:10px">Client Start Subject</div>
+              <input id="uClientStartSubject">
+              <div class="label" style="margin-top:10px">Client Start Body</div>
+              <textarea id="uClientStartBody" rows="5"></textarea>
+        
+              <div class="label" style="margin-top:10px">Client Completion Subject</div>
+              <input id="uClientCompletionSubject">
+              <div class="label" style="margin-top:10px">Client Completion Body</div>
+              <textarea id="uClientCompletionBody" rows="5"></textarea>
+        
+              <div class="sub" style="margin-top:8px">
+                Variables: {{clientName}} {{taskTitle}} {{startDate}} {{dueDate}} {{addToCalendarUrl}} {{completedAt}}
+              </div>
+        
+              <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:10px">
+                <button class="btn primary" id="btnSaveTaskDetails" type="button">Save Details</button>
+              </div>
+        
+              <div class="hr"></div>
+        
+              <div class="label">Series Tools (Partner)</div>
+              <div class="sub">Available only if this task belongs to a series.</div>
+        
+              <div class="grid" style="margin-top:10px">
+                <div class="col-6">
+                  <div class="label">Rebuild series: add N more occurrences</div>
+                  <input id="srAddCount" type="number" value="1" min="1">
+                </div>
+                <div class="col-6" style="display:flex;align-items:flex-end">
+                  <button class="btn" id="btnSeriesRebuild" type="button">Rebuild</button>
+                </div>
+        
+                <div class="col-6">
+                  <div class="label">Reassign series to email</div>
+                  <input id="srAssignEmail" placeholder="worker@firm.com">
+                </div>
+                <div class="col-6" style="display:flex;align-items:flex-end">
+                  <button class="btn" id="btnSeriesReassign" type="button">Reassign</button>
+                </div>
+              </div>
+        
+              <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px">
+                <button class="btn danger" id="btnDeleteOne" type="button">Delete This Task</button>
+                <button class="btn danger" id="btnDeleteSeries" type="button">Delete Entire Series</button>
+              </div>
+            </div>
+        
+            <div class="card" style="padding:12px">
+              <div class="label">Attachments</div>
+              <div id="dAttachList"></div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Toast -->
+        <div class="toast" id="toast"></div>
+        
+        <!-- Global Loading Overlay (MUST be before scripts so JS can find it reliably) -->
+        <div id="loadingOverlay" class="loadingOverlay hidden">
+          <div class="loadingCard">
+            <div class="loadingSpinner"></div>
+            <div>
+              <div style="font-weight:950;font-size:14px" id="loadingTitle">Working…</div>
+              <div class="sub" id="loadingMsg" style="margin-top:6px">Please wait</div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Scripts are in PART 3/3 -->
+        <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+        <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+        <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+        
+        <!-- index.html (PART 3/3) -->
+
+        <script>
+          // ===== CONFIG =====
+          // Replace with your stable Netlify domain
+          const BACKEND_BASE_URL = "https://investigators-burlington-button-harvest.trycloudflare.com/.netlify/functions";
+        
+          const firebaseConfig = {
+            apiKey: "AIzaSyCnWS-V96J6YDBVYKOeL5p8aa45GPTdSEg",
+            authDomain: "compliance-management-484405.firebaseapp.com",
+            projectId: "compliance-management-484405",
+            storageBucket: "compliance-management-484405.firebasestorage.app",
+            messagingSenderId: "4348274796",
+            appId: "1:4348274796:web:a9e1720c2ae223035bd049",
+            measurementId: "G-06QR8MTCSR"
+          };
+        
+          firebase.initializeApp(firebaseConfig);
+          const auth = firebase.auth();
+          const db = firebase.firestore();
+        
+          const el = (id) => document.getElementById(id);
+        
+          // ===== Toast =====
+          const toast = el('toast');
+          function showToast(msg, ms=2400){
+            if (!toast) return alert(msg);
+            toast.textContent = msg;
+            toast.classList.add('show');
+            setTimeout(()=>toast.classList.remove('show'), ms);
+          }
+        
+          // ===== Loading Overlay =====
+          const loadingOverlay = el('loadingOverlay');
+          const loadingTitle = el('loadingTitle');
+          const loadingMsg = el('loadingMsg');
+          let loadingCount = 0;
+        
+          function showLoading(title="Working…", msg="Please wait") {
+            loadingCount++;
+            if (loadingTitle) loadingTitle.textContent = title;
+            if (loadingMsg) loadingMsg.textContent = msg;
+            if (loadingOverlay) loadingOverlay.classList.remove('hidden');
+            document.body.classList.add('is-loading');
+          }
+        
+          function hideLoading() {
+            loadingCount = Math.max(0, loadingCount - 1);
+            if (loadingCount !== 0) return;
+            if (loadingOverlay) loadingOverlay.classList.add('hidden');
+            document.body.classList.remove('is-loading');
+          }
+        
+          // ===== Theme & Sidebar =====
+          const THEME_KEY = "cms_theme";
+          function applyTheme(theme) {
+            const dark = (theme === "dark");
+            document.body.classList.toggle('dark-mode', dark);
+            const ti = el('themeIcon');
+            const tl = el('themeLabel');
+            if (ti) ti.textContent = dark ? "☀" : "☾";
+            if (tl) tl.textContent = dark ? "Light" : "Dark";
+          }
+          applyTheme(localStorage.getItem(THEME_KEY) || "light");
+        
+          const themeToggle = el('themeToggle');
+          if (themeToggle) {
+            themeToggle.onclick = () => {
+              const next = document.body.classList.contains('dark-mode') ? "light" : "dark";
+              localStorage.setItem(THEME_KEY, next);
+              applyTheme(next);
+            };
+          }
+        
+          const sidebarToggle = el('sidebarToggle');
+          if (sidebarToggle) sidebarToggle.onclick = () => document.body.classList.toggle('sidebar-open');
+        
+          // ===== IST Date Helpers =====
+          const IST_TZ = 'Asia/Kolkata';
+        
+          function ymdIST(date=new Date()){
+            const parts = new Intl.DateTimeFormat('en-CA', {
+              timeZone: IST_TZ, year:'numeric', month:'2-digit', day:'2-digit'
+            }).formatToParts(date);
+            const m = Object.fromEntries(parts.map(p => [p.type, p.value]));
+            return `${m.year}-${m.month}-${m.day}`;
+          }
+        
+          function dateFromYmdIST(ymd){
+            return new Date(`${ymd}T00:00:00+05:30`);
+          }
+        
+          function dmyToYmd(dmy){
+            const s = String(dmy||'').trim();
+            const m = /^(\d{2})-(\d{2})-(\d{4})$/.exec(s);
+            if (!m) throw new Error(`Invalid date: "${s}". Use DD-MM-YYYY`);
+            return `${m[3]}-${m[2]}-${m[1]}`;
+          }
+        
+          function ymdToDmy(ymd){
+            const s = String(ymd||'').trim();
+            const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s);
+            if (!m) return '';
+            return `${m[3]}-${m[2]}-${m[1]}`;
+          }
+        
+          function todayYmdIST(){ return ymdIST(new Date()); }
+        
+          function dateDiffDaysIST(aYmd, bYmd){
+            const a = dateFromYmdIST(aYmd).getTime();
+            const b = dateFromYmdIST(bYmd).getTime();
+            return Math.floor((b - a) / (24*3600*1000));
+          }
+        
+          function asEmailList(str){
+            return String(str||'')
+              .split(/[;,:]/)
+              .map(s=>s.trim())
+              .filter(Boolean);
+          }
+        
+          function categoryLabel(cat){
+            const c = String(cat||'').toUpperCase().trim();
+            if (c === 'INCOME_TAX') return 'Income Tax';
+            if (c === 'OTHER') return 'Other';
+            if (c === 'ACCOUNTING') return 'Accounting';
+            if (c === 'AUDIT') return 'Audit';
+            return c || '';
+          }
+        
+          // ===== API Wrappers (Auto Loading) =====
+          function joinUrl(base, path) {
+            if (!path) return base;
+            return base + (path.startsWith('/') ? path : `/${path}`);
+          }
+        
+          async function apiPost(fnPath, bodyObj, opt={}) {
+            const { loadingTitle: lt, loadingMsg: lm, silentLoading } = opt || {};
+            if (!silentLoading) showLoading(lt || "Working…", lm || "Please wait");
+        
+            try{
+              const token = await auth.currentUser.getIdToken();
+              const res = await fetch(joinUrl(BACKEND_BASE_URL, fnPath), {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify(bodyObj || {}),
+              });
+              const txt = await res.text();
+              let data;
+              try { data = JSON.parse(txt); } catch { data = { raw: txt }; }
+              data.status = res.status;
+              data.httpOk = res.ok;
+              if (data.ok === undefined) data.ok = res.ok;
+              return data;
+            } catch(e){
+              return { ok:false, error: e.message || String(e) };
+            } finally {
+              if (!silentLoading) hideLoading();
+            }
+          }
+        
+          async function apiPostForm(fnPath, formData, opt={}) {
+            const { loadingTitle: lt, loadingMsg: lm, silentLoading } = opt || {};
+            if (!silentLoading) showLoading(lt || "Working…", lm || "Please wait");
+        
+            try{
+              const token = await auth.currentUser.getIdToken();
+              const res = await fetch(joinUrl(BACKEND_BASE_URL, fnPath), {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}` },
+                body: formData
+              });
+              const txt = await res.text();
+              let data;
+              try { data = JSON.parse(txt); } catch { data = { raw: txt }; }
+              data.status = res.status;
+              data.httpOk = res.ok;
+              if (data.ok === undefined) data.ok = res.ok;
+              return data;
+            } catch(e){
+              return { ok:false, error: e.message || String(e) };
+            } finally {
+              if (!silentLoading) hideLoading();
+            }
+          }
+        
+          function downloadBase64File(fileName, base64, mime){
+            const bytes = Uint8Array.from(atob(base64), c => c.charCodeAt(0));
+            const blob = new Blob([bytes], { type: mime || 'application/octet-stream' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = fileName || 'download.bin';
+            a.click();
+            setTimeout(()=>URL.revokeObjectURL(a.href), 1200);
+          }
+        
+          async function copyToClipboard(text){
+            try {
+              await navigator.clipboard.writeText(String(text ?? ''));
+              return true;
+            } catch {
+              const ta = document.createElement('textarea');
+              ta.value = String(text ?? '');
+              document.body.appendChild(ta);
+              ta.select();
+              document.execCommand('copy');
+              ta.remove();
+              return true;
+            }
+          }
+        
+          // ===== Navigation =====
+          function showPage(pageId) {
+            document.body.classList.remove('sidebar-open');
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            const p = document.getElementById(pageId);
+            if (p) p.classList.add('active');
+        
+            document.querySelectorAll('.navItem').forEach(n => n.classList.remove('active'));
+            const nav = document.querySelector(`.navItem[data-target="${pageId}"]`);
+            if (nav) nav.classList.add('active');
+          }
+        
+          const navGroup = el('navGroup');
+          if (navGroup) {
+            navGroup.addEventListener('click', async (e) => {
+              const item = e.target.closest('.navItem');
+              if (!item) return;
+              const target = item.getAttribute('data-target');
+              if (target) showPage(target);
+        
+              // optional: load team on nav open (safe)
+              if (target === 'p_team' && currentRole === 'PARTNER') {
+                try { await loadTeam(); } catch {}
+              }
+            });
+          }
+        
+          // ===== UI State Variables =====
+          const loginCard = el('loginCard');
+          const partnerUI = el('partnerUI');
+          const workerUI = el('workerUI');
+          const topUser = el('topUser');
+          const navRoleHint = el('navRoleHint');
+          const tasksSidebarCard = el('tasksSidebarCard');
+          const sidebarTasks = el('sidebarTasks');
+          const sidebarTaskCount = el('sidebarTaskCount');
+        
+          const overlay = el('overlay');
+          const drawer = el('drawer');
+        
+          let currentRole = "WORKER";
+          let myUid = null;
+        
+          let allClients = [];
+          let visibleTasks = [];
+          let selectedTaskId = null;
+        
+          function clientById(id){ return allClients.find(c => c.id === id) || null; }
+          function clientNameById(id){ const c = clientById(id); return c ? (c.name || id) : id; }
+        
+          function loadClientDropdowns(){
+            const filterClient = el('filterClient');
+            const ctClientId = el('ctClientId');
+        
+            const opts = allClients
+              .map(c => ({ id:c.id, name: c.name || c.id }))
+              .sort((a,b)=>a.name.localeCompare(b.name));
+        
+            if (filterClient){
+              const prev = filterClient.value;
+              filterClient.innerHTML = `<option value="">All Clients</option>` +
+                opts.map(o => `<option value="${o.id}">${o.name}</option>`).join('');
+              if (prev) filterClient.value = prev;
+            }
+        
+            if (ctClientId){
+              const prev = ctClientId.value;
+              ctClientId.innerHTML = `<option value="">(select)</option>` +
+                opts.map(o => `<option value="${o.id}">${o.name}</option>`).join('');
+              if (prev) ctClientId.value = prev;
+            }
+          }
+        
+          // ===== Runtime Calendar Settings =====
+          let calendarSettings = { startHH: 10, endHH: 12, timeZone: IST_TZ };
+        
+          async function loadCalendarSettings(silent=false) {
+            const r = await apiPost('/settings_calendar_get', {}, { silentLoading: silent });
+            if (!r.ok) return;
+            const d = r.data || {};
+            calendarSettings = {
+              startHH: Number(d.startHH ?? 10),
+              endHH: Number(d.endHH ?? 12),
+              timeZone: d.timeZone || IST_TZ
+            };
+            if (el('calSetStartHH')) el('calSetStartHH').value = calendarSettings.startHH;
+            if (el('calSetEndHH')) el('calSetEndHH').value = calendarSettings.endHH;
+            if (el('calSetTz')) el('calSetTz').value = calendarSettings.timeZone;
+          }
+        
+          function buildAddToCalendarUrlForTask(t, clientName) {
+            const ymdCompact = (s)=>String(s||'').replaceAll('-','');
+            const hh2 = (h)=>String(h).padStart(2,'0');
+            const start = `${ymdCompact(t.startDateYmd)}T${hh2(calendarSettings.startHH)}0000`;
+            const end = `${ymdCompact(t.startDateYmd)}T${hh2(calendarSettings.endHH)}0000`;
+        
+            const details =
+              `Client: ${clientName || ''}\n` +
+              `Task: ${t.title || ''}\n` +
+              `Start: ${ymdToDmy(t.startDateYmd)}\n` +
+              `Due: ${ymdToDmy(t.dueDateYmd)}\n` +
+              `TaskId: ${t.id}\n`;
+        
+            const params = new URLSearchParams({
+              action: 'TEMPLATE',
+              text: `START: ${t.title || 'Task'}`,
+              dates: `${start}/${end}`,
+              ctz: calendarSettings.timeZone || IST_TZ,
+              details
+            });
+        
+            return `https://calendar.google.com/calendar/render?${params.toString()}`;
+          }
+        
+          // ===== Drafting Studio Logic =====
+          const TEMPLATE_VARS = [
+            { name: "Client Name", key: "{{clientName}}", desc: "Client master name" },
+            { name: "Task Title", key: "{{taskTitle}}", desc: "Task title" },
+            { name: "Start Date (DD-MM-YYYY)", key: "{{startDate}}", desc: "Start/trigger date formatted DD-MM-YYYY" },
+            { name: "Due Date (DD-MM-YYYY)", key: "{{dueDate}}", desc: "Due date formatted DD-MM-YYYY" },
+            { name: "Add to Calendar URL", key: "{{addToCalendarUrl}}", desc: "Google Calendar template URL for the client" },
+            { name: "Completed At (IST)", key: "{{completedAt}}", desc: "Completion timestamp in IST" },
+          ];
+        
+          let draftLastFocus = 'body';
+          let draftInited = false;
+        
+          function normalizeForImport(s){
+            let x = String(s ?? '');
+            x = x.replace(/<br\s*\/?>/gi, '\\n');
+            x = x.replace(/\r?\n/g, '\\n');
+            x = x.replace(/\t/g, '    ');
+            return x;
+          }
+        
+          function tokensToRealLines(s){
+            return String(s ?? '').replaceAll('\\n', '\n');
+          }
+        
+          function draftSampleVars(){
+            return {
+              clientName: 'ABC Pvt Ltd',
+              taskTitle: 'GSTR-3B Filing',
+              startDate: '01-02-2026',
+              dueDate: '20-02-2026',
+              addToCalendarUrl: 'https://calendar.google.com/calendar/render?action=TEMPLATE&text=START...',
+              completedAt: new Date().toLocaleString('en-IN', { timeZone: IST_TZ }),
+            };
+          }
+        
+          function insertAtCursor(input, text){
+            const start = input.selectionStart ?? input.value.length;
+            const end = input.selectionEnd ?? input.value.length;
+            input.value = input.value.slice(0, start) + text + input.value.slice(end);
+            const pos = start + text.length;
+            input.selectionStart = input.selectionEnd = pos;
+            input.focus();
+          }
+        
+          function renderDraftPreview(){
+            const subj = el('draftSubject');
+            const body = el('draftBody');
+            const out = el('draftPreview');
+            if (!subj || !body || !out) return;
+        
+            const vars = draftSampleVars();
+            const replaceVar = (text) => {
+              let t = String(text || '');
+              for (const [k,v] of Object.entries(vars)) t = t.replaceAll(`{{${k}}}`, String(v));
+              return t;
+            };
+        
+            const bodyReal = tokensToRealLines(body.value);
+            out.textContent = `Subject: ${replaceVar(subj.value)}\n\n${replaceVar(bodyReal)}`;
+          }
+        
+          function initDraftingStudio(){
+            if (draftInited) return;
+            draftInited = true;
+        
+            const btn = el('btnVarMenu');
+            const dd = el('varDropdown');
+            const list = el('varList');
+            const search = el('varSearch');
+            const subj = el('draftSubject');
+            const body = el('draftBody');
+            const mode = el('draftNewlineMode');
+        
+            if (!btn || !dd || !list || !search || !subj || !body || !mode) return;
+        
+            subj.addEventListener('focus', ()=> draftLastFocus='subject');
+            body.addEventListener('focus', ()=> draftLastFocus='body');
+        
+            btn.onclick = () => {
+              dd.classList.toggle('show');
+              if (dd.classList.contains('show')) search.focus();
+            };
+        
+            document.addEventListener('click', (e) => {
+              const wrap = btn.closest('.draftVarMenu');
+              if (!wrap) return;
+              if (wrap.contains(e.target)) return;
+              dd.classList.remove('show');
+            });
+        
+            function renderVarList(filterText=''){
+              const q = String(filterText||'').toLowerCase();
+              list.innerHTML = '';
+              const rows = TEMPLATE_VARS.filter(v =>
+                !q || v.name.toLowerCase().includes(q) || v.key.toLowerCase().includes(q) || v.desc.toLowerCase().includes(q)
+              );
+        
+              rows.forEach(v => {
+                const div = document.createElement('div');
+                div.className = 'varItem';
+                div.innerHTML = `
+                  <div class="varTop">
+                    <div class="varName">${v.name}</div>
+                    <div class="varKey mono">${v.key}</div>
+                  </div>
+                  <div class="varDesc">${v.desc}</div>
+                `;
+                div.onclick = () => {
+                  const target = (draftLastFocus === 'subject') ? subj : body;
+                  insertAtCursor(target, v.key);
+                  dd.classList.remove('show');
+                  renderDraftPreview();
+                };
+                list.appendChild(div);
+              });
+        
+              if (!rows.length) list.innerHTML = `<div class="sub">No matches.</div>`;
+            }
+        
+            renderVarList('');
+            search.oninput = () => renderVarList(search.value);
+        
+            body.addEventListener('keydown', (e) => {
+              if (e.key !== 'Enter') return;
+              if (e.shiftKey) return;
+              if (mode.value === 'TOKEN') {
+                e.preventDefault();
+                insertAtCursor(body, '\\n');
+                renderDraftPreview();
+              }
+            });
+        
+            subj.addEventListener('input', renderDraftPreview);
+            body.addEventListener('input', renderDraftPreview);
+            mode.onchange = renderDraftPreview;
+        
+            const btnCopyForImport = el('btnDraftCopyForImport');
+            const btnCopySubject = el('btnDraftCopySubject');
+            const btnCopyBodyRaw = el('btnDraftCopyBodyRaw');
+        
+            if (btnCopyForImport) btnCopyForImport.onclick = async () => {
+              await copyToClipboard(normalizeForImport(body.value));
+              showToast('Copied Body (for Import)');
+            };
+        
+            if (btnCopySubject) btnCopySubject.onclick = async () => {
+              await copyToClipboard(subj.value || '');
+              showToast('Copied Subject');
+            };
+        
+            if (btnCopyBodyRaw) btnCopyBodyRaw.onclick = async () => {
+              await copyToClipboard(body.value || '');
+              showToast('Copied Body (raw)');
+            };
+        
+            renderDraftPreview();
+          }
+        
+          // ===== Dashboard / Render Logic =====
+          function seriesLabel(t){
+            if (!t.seriesId) return '-';
+            return `${t.occurrenceIndex || '?'} / ${t.occurrenceTotal || '?'}`;
+          }
+        
+          function taskAlertPill(t){
+            if (t.status === 'COMPLETED') return `<span class="pill ok">DONE</span>`;
+            const tdy = todayYmdIST();
+            const dd = dateDiffDaysIST(tdy, t.dueDateYmd);
+            const sd = t.startDateYmd ? dateDiffDaysIST(tdy, t.startDateYmd) : null;
+        
+            if (dd < 0) return `<span class="pill danger">OVERDUE</span>`;
+            if (dd === 0) return `<span class="pill danger">DUE TODAY</span>`;
+            if (dd <= 3) {
+              if (sd !== null && sd > 0) return `<span class="pill danger">HIGH ALERT</span>`;
+              return `<span class="pill warn">DUE SOON</span>`;
+            }
+            if (sd !== null && sd === 0) return `<span class="pill warn">START TODAY</span>`;
+            if (dd <= 7) return `<span class="pill warn">THIS WEEK</span>`;
+            return `<span class="pill">OK</span>`;
+          }
+        
+          function computeKPIs(){
+            const tdy = todayYmdIST();
+            let total = visibleTasks.length;
+            let d7=0,d15=0,d30=0,over=0,appr=0;
+        
+            for(const t of visibleTasks){
+              if (!t.dueDateYmd) continue;
+              const dd = dateDiffDaysIST(tdy, t.dueDateYmd);
+              if (t.status !== 'COMPLETED') {
+                if (dd < 0) over++;
+                if (dd >= 0 && dd <= 7) d7++;
+                if (dd >= 0 && dd <= 15) d15++;
+                if (dd >= 0 && dd <= 30) d30++;
+              }
+              if (t.status === 'APPROVAL_PENDING') appr++;
+            }
+        
+            if (el('kTotal')) el('kTotal').innerText = total;
+            if (el('k7')) el('k7').innerText = d7;
+            if (el('k15')) el('k15').innerText = d15;
+            if (el('k30')) el('k30').innerText = d30;
+            if (el('kOverdue')) el('kOverdue').innerText = over;
+            if (el('kAppr')) el('kAppr').innerText = appr;
+          }
+        
+          function applyPartnerFilters(){
+            const cId = el('filterClient')?.value || '';
+            const st = el('filterStatus')?.value || '';
+            const cat = el('filterCategory')?.value || '';
+            const q = (el('filterSearch')?.value || '').toLowerCase();
+            const dueOnDmy = (el('filterDueOn')?.value || '').trim();
+            const needDays = Number(el('filterNeedDays')?.value || 7);
+            const mode = el('filterMode')?.value || 'ALL';
+        
+            let dueOnYmd = '';
+            if (dueOnDmy) {
+              try { dueOnYmd = dmyToYmd(dueOnDmy); } catch {}
+            }
+        
+            const tdy = todayYmdIST();
+        
+            return visibleTasks.filter(t => {
+              if (cId && t.clientId !== cId) return false;
+              if (st && t.status !== st) return false;
+              if (cat && t.category !== cat) return false;
+              if (dueOnYmd && t.dueDateYmd !== dueOnYmd) return false;
+        
+              if (q){
+                const hay = `${t.title||''} ${clientNameById(t.clientId)||''}`.toLowerCase();
+                if (!hay.includes(q)) return false;
+              }
+        
+              if (mode === "APPROVAL") return t.status === "APPROVAL_PENDING";
+        
+              if (mode === "NEEDS_ACTION"){
+                if (t.status === 'COMPLETED') return false;
+                const dd = dateDiffDaysIST(tdy, t.dueDateYmd);
+                if (dd < 0) return true;
+                if (dd <= needDays) return true;
+                return false;
+              }
+        
+              return true;
+            });
+          }
+        
+          function renderPartnerTasks(){
+            const tbody = el('partnerTasks');
+            if (!tbody) return;
+        
+            const rows = applyPartnerFilters()
+              .sort((a,b)=>String(a.dueDateYmd||'').localeCompare(String(b.dueDateYmd||'')));
+        
+            tbody.innerHTML = '';
+            for(const t of rows){
+              const tr = document.createElement('tr');
+              tr.style.cursor = 'pointer';
+              tr.innerHTML = `
+                <td>${taskAlertPill(t)}</td>
+                <td>${clientNameById(t.clientId)}</td>
+                <td><b>${t.title || ''}</b><div class="sub" style="margin-top:6px">TaskId: ${t.id}</div></td>
+                <td>${seriesLabel(t)}</td>
+                <td><span class="pill">${t.category || ''}</span> <div class="sub" style="margin-top:6px">${t.type || ''}</div></td>
+                <td>${ymdToDmy(t.startDateYmd)}</td>
+                <td>${ymdToDmy(t.dueDateYmd)}</td>
+                <td>${t.status || ''}</td>
+                <td>${t.assignedToEmail || ''}</td>
+              `;
+              tr.onclick = () => openTaskDrawer(t.id);
+              tbody.appendChild(tr);
+            }
+          }
+        
+          function renderWorkerTasks(){
+            const tbody = el('workerTasks');
+            if (!tbody) return;
+        
+            const rows = [...visibleTasks].sort((a,b)=>String(a.dueDateYmd||'').localeCompare(String(b.dueDateYmd||'')));
+            tbody.innerHTML = '';
+        
+            for(const t of rows){
+              const tr = document.createElement('tr');
+              tr.style.cursor = 'pointer';
+              tr.innerHTML = `
+                <td>${taskAlertPill(t)}</td>
+                <td>${clientNameById(t.clientId)}</td>
+                <td><b>${t.title || ''}</b><div class="sub" style="margin-top:6px">${t.category || ''} / ${t.type || ''}</div></td>
+                <td>${seriesLabel(t)}</td>
+                <td>${ymdToDmy(t.startDateYmd)}</td>
+                <td>${ymdToDmy(t.dueDateYmd)}</td>
+                <td>${t.status || ''}</td>
+              `;
+              tr.onclick = () => openTaskDrawer(t.id);
+              tbody.appendChild(tr);
+            }
+          }
+        
+          function renderClients(){
+            const tbody = el('clientTable');
+            if (!tbody) return;
+            tbody.innerHTML = '';
+        
+            for(const c of allClients.sort((a,b)=>(a.name||'').localeCompare(b.name||''))){
+              const tr = document.createElement('tr');
+              tr.innerHTML = `
+                <td><b>${c.name || ''}</b><div class="sub" style="margin-top:6px">ID: ${c.id}</div></td>
+                <td>${c.primaryEmail || ''}</td>
+                <td>${c.pan || ''}</td>
+                <td>${c.gstin || ''}</td>
+                <td>${c.engagementType || ''}</td>
+              `;
+              tbody.appendChild(tr);
+            }
+          }
+        
+          function renderSidebarTasks(){
+            if (document.body.classList.contains('logged-out')) return;
+            const days = Number(el('sbDays')?.value || 7);
+            const tdy = todayYmdIST();
+        
+            const list = visibleTasks
+              .filter(t => t.status !== 'COMPLETED' && t.dueDateYmd)
+              .filter(t => {
+                const dd = dateDiffDaysIST(tdy, t.dueDateYmd);
+                return dd < 0 || dd <= days;
+              })
+              .sort((a,b)=>String(a.dueDateYmd||'').localeCompare(String(b.dueDateYmd||'')))
+              .slice(0, 30);
+        
+            if (sidebarTaskCount) sidebarTaskCount.textContent = String(list.length);
+            if (!sidebarTasks) return;
+            sidebarTasks.innerHTML = '';
+        
+            if (!list.length){
+              sidebarTasks.innerHTML = `<div class="sub">No tasks in this range.</div>`;
+              return;
+            }
+        
+            for(const t of list){
+              const div = document.createElement('div');
+              div.className = 'taskItem';
+              div.innerHTML = `
+                <div class="top">
+                  <div class="name">${t.title || ''}</div>
+                  <div>${taskAlertPill(t)}</div>
+                </div>
+                <div class="meta">${clientNameById(t.clientId)} • Due ${ymdToDmy(t.dueDateYmd)} • ${t.status}</div>
+              `;
+              div.onclick = () => {
+                showPage(currentRole === 'PARTNER' ? 'p_tasks' : 'w_tasks');
+                openTaskDrawer(t.id);
+              };
+              sidebarTasks.appendChild(div);
+            }
+          }
+        
+          const sbDays = el('sbDays');
+          if (sbDays) sbDays.oninput = renderSidebarTasks;
+        
+          function renderDashboardAlerts(){
+            const tbody = el('dashAlerts');
+            if (!tbody) return;
+            tbody.innerHTML = '';
+        
+            const tdy = todayYmdIST();
+            const alerts = visibleTasks
+              .filter(t => t.status !== 'COMPLETED' && t.dueDateYmd)
+              .map(t => {
+                const dd = dateDiffDaysIST(tdy, t.dueDateYmd);
+                const sd = t.startDateYmd ? dateDiffDaysIST(tdy, t.startDateYmd) : null;
+                let rank = 999;
+                if (dd < 0) rank = 0;
+                else if (dd === 0) rank = 1;
+                else if (dd <= 3 && sd !== null && sd > 0) rank = 2;
+                else if (dd <= 3) rank = 3;
+                else if (dd <= 7) rank = 4;
+                else rank = 999;
+                return { t, rank };
+              })
+              .filter(x => x.rank !== 999)
+              .sort((a,b)=>a.rank - b.rank)
+              .slice(0, 25);
+        
+            for(const x of alerts){
+              const t = x.t;
+              const tr = document.createElement('tr');
+              tr.style.cursor = 'pointer';
+              tr.innerHTML = `
+                <td>${taskAlertPill(t)}</td>
+                <td>${clientNameById(t.clientId)}</td>
+                <td><b>${t.title || ''}</b></td>
+                <td>${ymdToDmy(t.startDateYmd)}</td>
+                <td>${ymdToDmy(t.dueDateYmd)}</td>
+                <td>${t.status || ''}</td>
+              `;
+              tr.onclick = () => { showPage('p_tasks'); openTaskDrawer(t.id); };
+              tbody.appendChild(tr);
+            }
+          }
+        
+          const btnOpenTasksFromDash = el('btnOpenTasksFromDash');
+          if (btnOpenTasksFromDash) btnOpenTasksFromDash.onclick = () => showPage('p_tasks');
+        
+          // ===== Calendar Month Grid =====
+          let calCursor = new Date();
+          calCursor.setDate(1);
+          const DOW = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+        
+          function monthLabel(d){
+            const m = d.toLocaleString(undefined, { month: 'long' });
+            return `${m} ${d.getFullYear()}`;
+          }
+        
+          function tasksByDueDateMap(){
+            const map = new Map();
+            for(const t of visibleTasks){
+              if (!t.dueDateYmd) continue;
+              if (!map.has(t.dueDateYmd)) map.set(t.dueDateYmd, []);
+              map.get(t.dueDateYmd).push(t);
+            }
+            return map;
+          }
+        
+          function renderCalendar(){
+            const grid = el('calGrid');
+            const label = el('calLabel');
+            if (!grid || !label) return;
+        
+            grid.innerHTML = '';
+            label.textContent = monthLabel(calCursor);
+        
+            for(const d of DOW){
+              const div = document.createElement('div');
+              div.className = 'calDow';
+              div.textContent = d;
+              grid.appendChild(div);
+            }
+        
+            const map = tasksByDueDateMap();
+            const first = new Date(calCursor);
+            const month = first.getMonth();
+            const firstDow = (first.getDay() + 6) % 7;
+            const start = new Date(first);
+            start.setDate(first.getDate() - firstDow);
+        
+            const tdy = todayYmdIST();
+        
+            for(let i=0;i<42;i++){
+              const d = new Date(start);
+              d.setDate(start.getDate() + i);
+              const y = ymdIST(d);
+        
+              const cell = document.createElement('div');
+              cell.className = 'calCell';
+              if (d.getMonth() !== month) cell.classList.add('muted');
+              if (y === tdy) cell.classList.add('today');
+        
+              const list = map.get(y) || [];
+        
+              const hasOverdue = list.some(t => t.status !== 'COMPLETED' && dateDiffDaysIST(tdy, t.dueDateYmd) < 0);
+              const hasDueSoon = list.some(t => t.status !== 'COMPLETED' && dateDiffDaysIST(tdy, t.dueDateYmd) >= 0 && dateDiffDaysIST(tdy, t.dueDateYmd) <= 3);
+              const hasDone = list.some(t => t.status === 'COMPLETED');
+        
+              cell.innerHTML = `
+                <div class="calDayNum">${d.getDate()}</div>
+                <div class="calDotRow">
+                  <div class="calDots">
+                    <div class="dot ${hasOverdue ? 'danger' : ''}"></div>
+                    <div class="dot ${hasDueSoon ? 'warn' : ''}"></div>
+                    <div class="dot ${hasDone ? 'ok' : ''}"></div>
+                  </div>
+                  <div class="calCount">${list.length ? (list.length + ' tasks') : ''}</div>
+                </div>
+              `;
+        
+              cell.onclick = () => {
+                showPage(currentRole === 'PARTNER' ? 'p_tasks' : 'w_tasks');
+                if (currentRole === 'PARTNER') {
+                  el('filterDueOn').value = ymdToDmy(y);
+                  el('filterMode').value = 'ALL';
+                  renderPartnerTasks();
+                } else {
+                  showToast('Due date: ' + ymdToDmy(y));
+                }
+              };
+        
+              grid.appendChild(cell);
+            }
+          }
+        
+          const calPrev = el('calPrev');
+          const calNext = el('calNext');
+          const calTodayBtn = el('calToday');
+          if (calPrev) calPrev.onclick = () => { calCursor.setMonth(calCursor.getMonth() - 1); renderCalendar(); };
+          if (calNext) calNext.onclick = () => { calCursor.setMonth(calCursor.getMonth() + 1); renderCalendar(); };
+          if (calTodayBtn) calTodayBtn.onclick = () => { calCursor = new Date(); calCursor.setDate(1); renderCalendar(); };
+        
+          // ===== Drawer Logic + Fullscreen (REQUIRED CHANGE) =====
+          const btnExpand = el('btnExpandDrawer');
+          if(btnExpand) {
+            btnExpand.onclick = () => {
+              const d = el('drawer');
+              d.classList.toggle('fullscreen');
+              btnExpand.textContent = d.classList.contains('fullscreen') ? '><' : '⤢';
+            };
+          }
+        
+          function closeDrawer(){
+            selectedTaskId = null;
+            if (overlay) overlay.classList.remove('show');
+            if (drawer){
+              drawer.classList.remove('show');
+              drawer.classList.remove('fullscreen'); // Reset
+            }
+            if (btnExpand) btnExpand.textContent = '⤢';
+          }
+        
+          const btnCloseDrawer = el('btnCloseDrawer');
+          if (btnCloseDrawer) btnCloseDrawer.onclick = closeDrawer;
+          if (overlay) overlay.onclick = closeDrawer;
+        
+          function fillStatusOptions(role){
+            const sel = el('uStatus');
+            if (!sel) return;
+            sel.innerHTML = '';
+            const base = ['PENDING','IN_PROGRESS','CLIENT_PENDING','APPROVAL_PENDING'];
+            const list = role === 'PARTNER' ? [...base,'COMPLETED'] : base;
+            list.forEach(s => {
+              const o = document.createElement('option');
+              o.value = s; o.textContent = s;
+              sel.appendChild(o);
+            });
+          }
+        
+          function renderAttachments(t){
+            const box = el('dAttachList');
+            if (!box) return;
+            box.innerHTML = '';
+            const arr = t.attachments || [];
+            if (!arr.length) { box.innerHTML = `<div class="sub">No attachments</div>`; return; }
+            arr.forEach(a => {
+              const div = document.createElement('div');
+              div.className = 'card';
+              div.style.padding = '10px';
+              div.style.marginBottom = '8px';
+              div.innerHTML = `
+                <div style="font-weight:950">${a.type || 'DOC'} — ${a.fileName || ''}</div>
+                <div class="sub" style="margin-top:6px"><a class="link" href="${a.driveWebViewLink || '#'}" target="_blank">Open in Drive</a></div>
+              `;
+              box.appendChild(div);
+            });
+          }
+        
+          function openTaskDrawer(taskId){
+            const t = visibleTasks.find(x => x.id === taskId);
+            if (!t) return showToast('Task not found');
+            selectedTaskId = taskId;
+        
+            const clientName = clientNameById(t.clientId);
+            const eventId = t.calendarEventId || t.calendarStartEventId || '-';
+        
+            el('dTitle').textContent = t.title || 'Task';
+            el('dSub').textContent = `TaskId: ${t.id} • Client: ${clientName} • Series: ${t.seriesId ? (t.seriesId + ' ' + seriesLabel(t)) : 'none'}`;
+        
+            el('dInfo').innerHTML = `
+              <div><b>Start:</b> ${ymdToDmy(t.startDateYmd)} • <b>Due:</b> ${ymdToDmy(t.dueDateYmd)}</div>
+              <div><b>Status:</b> ${t.status} • <b>Assignee:</b> ${t.assignedToEmail || ''}</div>
+              <div class="sub" style="margin-top:6px"><b>CalendarEventId:</b> ${eventId}</div>
+              <div class="sub" style="margin-top:6px"><b>Client start mail sent:</b> ${t.clientStartMailSent ? 'YES' : 'NO'}</div>
+            `;
+        
+            const searchQ = encodeURIComponent(`${t.title || ''} ${t.startDateYmd || ''}`);
+            const fallback = `https://calendar.google.com/calendar/u/0/r/search?q=${searchQ}`;
+            el('btnOpenCalEvent').href = t.calendarHtmlLink || fallback;
+            el('btnAddToMyCal').href = buildAddToCalendarUrlForTask(t, clientName);
+        
+            fillStatusOptions(currentRole);
+            el('uStatus').value = t.status || 'PENDING';
+            el('uStatusNote').value = t.statusNote || '';
+            el('uDelayReason').value = t.delayReason || '';
+            el('uDelayNotes').value = t.delayNotes || '';
+        
+            const partnerOnly = (currentRole === 'PARTNER');
+            el('partnerOnlyBox').style.display = partnerOnly ? 'block' : 'none';
+        
+            if (partnerOnly) {
+              el('uApplyToSeries').checked = false;
+              el('uApplyToSeries').disabled = !t.seriesId;
+        
+              const catLabel = categoryLabel(t.category);
+              el('uTitle').value = t.title || '';
+              el('uCategory').value = catLabel || 'Other';
+              el('uType').value = t.type || 'FILING';
+              el('uTrigger').value = t.triggerDaysBefore ?? 15;
+              el('uAssignedToEmail').value = t.assignedToEmail || '';
+              el('uDueDateDmy').value = ymdToDmy(t.dueDateYmd) || '';
+        
+              el('uClientTo').value = (t.clientToEmails || []).join(';');
+              el('uClientCc').value = (t.clientCcEmails || []).join(';');
+              el('uClientBcc').value = (t.clientBccEmails || []).join(';');
+        
+              el('uCcAssignee').checked = (t.ccAssigneeOnClientStart === true);
+              el('uCcManager').checked = (t.ccManagerOnClientStart === true);
+              el('uSendCompletion').checked = (t.sendClientCompletionMail !== false);
+        
+              el('uClientStartSubject').value = t.clientStartSubject || '';
+              el('uClientStartBody').value = t.clientStartBody || '';
+              el('uClientCompletionSubject').value = t.clientCompletionSubject || '';
+              el('uClientCompletionBody').value = t.clientCompletionBody || '';
+        
+              el('btnSeriesRebuild').disabled = !t.seriesId;
+              el('btnSeriesReassign').disabled = !t.seriesId;
+              el('btnDeleteSeries').disabled = !t.seriesId;
+        
+              el('srAssignEmail').value = t.assignedToEmail || '';
+            }
+        
+            renderAttachments(t);
+        
+            if (overlay) overlay.classList.add('show');
+            if (drawer) drawer.classList.add('show');
+          }
+        
+          // ===== Button Actions =====
+          el('btnSaveTaskStatus').onclick = async () => {
+            if (!selectedTaskId) return;
+            const payload = {
+              taskId: selectedTaskId,
+              newStatus: el('uStatus').value,
+              statusNote: el('uStatusNote').value,
+              delayReason: el('uDelayReason').value || null,
+              delayNotes: el('uDelayNotes').value
+            };
+            const r = await apiPost('/tasks_updatestatus', payload, { loadingTitle: 'Saving status…' });
+            if (!r.ok) return showToast('Save failed: ' + (r.error || JSON.stringify(r)), 4500);
+            showToast('Saved status');
+          };
+        
+          el('btnUploadDoc').onclick = async () => {
+            if (!selectedTaskId) return;
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.onchange = async () => {
+              const file = input.files[0];
+              if (!file) return;
+              const type = prompt("Attachment type: CHALLAN / RETURN / ACK / OTHER", "ACK") || "OTHER";
+              const fd = new FormData();
+              fd.append('taskId', selectedTaskId);
+              fd.append('type', type);
+              fd.append('file', file, file.name);
+        
+              const r = await apiPostForm('/tasks_uploadattachment', fd, { loadingTitle:'Uploading…', loadingMsg:'Uploading to Drive' });
+              if (!r.ok) return showToast('Upload failed: ' + (r.error || JSON.stringify(r)), 5000);
+              showToast('Uploaded');
+            };
+            input.click();
+          };
+        
+          el('btnSaveTaskDetails').onclick = async () => {
+            if (!selectedTaskId) return;
+            if (currentRole !== 'PARTNER') return showToast('Partner only');
+        
+            const applyToSeries = el('uApplyToSeries').checked;
+        
+            let dueDateYmd = null;
+            const dueDmy = el('uDueDateDmy').value.trim();
+            if (dueDmy) {
+              try { dueDateYmd = dmyToYmd(dueDmy); } catch(e){ return showToast(e.message, 5000); }
+            }
+        
+            const payload = {
+              taskId: selectedTaskId,
+              applyToSeries,
+              title: el('uTitle').value,
+              category: el('uCategory').value,
+              type: el('uType').value,
+              triggerDaysBefore: Number(el('uTrigger').value || 0),
+              assignedToEmail: el('uAssignedToEmail').value.trim(),
+              dueDateYmd,
+        
+              clientStartSubject: el('uClientStartSubject').value,
+              clientStartBody: el('uClientStartBody').value,
+              sendClientCompletionMail: el('uSendCompletion').checked,
+              clientCompletionSubject: el('uClientCompletionSubject').value,
+              clientCompletionBody: el('uClientCompletionBody').value
+            };
+        
+            const r = await apiPost('/tasks_updatetask', payload, { loadingTitle:'Saving task…' });
+            if (!r.ok) return showToast('Save failed: ' + (r.error || JSON.stringify(r)), 5000);
+        
+            try {
+              await db.collection('tasks').doc(selectedTaskId).update({
+                clientToEmails: asEmailList(el('uClientTo').value),
+                clientCcEmails: asEmailList(el('uClientCc').value),
+                clientBccEmails: asEmailList(el('uClientBcc').value),
+                ccAssigneeOnClientStart: el('uCcAssignee').checked,
+                ccManagerOnClientStart: el('uCcManager').checked,
+                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+              });
+            } catch (e) {
+              console.warn('Recipient fields update blocked by rules:', e);
+            }
+        
+            showToast(`Saved. Updated ${r.updatedCount || 1} task(s).`);
+          };
+        
+          el('btnSeriesRebuild').onclick = async () => {
+            if (!selectedTaskId) return;
+            const t = visibleTasks.find(x => x.id === selectedTaskId);
+            if (!t?.seriesId) return showToast('No seriesId');
+            const addCount = Number(el('srAddCount').value || 1);
+            const r = await apiPost('/series_rebuild', { seriesId: t.seriesId, addCount }, { loadingTitle:'Rebuilding series…' });
+            if (!r.ok) return showToast('Rebuild failed: ' + (r.error || JSON.stringify(r)), 5000);
+            showToast(`Rebuilt. Created ${r.created} tasks. New total: ${r.newTotal}`);
+          };
+        
+          el('btnSeriesReassign').onclick = async () => {
+            if (!selectedTaskId) return;
+            const t = visibleTasks.find(x => x.id === selectedTaskId);
+            if (!t?.seriesId) return showToast('No seriesId');
+            const assignedToEmail = el('srAssignEmail').value.trim();
+            if (!assignedToEmail) return showToast('Enter email');
+            const r = await apiPost('/series_reassign', { seriesId: t.seriesId, assignedToEmail }, { loadingTitle:'Reassigning…' });
+            if (!r.ok) return showToast('Reassign failed: ' + (r.error || JSON.stringify(r)), 5000);
+            showToast(`Reassigned ${r.updatedCount} tasks`);
+          };
+        
+          el('btnDeleteOne').onclick = async () => {
+            if (!selectedTaskId) return;
+            if (currentRole !== 'PARTNER') return showToast('Partner only');
+            if (!confirm('Delete this task and its calendar event?')) return;
+            const r = await apiPost('/tasks_delete', { taskId: selectedTaskId, applyToSeries: false }, { loadingTitle:'Deleting…' });
+            if (!r.ok) return showToast('Delete failed: ' + (r.error || JSON.stringify(r)), 5000);
+            showToast(`Deleted ${r.deletedCount} task(s)`);
+            closeDrawer();
+          };
+        
+          el('btnDeleteSeries').onclick = async () => {
+            if (!selectedTaskId) return;
+            if (currentRole !== 'PARTNER') return showToast('Partner only');
+            const t = visibleTasks.find(x => x.id === selectedTaskId);
+            if (!t?.seriesId) return showToast('No seriesId');
+            if (!confirm('DELETE ENTIRE SERIES (all tasks + calendar events)?')) return;
+            const r = await apiPost('/tasks_delete', { taskId: selectedTaskId, applyToSeries: true }, { loadingTitle:'Deleting series…' });
+            if (!r.ok) return showToast('Delete series failed: ' + (r.error || JSON.stringify(r)), 5000);
+            showToast(`Deleted ${r.deletedCount} task(s)`);
+            closeDrawer();
+          };
+        
+          el('btnCreateClient').onclick = async () => {
+            const payload = {
+              name: el('cName').value,
+              pan: el('cPAN').value,
+              gstin: el('cGSTIN').value,
+              cin: el('cCIN').value,
+              assessmentYear: el('cAY').value,
+              engagementType: el('cEng').value,
+              primaryEmail: el('cEmail').value,
+              ccEmails: asEmailList(el('cCC').value),
+              bccEmails: asEmailList(el('cBCC').value),
+            };
+            const r = await apiPost('/clients_create', payload, { loadingTitle:'Creating client…' });
+            if (!r.ok) return showToast('Create client failed: ' + (r.error || JSON.stringify(r)), 5000);
+            showToast('Client created');
+          };
+        
+          el('btnGoTasks').onclick = () => showPage('p_tasks');
+        
+          // ===== Instant Mail: backend handles "startDate==today => send mail" inside tasks_createone =====
+          el('btnCreateTaskOne').onclick = async () => {
+            let dueYmd;
+            try { dueYmd = dmyToYmd(el('ctDueDate').value.trim()); }
+            catch(e){ return showToast(e.message, 5000); }
+        
+            const payload = {
+              clientId: el('ctClientId').value || null,
+              clientName: (el('ctClientName').value || '').trim() || null,
+              clientEmail: (el('ctClientEmail').value || '').trim() || null,
+              assignedToEmail: (el('ctAssignedToEmail').value || '').trim() || null,
+        
+              title: el('ctTitle').value,
+              category: el('ctCategory').value,
+              type: el('ctType').value || 'FILING',
+        
+              dueDateYmd: dueYmd,
+              triggerDaysBefore: Number(el('ctTrigger').value || 15),
+        
+              recurrence: el('ctRecurrence').value,
+              generateCount: Number(el('ctGenerateCount').value || 1),
+        
+              clientToEmails: asEmailList(el('ctClientTo').value),
+              clientCcEmails: asEmailList(el('ctClientCc').value),
+              clientBccEmails: asEmailList(el('ctClientBcc').value),
+              ccAssigneeOnClientStart: el('ctCcAssignee').checked,
+              ccManagerOnClientStart: el('ctCcManager').checked,
+        
+              clientStartSubject: el('ctStartSubject').value,
+              clientStartBody: el('ctStartBody').value,
+        
+              sendClientCompletionMail: el('ctSendCompletion').checked,
+              clientCompletionSubject: el('ctCompletionSubject').value,
+              clientCompletionBody: el('ctCompletionBody').value
+            };
+        
+            const r = await apiPost('/tasks_createone', payload, { loadingTitle:'Creating task(s)…' });
+            if (!r.ok) return showToast('Create failed: ' + (r.error || JSON.stringify(r)), 6000);
+            showToast(`Created ${r.created || 1} task(s).`);
+            showPage('p_tasks');
+          };
+        
+          el('btnDownloadMyClientsXlsx').onclick = async () => {
+            const r = await apiPost('/exports_myClientsTemplateXlsx', {}, { loadingTitle:'Preparing template…' });
+            if (!r.ok) return showToast('Template download failed: ' + (r.error || JSON.stringify(r)), 6000);
+            downloadBase64File(r.fileName || 'my_clients_import_template.xlsx', r.base64,
+              'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            );
+            showToast('Template downloaded');
+          };
+        
+          el('btnImportXlsx').onclick = async () => {
+            const f = el('xlsxFile').files[0];
+            if (!f) return showToast('Select XLSX file');
+            const fd = new FormData();
+            fd.append('file', f, f.name);
+            const r = await apiPostForm('/tasks_bulkimportxlsx', fd, { loadingTitle:'Importing…', loadingMsg:'Uploading XLSX and creating tasks' });
+            if (!r.ok) return showToast('Import failed: ' + (r.error || JSON.stringify(r)), 6000);
+            showToast('Imported. Created: ' + (r.created || 0));
+            showPage('p_tasks');
+          };
+        
+          el('btnExportFirmRange').onclick = async () => {
+            let fromDmy = el('exportFrom').value.trim();
+            let toDmy = el('exportTo').value.trim();
+            const includeAudit = el('exportIncludeAudit').value === 'true';
+        
+            try { dmyToYmd(fromDmy); dmyToYmd(toDmy); }
+            catch(e){ return showToast(e.message, 6000); }
+        
+            const r = await apiPost('/exports_firmRangeWithHistoryXlsx', { fromDmy, toDmy, includeAudit }, { loadingTitle:'Exporting…' });
+            if (!r.ok) return showToast('Export failed: ' + (r.error || JSON.stringify(r)), 7000);
+            downloadBase64File(r.fileName, r.base64,
+              'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            );
+            showToast('Export downloaded');
+          };
+        
+          async function runQuickExport(mode){
+            const r = await apiPost('/exports_quickXlsx', { mode }, { loadingTitle:'Exporting…' });
+            if (!r.ok) return showToast('Quick export failed: ' + (r.error || JSON.stringify(r)), 6000);
+            downloadBase64File(r.fileName, r.base64,
+              'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            );
+            showToast('Export downloaded');
+          }
+        
+          el('btnExportNext7').onclick = () => runQuickExport('NEXT_7');
+          el('btnExportNext15').onclick = () => runQuickExport('NEXT_15');
+          el('btnExportNext30').onclick = () => runQuickExport('NEXT_30');
+          el('btnExportOverdue').onclick = () => runQuickExport('OVERDUE');
+          el('btnExportApproval').onclick = () => runQuickExport('APPROVAL_PENDING');
+        
+          // Filters
+          el('btnResetFilters').onclick = () => {
+            el('filterClient').value = '';
+            el('filterStatus').value = '';
+            el('filterCategory').value = '';
+            el('filterSearch').value = '';
+            el('filterDueOn').value = '';
+            el('filterNeedDays').value = '7';
+            el('filterMode').value = 'ALL';
+            renderPartnerTasks();
+          };
+          el('btnClearDueOn').onclick = () => { el('filterDueOn').value = ''; renderPartnerTasks(); };
+          ['filterClient','filterStatus','filterCategory','filterMode'].forEach(id => el(id).onchange = renderPartnerTasks);
+          ['filterSearch','filterDueOn','filterNeedDays'].forEach(id => el(id).oninput = renderPartnerTasks);
+        
+          // Digest settings
+          async function loadSettings(){
+            const r = await apiPost('/settings_get', {}, { loadingTitle:'Loading settings…' });
+            if (!r.ok) return showToast('Settings load failed: ' + (r.error || JSON.stringify(r)), 6000);
+            const data = r.data || {};
+            el('setDailyEmails').value = (data.dailyInternalEmails || []).join(';');
+            el('setDailyWindowDays').value = data.dailyWindowDays || 30;
+            el('setSendToAssignees').value = (data.sendDailyToAssignees === false) ? 'false' : 'true';
+            el('setLastRun').value = data.lastDailyRunYmd || '';
+          }
+          el('btnReloadSettings').onclick = loadSettings;
+        
+          el('btnSaveSettings').onclick = async () => {
+            const payload = {
+              dailyInternalEmails: el('setDailyEmails').value,
+              dailyWindowDays: Number(el('setDailyWindowDays').value || 30),
+              sendDailyToAssignees: el('setSendToAssignees').value === 'true'
+            };
+            const r = await apiPost('/settings_update', payload, { loadingTitle:'Saving digest settings…' });
+            if (!r.ok) return showToast('Save failed: ' + (r.error || JSON.stringify(r)), 6000);
+            showToast('Digest settings saved');
+            loadSettings();
+          };
+        
+          // Calendar settings
+          async function reloadCalSettings(){
+            const r = await apiPost('/settings_calendar_get', {}, { loadingTitle:'Loading calendar settings…' });
+            if (!r.ok) return showToast('Calendar settings load failed: ' + (r.error || JSON.stringify(r)), 6000);
+            const d = r.data || {};
+            el('calSetStartHH').value = d.startHH ?? 10;
+            el('calSetEndHH').value = d.endHH ?? 12;
+            el('calSetTz').value = d.timeZone || IST_TZ;
+            calendarSettings = { startHH: Number(d.startHH ?? 10), endHH: Number(d.endHH ?? 12), timeZone: d.timeZone || IST_TZ };
+            showToast('Calendar settings loaded');
+          }
+          el('btnReloadCalSettings').onclick = reloadCalSettings;
+        
+          el('btnSaveCalSettings').onclick = async () => {
+            const startHH = Number(el('calSetStartHH').value);
+            const endHH = Number(el('calSetEndHH').value);
+            const timeZone = el('calSetTz').value.trim() || IST_TZ;
+            const r = await apiPost('/settings_calendar_update', { startHH, endHH, timeZone }, { loadingTitle:'Saving calendar settings…' });
+            if (!r.ok) return showToast('Save failed: ' + (r.error || JSON.stringify(r)), 6000);
+            showToast('Calendar settings saved');
+            await loadCalendarSettings(true);
+          };
+        
+          // ===== Team management =====
+          async function loadTeam(){
+            const r = await apiPost('/users_list', {}, { loadingTitle:'Loading team…' });
+            if (!r.ok) return showToast('Team load failed: ' + (r.error || JSON.stringify(r)), 6000);
+        
+            const users = r.users || [];
+            const tbody = el('teamTable');
+            if (!tbody) return;
+        
+            tbody.innerHTML = '';
+        
+            users.forEach(u => {
+              const tr = document.createElement('tr');
+        
+              const roleSelId = `role_${u.uid}`;
+              const activeSelId = `active_${u.uid}`;
+              const mgrId = `mgr_${u.uid}`;
+        
+              tr.innerHTML = `
+                <td><b>${u.email || ''}</b><div class="sub" style="margin-top:6px">uid: ${u.uid}</div></td>
+                <td>
+                  <select id="${roleSelId}">
+                    <option ${u.role==='PARTNER'?'selected':''}>PARTNER</option>
+                    <option ${u.role==='MANAGER'?'selected':''}>MANAGER</option>
+                    <option ${u.role==='WORKER'?'selected':''}>WORKER</option>
+                  </select>
+                </td>
+                <td>
+                  <select id="${activeSelId}">
+                    <option value="true" ${(u.active!==false)?'selected':''}>true</option>
+                    <option value="false" ${(u.active===false)?'selected':''}>false</option>
+                  </select>
+                </td>
+                <td>
+                  <input id="${mgrId}" value="${u.managerEmail || ''}" placeholder="manager@firm.com (optional)">
+                  <div class="sub" style="margin-top:6px">Used when CC manager is enabled.</div>
+                </td>
+                <td style="white-space:nowrap">
+                  <button class="btn small" data-act="saveRole" data-uid="${u.uid}">Save Role</button>
+                  <button class="btn small" data-act="saveMgr" data-uid="${u.uid}">Save Manager</button>
+                </td>
+              `;
+        
+              tbody.appendChild(tr);
+            });
+        
+            tbody.onclick = async (e) => {
+              const btn = e.target.closest('button[data-act]');
+              if (!btn) return;
+              const uid = btn.getAttribute('data-uid');
+              const act = btn.getAttribute('data-act');
+        
+              if (act === 'saveRole') {
+                const role = el(`role_${uid}`).value;
+                const active = el(`active_${uid}`).value === 'true';
+                const rr = await apiPost('/users_setrole', { uid, role, active }, { loadingTitle:'Saving role…' });
+                if (!rr.ok) return showToast('Save role failed: ' + (rr.error || JSON.stringify(rr)), 6000);
+                showToast('Role saved');
+              }
+        
+              if (act === 'saveMgr') {
+                const managerEmail = el(`mgr_${uid}`).value.trim();
+                const rr = await apiPost('/users_setmanager', { uid, managerEmail }, { loadingTitle:'Saving manager…' });
+                if (!rr.ok) return showToast('Save manager failed: ' + (rr.error || JSON.stringify(rr)), 6000);
+                showToast('Manager saved');
+              }
+            };
+          }
+          el('btnReloadTeam').onclick = loadTeam;
+        
+          // ===== Firestore Subscriptions =====
+          let unsubClients = null;
+          let unsubTasks = null;
+          let unsubAudit = null;
+        
+          function subscribeClients(){
+            if (unsubClients) unsubClients();
+            unsubClients = db.collection('clients').onSnapshot((snap) => {
+              allClients = snap.docs.map(d => ({ id:d.id, ...d.data() }));
+              loadClientDropdowns();
+              renderClients();
+            });
+          }
+        
+          function subscribeTasksForRole(role, uid){
+            if (unsubTasks) unsubTasks();
+            if (role === 'PARTNER'){
+              unsubTasks = db.collection('tasks').onSnapshot((snap) => {
+                visibleTasks = snap.docs.map(d => ({ id:d.id, ...d.data() }));
+                computeKPIs();
+                renderPartnerTasks();
+                renderDashboardAlerts();
+                renderSidebarTasks();
+                renderCalendar();
+                if (selectedTaskId) openTaskDrawer(selectedTaskId);
+              });
+            } else {
+              unsubTasks = db.collection('tasks').where('assignedToUid','==',uid).onSnapshot((snap) => {
+                visibleTasks = snap.docs.map(d => ({ id:d.id, ...d.data() }));
+                renderWorkerTasks();
+                renderSidebarTasks();
+                renderCalendar();
+                if (selectedTaskId) openTaskDrawer(selectedTaskId);
+              });
+            }
+          }
+        
+          function subscribeAudit(role){
+            if (unsubAudit) unsubAudit();
+            if (role !== 'PARTNER') return;
+        
+            unsubAudit = db.collection('auditLogs').orderBy('timestamp','desc').limit(50).onSnapshot((snap) => {
+              const tbody = el('auditTable');
+              if (!tbody) return;
+              tbody.innerHTML = '';
+              snap.docs.forEach(d => {
+                const a = d.data();
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                  <td>${a.timestamp?.toDate?.().toLocaleString?.('en-IN',{timeZone:IST_TZ}) || ''}</td>
+                  <td>${a.action || ''}</td>
+                  <td>${a.taskId || ''}</td>
+                  <td>${a.actorEmail || ''}</td>
+                  <td><pre style="white-space:pre-wrap;margin:0">${JSON.stringify(a.details||{}, null, 0)}</pre></td>
+                `;
+                tbody.appendChild(tr);
+              });
+            });
+          }
+        
+          // ===== Login / Signup =====
+          el('btnLogin').onclick = async () => {
+            try{
+              showLoading('Logging in…', 'Checking credentials');
+              await auth.signInWithEmailAndPassword(el('email').value.trim(), el('pass').value);
+              showToast('Logged in');
+            } catch(e){
+              console.error(e);
+              showToast('Login failed: ' + (e.message || e.code || String(e)), 7000);
+            } finally {
+              hideLoading();
+            }
+          };
+        
+          el('btnSignup').onclick = async () => {
+            try{
+              showLoading('Signing up…', 'Creating your account');
+              const email = el('email').value.trim();
+              const pass = el('pass').value;
+              const cred = await auth.createUserWithEmailAndPassword(email, pass);
+        
+              await db.collection('users').doc(cred.user.uid).set({
+                email,
+                emailLower: email.toLowerCase(),
+                displayName: email.split('@')[0],
+                role: "WORKER",
+                active: true,
+                managerEmail: null,
+                managerUid: null,
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+              });
+        
+              showToast("Signed up. Now login.");
+              await auth.signOut();
+            } catch(e){
+              console.error(e);
+              showToast('Signup failed: ' + (e.message || e.code || String(e)), 7000);
+            } finally {
+              hideLoading();
+            }
+          };
+        
+          // ===== Auth Listener =====
+          auth.onAuthStateChanged(async (user) => {
+            if (!user) {
+              document.body.classList.add('logged-out');
+              if (navRoleHint) navRoleHint.textContent = "Not signed in";
+              if (topUser) topUser.innerHTML = "";
+              loginCard.classList.remove('hidden');
+              partnerUI.classList.add('hidden');
+              workerUI.classList.add('hidden');
+              tasksSidebarCard.classList.add('hidden');
+        
+              if (unsubClients) unsubClients();
+              if (unsubTasks) unsubTasks();
+              if (unsubAudit) unsubAudit();
+              return;
+            }
+        
+            document.body.classList.remove('logged-out');
+            myUid = user.uid;
+        
+            const initial = (user.email || 'U').trim().charAt(0).toUpperCase();
+            topUser.innerHTML = `
+              <div class="pillUser">
+                <div class="avatar">${initial}</div>
+                <div style="display:flex;flex-direction:column;line-height:1.1">
+                  <div style="font-weight:950">${user.email}</div>
+                  <div style="font-size:12px;color:var(--muted);font-weight:800">Signed in</div>
+                </div>
+              </div>
+              <button id="logoutBtn" class="btn" type="button">Logout</button>
+            `;
+            el('logoutBtn').onclick = () => auth.signOut();
+        
+            loginCard.classList.add('hidden');
+        
+            // role
+            let role = "WORKER";
+            try {
+              const uDoc = await db.collection('users').doc(user.uid).get();
+              role = uDoc.exists ? (uDoc.data().role || "WORKER") : "WORKER";
+            } catch (e) {
+              console.warn('Cannot read user role (rules?):', e);
+            }
+            currentRole = role;
+            if (navRoleHint) navRoleHint.textContent = `Role: ${currentRole}`;
+        
+            tasksSidebarCard.classList.remove('hidden');
+        
+            await loadCalendarSettings(true);
+        
+            subscribeClients();
+            subscribeTasksForRole(currentRole, user.uid);
+            subscribeAudit(currentRole);
+        
+            if (currentRole === "PARTNER") {
+              partnerUI.classList.remove('hidden');
+              workerUI.classList.add('hidden');
+              el('navWorkerTasks').classList.add('hidden');
+              showPage('p_dashboard');
+        
+              // REQUIRED: init Drafting Studio for partner
+              initDraftingStudio();
+        
+              // load partner-only pages
+              loadSettings();
+              loadTeam();
+              reloadCalSettings();
+        
+            } else {
+              partnerUI.classList.add('hidden');
+              workerUI.classList.remove('hidden');
+              el('navWorkerTasks').classList.remove('hidden');
+              showPage('w_tasks');
+            }
+          });
+        </script>
+        
+        </body>
+        </html>

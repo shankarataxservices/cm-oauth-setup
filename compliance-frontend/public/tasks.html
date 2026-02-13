@@ -1,0 +1,310 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Compliance Management — Tasks</title>
+  <link rel="icon" href="favicon.png" type="image/png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="assets/styles.css">
+</head>
+
+<body class="logged-out">
+  <div id="layoutMount"></div>
+
+  <template id="partnerPages">
+    <!-- internal tasks tabs -->
+    <div class="card" style="padding:12px;margin-bottom:12px">
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <div class="navItem active" data-target="p_tasks">Tasks</div>
+        <div class="navItem" data-target="p_clients">Clients</div>
+        <div class="navItem" data-target="p_create_task">Create Task</div>
+        <div class="navItem" data-target="p_import_export">Import / Export</div>
+      </div>
+      <div class="sub" style="margin-top:8px">These tabs work only inside this Tasks page.</div>
+    </div>
+
+    <!-- TASKS -->
+    <div id="p_tasks" class="page active">
+      <div class="grid">
+        <div class="col-12 card">
+          <div class="cardHeader"><div><h3 class="title">Filters</h3><p class="sub">Dates are DD-MM-YYYY in UI.</p></div></div>
+          <div class="cardBody">
+            <div class="grid">
+              <div class="col-3"><div class="label">Client</div><select id="filterClient"></select></div>
+              <div class="col-3"><div class="label">Status</div>
+                <select id="filterStatus">
+                  <option value="">All Status</option>
+                  <option>PENDING</option><option>IN_PROGRESS</option><option>CLIENT_PENDING</option>
+                  <option>APPROVAL_PENDING</option><option>COMPLETED</option>
+                </select>
+              </div>
+              <div class="col-3"><div class="label">Category</div>
+                <select id="filterCategory">
+                  <option value="">All</option>
+                  <option>GST</option><option>TDS</option><option>INCOME_TAX</option><option>ROC</option>
+                  <option>ACCOUNTING</option><option>AUDIT</option><option>OTHER</option>
+                </select>
+              </div>
+              <div class="col-3"><div class="label">Search</div><input id="filterSearch" placeholder="Search title/client"></div>
+
+              <div class="col-3"><div class="label">Due on (DD-MM-YYYY)</div><input id="filterDueOn" placeholder="DD-MM-YYYY"></div>
+              <div class="col-3"><div class="label">Needs action in (days)</div><input id="filterNeedDays" type="number" value="7" min="0"></div>
+              <div class="col-6"><div class="label">Mode</div>
+                <select id="filterMode">
+                  <option value="ALL">All tasks</option>
+                  <option value="NEEDS_ACTION">Only overdue + due within N days</option>
+                  <option value="APPROVAL">Approval pending</option>
+                </select>
+              </div>
+
+              <div class="col-12" style="display:flex;gap:10px;flex-wrap:wrap">
+                <button class="btn" id="btnResetFilters" type="button">Reset</button>
+                <button class="btn small" id="btnClearDueOn" type="button">Clear Due-on</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-12 card">
+          <div class="cardHeader"><div><h3 class="title">Tasks</h3><p class="sub">Click row to open drawer.</p></div></div>
+          <div class="cardBody">
+            <div class="tableWrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Alert</th><th>Client</th><th>Title</th><th>Series</th>
+                    <th>Cat/Type</th><th>Start</th><th>Due</th><th>Status</th><th>Assignee</th>
+                  </tr>
+                </thead>
+                <tbody id="partnerTasks"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CLIENTS -->
+    <div id="p_clients" class="page">
+      <div class="grid">
+        <div class="col-12 card">
+          <div class="cardHeader"><div><h3 class="title">Create Client</h3><p class="sub">Creates client master profile.</p></div></div>
+          <div class="cardBody">
+            <div class="grid">
+              <div class="col-6"><div class="label">Client name</div><input id="cName"></div>
+              <div class="col-6"><div class="label">PAN</div><input id="cPAN"></div>
+              <div class="col-6"><div class="label">GSTIN</div><input id="cGSTIN"></div>
+              <div class="col-6"><div class="label">CIN</div><input id="cCIN"></div>
+              <div class="col-6"><div class="label">Assessment Year</div><input id="cAY"></div>
+              <div class="col-6"><div class="label">Engagement Type</div><input id="cEng"></div>
+              <div class="col-12"><div class="label">Primary Email</div><input id="cEmail"></div>
+              <div class="col-6"><div class="label">CC Emails (; , : separated)</div><input id="cCC"></div>
+              <div class="col-6"><div class="label">BCC Emails (; , : separated)</div><input id="cBCC"></div>
+              <div class="col-12"><button class="btn primary" id="btnCreateClient" type="button">Create Client</button></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-12 card">
+          <div class="cardHeader"><div><h3 class="title">Client List</h3><p class="sub">Read-only from Firestore</p></div></div>
+          <div class="cardBody">
+            <div class="tableWrap">
+              <table>
+                <thead><tr><th>Name</th><th>Email</th><th>PAN</th><th>GSTIN</th><th>Engagement</th></tr></thead>
+                <tbody id="clientTable"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CREATE TASK -->
+    <div id="p_create_task" class="page">
+      <div class="grid">
+        <div class="col-12 card">
+          <div class="cardHeader"><div><h3 class="title">Create Task</h3><p class="sub">DD-MM-YYYY dates. Single Google Calendar event is created on START date only.</p></div></div>
+          <div class="cardBody">
+            <div class="grid">
+              <div class="col-6"><div class="label">Client (existing)</div><select id="ctClientId"></select></div>
+              <div class="col-6"><div class="label">Client name (optional)</div><input id="ctClientName"></div>
+              <div class="col-6"><div class="label">Client email (optional)</div><input id="ctClientEmail"></div>
+              <div class="col-6"><div class="label">Assigned to email</div><input id="ctAssignedToEmail" placeholder="worker@firm.com"></div>
+
+              <div class="col-12"><div class="label">Title</div><input id="ctTitle"></div>
+
+              <div class="col-3">
+                <div class="label">Category</div>
+                <select id="ctCategory">
+                  <option>GST</option><option>TDS</option><option>Income Tax</option><option>ROC</option>
+                  <option>Accounting</option><option>Audit</option><option>Other</option>
+                </select>
+              </div>
+
+              <div class="col-3">
+                <div class="label">Type (free text)</div>
+                <input id="ctType" list="typeSuggestions" placeholder="FILING / REVIEW / PAYMENT ...">
+                <datalist id="typeSuggestions">
+                  <option value="FILING"></option>
+                  <option value="REVIEW"></option>
+                  <option value="PAYMENT"></option>
+                  <option value="FOLLOW_UP"></option>
+                  <option value="CLIENT_PENDING"></option>
+                </datalist>
+              </div>
+
+              <div class="col-3"><div class="label">Due date (DD-MM-YYYY)</div><input id="ctDueDate" placeholder="DD-MM-YYYY"></div>
+              <div class="col-3"><div class="label">Trigger days before</div><input id="ctTrigger" type="number" value="15"></div>
+
+              <div class="col-6"><div class="label">Recurrence</div>
+                <select id="ctRecurrence">
+                  <option value="AD_HOC">AD_HOC</option>
+                  <option value="DAILY">DAILY</option>
+                  <option value="WEEKLY">WEEKLY</option>
+                  <option value="BIWEEKLY">BIWEEKLY</option>
+                  <option value="MONTHLY">MONTHLY</option>
+                  <option value="BIMONTHLY">BIMONTHLY</option>
+                  <option value="QUARTERLY">QUARTERLY</option>
+                  <option value="HALF_YEARLY">HALF_YEARLY</option>
+                  <option value="YEARLY">YEARLY</option>
+                </select>
+              </div>
+              <div class="col-6"><div class="label">Generate Count</div><input id="ctGenerateCount" type="number" value="1" min="1"></div>
+
+              <div class="col-12">
+                <div class="label">Client Mail Recipients (override / additional)</div>
+                <div class="sub">Supports multiple emails separated by <b>;</b> or <b>,</b> or <b>:</b></div>
+              </div>
+              <div class="col-4"><div class="label">Client To</div><input id="ctClientTo" placeholder="client@abc.com; director@abc.com"></div>
+              <div class="col-4"><div class="label">Client CC</div><input id="ctClientCc" placeholder="staff@firm.com"></div>
+              <div class="col-4"><div class="label">Client BCC</div><input id="ctClientBcc" placeholder="partner@firm.com"></div>
+
+              <div class="col-6">
+                <label style="display:flex;gap:10px;align-items:center;font-weight:900">
+                  <input id="ctCcAssignee" type="checkbox" style="width:auto">
+                  CC assignee on client start mail
+                </label>
+              </div>
+              <div class="col-6">
+                <label style="display:flex;gap:10px;align-items:center;font-weight:900">
+                  <input id="ctCcManager" type="checkbox" style="width:auto">
+                  CC assignee’s manager on client start mail
+                </label>
+              </div>
+
+              <div class="col-12"><div class="label">Client Start Subject</div><input id="ctStartSubject" placeholder="We started {{taskTitle}}"></div>
+              <div class="col-12"><div class="label">Client Start Body</div><textarea id="ctStartBody" rows="6" placeholder="Use variables: {{clientName}} {{taskTitle}} {{startDate}} {{dueDate}} {{addToCalendarUrl}}"></textarea></div>
+
+              <div class="col-6">
+                <label style="display:flex;gap:10px;align-items:center;font-weight:900">
+                  <input id="ctSendCompletion" type="checkbox" style="width:auto" checked>
+                  Send completion mail to client (partner approval)
+                </label>
+                <div class="sub">If unchecked, completion mail is not sent to client.</div>
+              </div>
+
+              <div class="col-12"><div class="label">Client Completion Subject (optional)</div><input id="ctCompletionSubject" placeholder="Completed: {{taskTitle}}"></div>
+              <div class="col-12"><div class="label">Client Completion Body (optional)</div><textarea id="ctCompletionBody" rows="6" placeholder="Use {{completedAt}} too"></textarea></div>
+
+              <div class="col-12" style="display:flex;gap:10px;flex-wrap:wrap">
+                <button class="btn primary" id="btnCreateTaskOne" type="button">Create</button>
+                <button class="btn" id="btnGoTasks" type="button">Go to Tasks</button>
+              </div>
+
+              <div class="col-12">
+                <div class="sub">
+                  Google Calendar: <b>only START event</b> is created, using global time window in Settings.
+                  Due date is included in event description and in email templates.
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- IMPORT / EXPORT -->
+    <div id="p_import_export" class="page">
+      <div class="grid">
+
+        <div class="col-12 card">
+          <div class="cardHeader">
+            <div>
+              <h3 class="title">XLSX Import</h3>
+              <p class="sub">Upload Excel (.xlsx). Dates inside file must be DD-MM-YYYY (or Excel date type).</p>
+            </div>
+          </div>
+          <div class="cardBody">
+            <div class="grid">
+              <div class="col-12">
+                <button class="btn" id="btnDownloadMyClientsXlsx" type="button">Download “My Clients” Import Template (XLSX)</button>
+                <div class="sub" style="margin-top:8px">
+                  Template includes dropdowns: Category/Recurrence/Type + mail flags + CC/BCC columns.
+                </div>
+              </div>
+
+              <div class="col-12"><input type="file" id="xlsxFile" accept=".xlsx"></div>
+
+              <div class="col-12" style="display:flex;gap:10px;flex-wrap:wrap">
+                <button class="btn primary" id="btnImportXlsx" type="button">Import XLSX</button>
+              </div>
+
+              <div class="col-12">
+                <div class="sub">
+                  Import creates tasks in Firestore + creates <b>only START calendar events</b>.
+                  Client start mails are sent by GitHub Action at <b>08:15 IST</b>.
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+        <div class="col-12 card">
+          <div class="cardHeader">
+            <div>
+              <h3 class="title">Firm Export (Tasks + History)</h3>
+              <p class="sub">Exports tasks by Due Date range and includes audit history in another sheet.</p>
+            </div>
+          </div>
+          <div class="cardBody">
+            <div class="grid">
+              <div class="col-4"><div class="label">From (DD-MM-YYYY)</div><input id="exportFrom" value="01-01-2026"></div>
+              <div class="col-4"><div class="label">To (DD-MM-YYYY)</div><input id="exportTo" value="31-12-2026"></div>
+              <div class="col-4"><div class="label">Include audit history</div>
+                <select id="exportIncludeAudit">
+                  <option value="true">true</option>
+                  <option value="false">false</option>
+                </select>
+              </div>
+
+              <div class="col-12" style="display:flex;gap:10px;flex-wrap:wrap">
+                <button class="btn primary" id="btnExportFirmRange" type="button">Download Firm Export (XLSX)</button>
+                <button class="btn" id="btnExportNext7" type="button">Next 7 days</button>
+                <button class="btn" id="btnExportNext15" type="button">Next 15 days</button>
+                <button class="btn" id="btnExportNext30" type="button">Next 30 days</button>
+                <button class="btn" id="btnExportOverdue" type="button">Overdue</button>
+                <button class="btn" id="btnExportApproval" type="button">Approval Pending</button>
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </template>
+
+  <template id="workerPages">
+    <div id="w_tasks" class="page active">
+      <div class="grid">
+        <div class="col-12 card">
+          <div class="cardHeader"><div><h3 class="title">My Tasks</h3><p class="sub">Click row to open drawer</p></div></div>
+          <div class="cardBody">
+            <div class="tableWrap">
+              <table>

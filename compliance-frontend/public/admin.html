@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Compliance Management — Admin</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="assets/styles.css">
+</head>
+
+<body class="logged-out">
+  <div id="layoutMount"></div>
+
+  <template id="partnerPages">
+    <!-- internal admin tabs -->
+    <div class="card" style="padding:12px;margin-bottom:12px">
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <div class="navItem active" data-target="p_team">Team</div>
+        <div class="navItem" data-target="p_settings">Settings</div>
+        <div class="navItem" data-target="p_audit">Audit</div>
+      </div>
+      <div class="sub" style="margin-top:8px">These tabs work only inside this Admin page.</div>
+    </div>
+
+    <!-- TEAM -->
+    <div id="p_team" class="page active">
+      <div class="grid">
+        <div class="col-12 card">
+          <div class="cardHeader">
+            <div><h3 class="title">Team Management</h3><p class="sub">Partner-only. Manage roles and manager mapping.</p></div>
+            <button class="btn small" id="btnReloadTeam" type="button">Reload</button>
+          </div>
+          <div class="cardBody">
+            <div class="sub">
+              Roles: <b>PARTNER</b>, <b>MANAGER</b>, <b>WORKER</b>. Manager mapping is used for client start mail CC when enabled.
+            </div>
+            <div style="height:10px"></div>
+            <div class="tableWrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Email</th><th>Role</th><th>Active</th><th>Manager Email</th><th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="teamTable"></tbody>
+              </table>
+            </div>
+            <div class="sub" style="margin-top:10px">
+              Note: New signups store <code>emailLower</code>. Existing users can be updated in Firestore once.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SETTINGS -->
+    <div id="p_settings" class="page">
+      <div class="grid">
+
+        <div class="col-12 card">
+          <div class="cardHeader">
+            <div><h3 class="title">Calendar Settings</h3><p class="sub">Controls Google Calendar event time window (START events only).</p></div>
+            <button class="btn small" id="btnReloadCalSettings" type="button">Reload</button>
+          </div>
+          <div class="cardBody">
+            <div class="grid">
+              <div class="col-4"><div class="label">Start Hour (0–23)</div><input id="calSetStartHH" type="number" min="0" max="23"></div>
+              <div class="col-4"><div class="label">End Hour (0–23)</div><input id="calSetEndHH" type="number" min="0" max="23"></div>
+              <div class="col-4"><div class="label">Time Zone</div><input id="calSetTz" value="Asia/Kolkata"></div>
+              <div class="col-12"><button class="btn primary" id="btnSaveCalSettings" type="button">Save Calendar Settings</button></div>
+              <div class="col-12"><div class="sub">These settings affect: create task, bulk import, series rebuild, task edits, completion color patch.</div></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-12 card">
+          <div class="cardHeader">
+            <div><h3 class="title">Daily Digest Settings</h3><p class="sub">Edits settings/notifications (internal digest at 05:00 IST).</p></div>
+            <button class="btn small" id="btnReloadSettings" type="button">Reload</button>
+          </div>
+          <div class="cardBody">
+            <div class="grid">
+              <div class="col-6">
+                <div class="label">Daily Internal Emails (; , : separated)</div>
+                <textarea id="setDailyEmails" rows="4"></textarea>
+              </div>
+              <div class="col-3"><div class="label">Daily Window Days</div><input id="setDailyWindowDays" type="number" value="30"></div>
+              <div class="col-3"><div class="label">Send digest to assignees</div>
+                <select id="setSendToAssignees"><option value="true">true</option><option value="false">false</option></select>
+              </div>
+              <div class="col-12"><div class="label">Last Digest Run (YMD)</div><input id="setLastRun" disabled></div>
+              <div class="col-12"><button class="btn primary" id="btnSaveSettings" type="button">Save Digest Settings</button></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-12 card">
+          <div class="cardHeader">
+            <div><h3 class="title">Cron Notes</h3><p class="sub">GitHub Actions should call backend cron endpoints.</p></div>
+          </div>
+          <div class="cardBody">
+            <div class="sub">
+              <b>Internal digest:</b> call <code>/jobs_daily5am</code> at 05:00 IST.<br>
+              <b>Client start mails:</b> call <code>/jobs_client0815</code> at 08:15 IST.<br>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- AUDIT -->
+    <div id="p_audit" class="page">
+      <div class="grid">
+        <div class="col-12 card">
+          <div class="cardHeader"><div><h3 class="title">Audit Logs (latest 50)</h3><p class="sub">Trace feed</p></div></div>
+          <div class="cardBody">
+            <div class="tableWrap" style="max-height:520px;">
+              <table>
+                <thead><tr><th>Time</th><th>Action</th><th>TaskId</th><th>Actor</th><th>Details</th></tr></thead>
+                <tbody id="auditTable"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </template>
+
+  <template id="workerPages">
+    <div id="w_tasks" class="page active">
+      <div class="grid">
+        <div class="col-12 card">
+          <div class="cardHeader"><div><h3 class="title">My Tasks</h3><p class="sub">Click row to open drawer</p></div></div>
+          <div class="cardBody">
+            <div class="tableWrap">
+              <table>
+                <thead><tr><th>Alert</th><th>Client</th><th>Title</th><th>Series</th><th>Start</th><th>Due</th><th>Status</th></tr></thead>
+                <tbody id="workerTasks"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </template>
+
+  <script>
+    window.APP_PAGE = "admin";
+    window.DEFAULT_PAGE_ID = "p_team";
+  </script>
+
+  <script defer src="assets/layout.js"></script>
+
+  <script defer src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script defer src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+  <script defer src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+
+  <script defer src="assets/app.js"></script>
+</body>
+</html>

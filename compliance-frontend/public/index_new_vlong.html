@@ -1,0 +1,2317 @@
+<!DOCTYPE html>
+<html lang="en" class="antialiased">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="description" content="Orbit Compliance Management System">
+    <meta name="theme-color" content="#0f172a">
+    <title>Orbit | Compliance OS</title>
+
+    <!-- FONTS: Inter (UI) and JetBrains Mono (Data/Code) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    
+    <!-- ICONS: Phosphor Icons (Lightweight, Modern) -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+
+    <style>
+        /* 
+         * ------------------------------------------------------------------
+         *  ORBIT DESIGN SYSTEM (v2.0)
+         *  A modern, high-density Enterprise SaaS visual language.
+         * ------------------------------------------------------------------
+         */
+
+        :root {
+            /* --- CORE PALETTE: Slate & Indigo --- */
+            --c-canvas: #ffffff;
+            --c-canvas-alt: #f8fafc;
+            --c-canvas-sidebar: #0f172a;
+            
+            --c-text-primary: #0f172a;
+            --c-text-secondary: #475569;
+            --c-text-tertiary: #94a3b8;
+            --c-text-inverse: #ffffff;
+
+            --c-brand: #4f46e5;       /* Indigo 600 */
+            --c-brand-hover: #4338ca; /* Indigo 700 */
+            --c-brand-light: #e0e7ff; /* Indigo 100 */
+            --c-brand-text: #3730a3;  /* Indigo 800 */
+
+            --c-border: #e2e8f0;
+            --c-border-focus: #4f46e5;
+            
+            /* --- SEMANTIC COLORS --- */
+            --c-success: #10b981;
+            --c-success-bg: #ecfdf5;
+            --c-success-text: #047857;
+
+            --c-warning: #f59e0b;
+            --c-warning-bg: #fffbeb;
+            --c-warning-text: #b45309;
+
+            --c-danger: #ef4444;
+            --c-danger-bg: #fef2f2;
+            --c-danger-text: #b91c1c;
+
+            --c-info: #0ea5e9;
+            --c-info-bg: #f0f9ff;
+            --c-info-text: #0369a1;
+
+            /* --- DIMENSIONS & SPACING --- */
+            --header-h: 60px;
+            --sidebar-w: 240px;
+            --sidebar-w-collapsed: 64px;
+            
+            --radius-sm: 4px;
+            --radius-md: 8px;
+            --radius-lg: 12px;
+            --radius-xl: 16px;
+            --radius-full: 9999px;
+
+            --space-1: 4px;
+            --space-2: 8px;
+            --space-3: 12px;
+            --space-4: 16px;
+            --space-6: 24px;
+            --space-8: 32px;
+
+            /* --- SHADOWS --- */
+            --shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+            --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+            --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+            --shadow-inner: inset 0 2px 4px 0 rgb(0 0 0 / 0.05);
+
+            /* --- Z-INDEX --- */
+            --z-sticky: 10;
+            --z-header: 40;
+            --z-sidebar: 50;
+            --z-overlay: 90;
+            --z-drawer: 100;
+            --z-modal: 110;
+            --z-toast: 120;
+            --z-tooltip: 130;
+
+            /* --- ANIMATION --- */
+            --ease-default: cubic-bezier(0.4, 0, 0.2, 1);
+            --ease-out: cubic-bezier(0, 0, 0.2, 1);
+            --duration-fast: 150ms;
+            --duration-normal: 300ms;
+        }
+
+        /* --- DARK MODE OVERRIDES (Orbit Dark) --- */
+        body.dark-mode {
+            --c-canvas: #0f172a;      /* Slate 900 */
+            --c-canvas-alt: #020617;  /* Slate 950 */
+            --c-canvas-sidebar: #020617;
+
+            --c-text-primary: #f8fafc;
+            --c-text-secondary: #94a3b8;
+            --c-text-tertiary: #64748b;
+            --c-text-inverse: #0f172a;
+
+            --c-brand: #6366f1;       /* Indigo 500 */
+            --c-brand-hover: #818cf8;
+            --c-brand-light: rgba(99, 102, 241, 0.15);
+            --c-brand-text: #e0e7ff;
+
+            --c-border: #1e293b;      /* Slate 800 */
+            --c-border-focus: #6366f1;
+
+            --c-success-bg: rgba(16, 185, 129, 0.1);
+            --c-success-text: #34d399;
+            
+            --c-warning-bg: rgba(245, 158, 11, 0.1);
+            --c-warning-text: #fbbf24;
+
+            --c-danger-bg: rgba(239, 68, 68, 0.1);
+            --c-danger-text: #f87171;
+
+            --c-info-bg: rgba(14, 165, 233, 0.1);
+            --c-info-text: #38bdf8;
+
+            --shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.5);
+            --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.5);
+            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.5);
+        }
+
+        /* --- RESET --- */
+        *, *::before, *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            border-width: 0;
+            border-style: solid;
+            border-color: var(--c-border);
+        }
+
+        html, body {
+            height: 100%;
+            width: 100%;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        body {
+            font-family: 'Inter', system-ui, sans-serif;
+            background-color: var(--c-canvas-alt);
+            color: var(--c-text-primary);
+            font-size: 14px;
+            line-height: 1.5;
+            overflow: hidden; /* App shell handles scroll */
+            display: flex;
+        }
+
+        a { color: inherit; text-decoration: none; cursor: pointer; }
+        button { background: none; cursor: pointer; font-family: inherit; }
+        input, textarea, select { font-family: inherit; font-size: inherit; }
+        
+        /* Focus Outline */
+        :focus-visible {
+            outline: 2px solid var(--c-brand);
+            outline-offset: 2px;
+        }
+
+        /* Scrollbars */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--c-border); border-radius: var(--radius-full); }
+        ::-webkit-scrollbar-thumb:hover { background: var(--c-text-tertiary); }
+
+        /* --- UTILITY CLASSES --- */
+        .flex { display: flex; }
+        .flex-col { flex-direction: column; }
+        .items-center { align-items: center; }
+        .justify-between { justify-content: space-between; }
+        .justify-center { justify-content: center; }
+        .justify-end { justify-content: flex-end; }
+        .gap-1 { gap: var(--space-1); }
+        .gap-2 { gap: var(--space-2); }
+        .gap-3 { gap: var(--space-3); }
+        .gap-4 { gap: var(--space-4); }
+        .gap-6 { gap: var(--space-6); }
+        
+        .grid { display: grid; gap: var(--space-4); }
+        .grid-cols-1 { grid-template-columns: repeat(1, minmax(0, 1fr)); }
+        .grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        .grid-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+        .grid-cols-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+        .grid-cols-12 { grid-template-columns: repeat(12, minmax(0, 1fr)); }
+        
+        .span-12 { grid-column: span 12 / span 12; }
+        .span-6 { grid-column: span 6 / span 12; }
+        .span-4 { grid-column: span 4 / span 12; }
+        .span-3 { grid-column: span 3 / span 12; }
+
+        .hidden { display: none !important; }
+        .w-full { width: 100%; }
+        .h-full { height: 100%; }
+        .relative { position: relative; }
+        .absolute { position: absolute; }
+        
+        .text-sm { font-size: 13px; }
+        .text-xs { font-size: 12px; }
+        .text-lg { font-size: 16px; font-weight: 600; }
+        .text-xl { font-size: 20px; font-weight: 700; letter-spacing: -0.02em; }
+        .text-2xl { font-size: 24px; font-weight: 700; letter-spacing: -0.03em; }
+        .font-mono { font-family: 'JetBrains Mono', monospace; }
+        .font-medium { font-weight: 500; }
+        .font-bold { font-weight: 700; }
+        
+        .text-muted { color: var(--c-text-secondary); }
+        .text-faint { color: var(--c-text-tertiary); }
+        .text-brand { color: var(--c-brand); }
+        .text-danger { color: var(--c-danger); }
+        
+        .truncate { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .select-none { user-select: none; }
+                /* --- COMPONENT STYLES --- */
+
+        /* App Shell Layout */
+        #app {
+            display: flex;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: var(--sidebar-w);
+            background-color: var(--c-canvas-sidebar);
+            border-right: 1px solid var(--c-border);
+            display: flex;
+            flex-direction: column;
+            transition: width var(--duration-normal) var(--ease-default);
+            z-index: var(--z-sidebar);
+            flex-shrink: 0;
+        }
+        body.sidebar-collapsed .sidebar {
+            width: var(--sidebar-w-collapsed);
+        }
+
+        .sidebar-header {
+            height: var(--header-h);
+            display: flex;
+            align-items: center;
+            padding: 0 var(--space-4);
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: var(--space-3);
+            font-weight: 700;
+            font-size: 16px;
+            color: #ffffff;
+            white-space: nowrap;
+            overflow: hidden;
+        }
+        .logo-icon {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, var(--c-brand), #818cf8);
+            border-radius: var(--radius-md);
+            display: grid;
+            place-items: center;
+            color: #fff;
+            font-size: 18px;
+            flex-shrink: 0;
+        }
+
+        .nav-scroller {
+            flex: 1;
+            overflow-y: auto;
+            padding: var(--space-4) var(--space-2);
+        }
+        
+        .nav-group-label {
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--c-text-tertiary);
+            padding: var(--space-2) var(--space-3);
+            margin-top: var(--space-4);
+            white-space: nowrap;
+            overflow: hidden;
+        }
+        body.sidebar-collapsed .nav-group-label { display: none; }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: var(--space-3);
+            padding: var(--space-2) var(--space-3);
+            color: var(--c-text-tertiary);
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            transition: all var(--duration-fast);
+            margin-bottom: 2px;
+            text-decoration: none;
+            position: relative;
+        }
+        .nav-item:hover {
+            background-color: rgba(255,255,255,0.05);
+            color: #ffffff;
+        }
+        .nav-item.active {
+            background-color: var(--c-brand);
+            color: #ffffff;
+        }
+        .nav-item i {
+            font-size: 20px;
+            flex-shrink: 0;
+        }
+        .nav-text {
+            font-size: 14px;
+            font-weight: 500;
+            white-space: nowrap;
+            opacity: 1;
+            transition: opacity var(--duration-fast);
+        }
+        body.sidebar-collapsed .nav-text {
+            opacity: 0;
+            width: 0;
+            display: none;
+        }
+        body.sidebar-collapsed .nav-item {
+            justify-content: center;
+            padding: var(--space-3) 0;
+        }
+
+        .user-menu {
+            padding: var(--space-4);
+            border-top: 1px solid rgba(255,255,255,0.05);
+            display: flex;
+            align-items: center;
+            gap: var(--space-3);
+            color: #fff;
+            cursor: pointer;
+        }
+        .avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: var(--radius-full);
+            background-color: var(--c-brand-light);
+            color: var(--c-brand-text);
+            display: grid;
+            place-items: center;
+            font-weight: 600;
+            font-size: 14px;
+            flex-shrink: 0;
+        }
+        .user-info {
+            flex: 1;
+            min-width: 0;
+        }
+        .user-name { font-weight: 600; font-size: 14px; }
+        .user-role { font-size: 12px; color: var(--c-text-tertiary); }
+        body.sidebar-collapsed .user-info { display: none; }
+
+        /* Main Content Area */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background-color: var(--c-canvas-alt);
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* Top Header */
+        .header {
+            height: var(--header-h);
+            background-color: var(--c-canvas);
+            border-bottom: 1px solid var(--c-border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 var(--space-6);
+            z-index: var(--z-header);
+        }
+        .header-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--c-text-primary);
+        }
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: var(--space-3);
+        }
+
+        /* Buttons */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: var(--space-2);
+            padding: 8px 16px;
+            border-radius: var(--radius-md);
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all var(--duration-fast);
+            border: 1px solid transparent;
+            white-space: nowrap;
+        }
+        .btn:active { transform: translateY(1px); }
+        .btn-sm { padding: 4px 10px; font-size: 13px; border-radius: var(--radius-sm); }
+        .btn-icon { padding: 8px; border-radius: var(--radius-md); color: var(--c-text-secondary); background: transparent; }
+        .btn-icon:hover { background-color: var(--c-canvas-alt); color: var(--c-text-primary); }
+
+        .btn-primary {
+            background-color: var(--c-brand);
+            color: #ffffff;
+            box-shadow: var(--shadow-sm);
+        }
+        .btn-primary:hover { background-color: var(--c-brand-hover); box-shadow: var(--shadow-md); }
+
+        .btn-secondary {
+            background-color: var(--c-canvas);
+            border-color: var(--c-border);
+            color: var(--c-text-primary);
+        }
+        .btn-secondary:hover { background-color: var(--c-canvas-alt); border-color: var(--c-text-tertiary); }
+
+        .btn-ghost {
+            background-color: transparent;
+            color: var(--c-text-secondary);
+        }
+        .btn-ghost:hover { background-color: var(--c-canvas-alt); color: var(--c-text-primary); }
+
+        .btn-danger {
+            background-color: var(--c-danger-bg);
+            color: var(--c-danger-text);
+            border-color: transparent;
+        }
+        .btn-danger:hover { background-color: #fee2e2; }
+
+        /* Pages (View Switcher) */
+        .page-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: var(--space-6);
+            display: none; /* hidden by default */
+            animation: fadeIn 0.3s ease;
+        }
+        .page-container.active { display: block; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Cards */
+        .card {
+            background-color: var(--c-canvas);
+            border: 1px solid var(--c-border);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-sm);
+            overflow: hidden;
+            margin-bottom: var(--space-4);
+        }
+        .card-head {
+            padding: var(--space-4) var(--space-6);
+            border-bottom: 1px solid var(--c-border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: rgba(248, 250, 252, 0.5);
+        }
+        .card-title { font-weight: 600; font-size: 15px; }
+        .card-body { padding: var(--space-6); }
+        .card-grid { display: grid; gap: var(--space-4); }
+
+        /* Form Controls */
+        .form-group { margin-bottom: var(--space-4); }
+        .label {
+            display: block;
+            font-size: 13px;
+            font-weight: 500;
+            margin-bottom: 6px;
+            color: var(--c-text-secondary);
+        }
+        .input, .select, .textarea {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid var(--c-border);
+            border-radius: var(--radius-md);
+            font-size: 14px;
+            background-color: var(--c-canvas);
+            color: var(--c-text-primary);
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .input:focus, .select:focus, .textarea:focus {
+            outline: none;
+            border-color: var(--c-border-focus);
+            box-shadow: 0 0 0 3px var(--c-brand-light);
+        }
+        .textarea { min-height: 100px; resize: vertical; font-family: inherit; }
+        .checkbox-label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            user-select: none;
+        }
+        .checkbox-label input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+            accent-color: var(--c-brand);
+        }
+
+        /* Data Tables */
+        .table-container {
+            width: 100%;
+            overflow-x: auto;
+            border: 1px solid var(--c-border);
+            border-radius: var(--radius-lg);
+            background: var(--c-canvas);
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+            white-space: nowrap;
+        }
+        th {
+            background-color: var(--c-canvas-alt);
+            padding: 12px 16px;
+            text-align: left;
+            font-weight: 600;
+            color: var(--c-text-secondary);
+            border-bottom: 1px solid var(--c-border);
+            position: sticky;
+            top: 0;
+            z-index: 1;
+        }
+        td {
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--c-border);
+            color: var(--c-text-primary);
+        }
+        tr:last-child td { border-bottom: none; }
+        tr:hover td { background-color: var(--c-canvas-alt); }
+        
+        /* Status Badges */
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 2px 8px;
+            border-radius: var(--radius-full);
+            font-size: 12px;
+            font-weight: 600;
+            line-height: 1.4;
+        }
+        .badge-brand { background-color: var(--c-brand-light); color: var(--c-brand-text); }
+        .badge-success { background-color: var(--c-success-bg); color: var(--c-success-text); }
+        .badge-warning { background-color: var(--c-warning-bg); color: var(--c-warning-text); }
+        .badge-danger { background-color: var(--c-danger-bg); color: var(--c-danger-text); }
+        .badge-neutral { background-color: var(--c-canvas-alt); color: var(--c-text-secondary); border: 1px solid var(--c-border); }
+
+        /* KPI Stat Cards */
+        .kpi-card {
+            background: var(--c-canvas);
+            border: 1px solid var(--c-border);
+            border-radius: var(--radius-lg);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .kpi-label { font-size: 13px; color: var(--c-text-secondary); font-weight: 500; }
+        .kpi-value { font-size: 28px; font-weight: 700; color: var(--c-text-primary); letter-spacing: -0.5px; }
+        .kpi-trend { font-size: 12px; display: flex; align-items: center; gap: 4px; }
+        .trend-up { color: var(--c-success-text); }
+        .trend-down { color: var(--c-danger-text); }
+
+        /* Drawer (Right Side Panel) */
+        .drawer-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.4);
+            z-index: var(--z-overlay);
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s;
+            backdrop-filter: blur(2px);
+        }
+        .drawer-overlay.open { opacity: 1; visibility: visible; }
+        
+        .drawer {
+            position: fixed;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            width: 500px;
+            max-width: 90vw;
+            background: var(--c-canvas);
+            z-index: var(--z-drawer);
+            box-shadow: var(--shadow-xl);
+            transform: translateX(100%);
+            transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            display: flex;
+            flex-direction: column;
+        }
+        .drawer.open { transform: translateX(0); }
+        .drawer.fullscreen { width: 100vw; max-width: 100vw; }
+        
+        .drawer-header {
+            padding: 16px 24px;
+            border-bottom: 1px solid var(--c-border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: var(--c-canvas-alt);
+        }
+        .drawer-title { font-weight: 600; font-size: 16px; }
+        .drawer-body {
+            flex: 1;
+            overflow-y: auto;
+            padding: 24px;
+        }
+        .drawer-footer {
+            padding: 16px 24px;
+            border-top: 1px solid var(--c-border);
+            background: var(--c-canvas);
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+        }
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: var(--z-modal);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.2s;
+            backdrop-filter: blur(2px);
+        }
+        .modal-overlay.open { opacity: 1; visibility: visible; }
+        .modal {
+            background: var(--c-canvas);
+            width: 400px;
+            max-width: 90vw;
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-xl);
+            transform: scale(0.95);
+            transition: transform 0.2s;
+            padding: 24px;
+        }
+        .modal-overlay.open .modal { transform: scale(1); }
+        .modal-title { font-size: 18px; font-weight: 600; margin-bottom: 8px; }
+        .modal-desc { color: var(--c-text-secondary); font-size: 14px; margin-bottom: 24px; line-height: 1.5; }
+        .modal-actions { display: flex; justify-content: flex-end; gap: 12px; }
+
+        /* Toast Notification */
+        .toast-container {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            z-index: var(--z-toast);
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .toast {
+            background: var(--c-canvas-sidebar);
+            color: #fff;
+            padding: 12px 16px;
+            border-radius: var(--radius-md);
+            box-shadow: var(--shadow-lg);
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            animation: slideIn 0.3s ease forwards;
+            min-width: 250px;
+        }
+        @keyframes slideIn { from { transform: translateX(100%); opacity:0; } to { transform: translateX(0); opacity:1; } }
+
+        /* Command Palette (Cmd+K) */
+        .cmdk-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.3);
+            z-index: 200;
+            display: none;
+            align-items: flex-start;
+            justify-content: center;
+            padding-top: 15vh;
+            backdrop-filter: blur(2px);
+        }
+        .cmdk-overlay.open { display: flex; }
+        .cmdk-box {
+            width: 600px;
+            max-width: 90vw;
+            background: var(--c-canvas);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-xl);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        .cmdk-input {
+            width: 100%;
+            padding: 16px 20px;
+            font-size: 16px;
+            border: none;
+            border-bottom: 1px solid var(--c-border);
+            outline: none;
+        }
+        .cmdk-results {
+            max-height: 300px;
+            overflow-y: auto;
+            padding: 8px;
+        }
+        .cmdk-item {
+            padding: 10px 12px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            cursor: pointer;
+            border-radius: var(--radius-md);
+            color: var(--c-text-primary);
+        }
+        .cmdk-item:hover, .cmdk-item.active { background: var(--c-canvas-alt); }
+        .cmdk-meta { font-size: 12px; color: var(--c-text-tertiary); }
+
+        /* Draft Editor */
+        .draft-editor {
+            border: 1px solid var(--c-border);
+            border-radius: var(--radius-md);
+            overflow: hidden;
+            background: var(--c-canvas);
+        }
+        .draft-toolbar {
+            padding: 8px;
+            background: var(--c-canvas-alt);
+            border-bottom: 1px solid var(--c-border);
+            display: flex;
+            gap: 8px;
+        }
+        .draft-textarea {
+            width: 100%;
+            border: none;
+            padding: 16px;
+            min-height: 300px;
+            resize: none;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+        .draft-textarea:focus { outline: none; }
+
+        /* Loader */
+        .global-loader {
+            position: fixed;
+            inset: 0;
+            background: rgba(255,255,255,0.8);
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(4px);
+        }
+        .loader-spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid var(--c-border);
+            border-top-color: var(--c-brand);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .sidebar { position: fixed; height: 100%; transform: translateX(-100%); }
+            .sidebar.mobile-open { transform: translateX(0); }
+            .header-title { font-size: 16px; }
+            .drawer { width: 100%; }
+        }
+    </style>
+</head>
+<body class="loading">
+
+    <!-- GLOBAL LOADING OVERLAY -->
+    <div id="loader" class="global-loader">
+        <div class="loader-spinner"></div>
+        <div style="margin-top:16px; font-weight:600; color:var(--c-text-secondary)">Initializing...</div>
+    </div>
+
+    <!-- TOAST CONTAINER -->
+    <div id="toastContainer" class="toast-container"></div>
+
+    <!-- APP SHELL -->
+    <div id="app">
+        
+        <!-- SIDEBAR NAVIGATION -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <div class="logo-icon"><i class="ph ph-planet"></i></div>
+                    <span class="nav-text">Orbit</span>
+                </div>
+            </div>
+
+            <div class="nav-scroller">
+                <div class="nav-group-label">Workspace</div>
+                <a class="nav-item active" data-page="dashboard">
+                    <i class="ph ph-squares-four"></i>
+                    <span class="nav-text">Dashboard</span>
+                </a>
+                <a class="nav-item" data-page="tasks">
+                    <i class="ph ph-check-square"></i>
+                    <span class="nav-text">Tasks</span>
+                </a>
+                <a class="nav-item" data-page="calendar">
+                    <i class="ph ph-calendar-blank"></i>
+                    <span class="nav-text">Calendar</span>
+                </a>
+
+                <div class="nav-group-label">Tools</div>
+                <a class="nav-item" data-page="create_task">
+                    <i class="ph ph-plus-circle"></i>
+                    <span class="nav-text">Create Task</span>
+                </a>
+                <a class="nav-item" data-page="import_export">
+                    <i class="ph ph-file-csv"></i>
+                    <span class="nav-text">Import / Export</span>
+                </a>
+                <a class="nav-item" data-page="drafts">
+                    <i class="ph ph-pencil-simple-line"></i>
+                    <span class="nav-text">Email Drafts</span>
+                </a>
+
+                <!-- Partner/Manager Only Sections (Hidden by default, shown via JS) -->
+                <div id="navGroupAdmin" class="hidden">
+                    <div class="nav-group-label">Admin</div>
+                    <a class="nav-item" data-page="clients">
+                        <i class="ph ph-users"></i>
+                        <span class="nav-text">Clients</span>
+                    </a>
+                    <a class="nav-item" data-page="team">
+                        <i class="ph ph-user-gear"></i>
+                        <span class="nav-text">Team</span>
+                    </a>
+                    <a class="nav-item" data-page="activity">
+                        <i class="ph ph-activity"></i>
+                        <span class="nav-text">Activity Log</span>
+                    </a>
+                    <a class="nav-item" data-page="settings">
+                        <i class="ph ph-gear"></i>
+                        <span class="nav-text">Settings</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- User Profile Bottom -->
+            <div class="user-menu" id="userMenuBtn">
+                <div class="avatar" id="userAvatar">U</div>
+                <div class="user-info nav-text">
+                    <div class="user-name" id="userNameDisplay">User</div>
+                    <div class="user-role" id="userRoleDisplay">Associate</div>
+                </div>
+                <i class="ph ph-caret-up nav-text"></i>
+            </div>
+        </aside>
+
+        <!-- MAIN CONTENT AREA -->
+        <main class="main-content">
+            
+            <!-- TOP HEADER -->
+            <header class="header">
+                <div class="flex items-center gap-4">
+                    <button class="btn-icon" id="sidebarToggle" title="Toggle Menu">
+                        <i class="ph ph-list"></i>
+                    </button>
+                    <h1 class="header-title" id="pageTitle">Dashboard</h1>
+                </div>
+
+                <div class="header-actions">
+                    <button class="btn btn-secondary btn-sm" id="cmdKBtn">
+                        <i class="ph ph-magnifying-glass"></i> Search (Cmd+K)
+                    </button>
+                    <button class="btn-icon" id="themeToggle" title="Toggle Theme">
+                        <i class="ph ph-moon"></i>
+                    </button>
+                    <button class="btn-icon" id="refreshBtn" title="Refresh Data">
+                        <i class="ph ph-arrows-clockwise"></i>
+                    </button>
+                    <button class="btn-icon" id="logoutBtn" title="Sign Out">
+                        <i class="ph ph-sign-out"></i>
+                    </button>
+                </div>
+            </header>
+
+            <!-- AUTH / LOGIN PAGE -->
+            <div id="p_login" class="page-container" style="display:flex; align-items:center; justify-content:center; height:100%;">
+                <div class="card" style="width: 400px; padding: 0;">
+                    <div class="card-head">
+                        <div class="card-title">Sign in to Orbit</div>
+                    </div>
+                    <div class="card-body">
+                        <div class="form-group">
+                            <label class="label">Email Address</label>
+                            <input type="email" id="loginEmail" class="input" placeholder="you@company.com">
+                        </div>
+                        <div class="form-group">
+                            <label class="label">Password</label>
+                            <input type="password" id="loginPass" class="input" placeholder="••••••••">
+                        </div>
+                        <div class="flex flex-col gap-2" style="margin-top: 24px;">
+                            <button class="btn btn-primary w-full" id="doLogin">Sign In</button>
+                            <button class="btn btn-secondary w-full" id="doSignup">Create Account</button>
+                        </div>
+                        <div class="text-center" style="margin-top: 16px;">
+                            <a href="#" class="text-sm text-brand" id="forgotPassBtn">Forgot password?</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- DASHBOARD PAGE -->
+            <div id="p_dashboard" class="page-container">
+                <!-- KPI Row -->
+                <div class="grid grid-cols-4 mb-6">
+                    <div class="kpi-card">
+                        <div class="kpi-label">Pending Tasks</div>
+                        <div class="kpi-value" id="kpiPending">0</div>
+                        <div class="kpi-trend trend-up"><i class="ph ph-clock"></i> Active items</div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-label">Due Today</div>
+                        <div class="kpi-value" id="kpiDueToday" style="color:var(--c-warning)">0</div>
+                        <div class="kpi-trend"><i class="ph ph-calendar-check"></i> Critical</div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-label">Overdue</div>
+                        <div class="kpi-value" id="kpiOverdue" style="color:var(--c-danger)">0</div>
+                        <div class="kpi-trend trend-down"><i class="ph ph-warning-circle"></i> Requires attention</div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-label">Approval Pending</div>
+                        <div class="kpi-value" id="kpiApproval">0</div>
+                        <div class="kpi-trend"><i class="ph ph-check-circle"></i> Needs review</div>
+                    </div>
+                </div>
+
+                <!-- Quick Actions & Alerts -->
+                <div class="grid grid-cols-12 gap-6">
+                    <div class="span-8 card">
+                        <div class="card-head">
+                            <div class="card-title">Urgent Tasks (Today & Overdue)</div>
+                            <button class="btn btn-secondary btn-sm" id="dashGoTasks">View All</button>
+                        </div>
+                        <div class="table-container">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Status</th>
+                                        <th>Client</th>
+                                        <th>Task</th>
+                                        <th>Due Date</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="dashUrgentTable">
+                                    <!-- Populated by JS -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <div class="span-4 flex flex-col gap-4">
+                        <div class="card">
+                            <div class="card-head"><div class="card-title">Quick Actions</div></div>
+                            <div class="card-body flex flex-col gap-3">
+                                <button class="btn btn-primary w-full justify-start" onclick="app.navTo('create_task')">
+                                    <i class="ph ph-plus"></i> New Task
+                                </button>
+                                <button class="btn btn-secondary w-full justify-start" onclick="app.navTo('import_export')">
+                                    <i class="ph ph-file-arrow-up"></i> Bulk Import / Update
+                                </button>
+                                <button class="btn btn-secondary w-full justify-start" onclick="app.navTo('calendar')">
+                                    <i class="ph ph-calendar"></i> View Calendar
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="card flex-1">
+                            <div class="card-head"><div class="card-title">System Status</div></div>
+                            <div class="card-body">
+                                <div class="text-sm text-muted">
+                                    <p>Last Sync: <span id="lastSyncTime">Just now</span></p>
+                                    <p class="mt-2">Backend: <span class="badge badge-success">Online</span></p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TASKS LIST PAGE -->
+            <div id="p_tasks" class="page-container">
+                <div class="card">
+                    <div class="card-body">
+                        <!-- Filters Toolbar -->
+                        <div class="grid grid-cols-4 gap-4 mb-4">
+                            <div class="form-group mb-0">
+                                <label class="label">Search</label>
+                                <input id="taskSearch" class="input" placeholder="Client, Task, Tag...">
+                            </div>
+                            <div class="form-group mb-0">
+                                <label class="label">Status</label>
+                                <select id="taskFilterStatus" class="select">
+                                    <option value="">All Statuses</option>
+                                    <option value="PENDING">Pending</option>
+                                    <option value="IN_PROGRESS">In Progress</option>
+                                    <option value="CLIENT_PENDING">Client Pending</option>
+                                    <option value="APPROVAL_PENDING">Approval Pending</option>
+                                    <option value="COMPLETED">Completed</option>
+                                </select>
+                            </div>
+                            <div class="form-group mb-0">
+                                <label class="label">Due Date Range</label>
+                                <select id="taskFilterDue" class="select">
+                                    <option value="ALL">Any Time</option>
+                                    <option value="TODAY">Today</option>
+                                    <option value="WEEK">This Week</option>
+                                    <option value="OVERDUE">Overdue</option>
+                                    <option value="NEXT_30">Next 30 Days</option>
+                                </select>
+                            </div>
+                            <div class="form-group mb-0">
+                                <label class="label">Assignee</label>
+                                <select id="taskFilterAssignee" class="select">
+                                    <option value="">Anyone</option>
+                                    <option value="ME">Assigned to Me</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <!-- Bulk Actions Bar (Hidden by default) -->
+                        <div id="bulkActionBar" class="hidden p-3 bg-indigo-50 border border-indigo-100 rounded-md flex items-center justify-between mb-4">
+                            <div class="text-sm font-semibold text-indigo-700">
+                                <span id="selectedCount">0</span> selected
+                            </div>
+                            <div class="flex gap-2">
+                                <button class="btn btn-sm btn-secondary" id="btnBulkStatus">Set Status</button>
+                                <button class="btn btn-sm btn-secondary" id="btnBulkAssign">Reassign</button>
+                                <button class="btn btn-sm btn-secondary" id="btnBulkSnooze">Snooze</button>
+                                <button class="btn btn-sm btn-danger" id="btnBulkDelete">Delete</button>
+                            </div>
+                        </div>
+
+                        <!-- Task Table -->
+                        <div class="table-container" style="max-height: 70vh;">
+                            <table id="taskTableMain">
+                                <thead>
+                                    <tr>
+                                        <th width="40"><input type="checkbox" id="selectAllTasks"></th>
+                                        <th>Status</th>
+                                        <th>Client</th>
+                                        <th>Task Title</th>
+                                        <th>Due Date</th>
+                                        <th>Assignee</th>
+                                        <th>Priority</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="taskTableBody"></tbody>
+                            </table>
+                        </div>
+                        
+                        <!-- Pagination / Count -->
+                        <div class="flex justify-between items-center mt-4">
+                            <div class="text-sm text-muted" id="taskCountDisplay">Showing 0 tasks</div>
+                            <div class="flex gap-2">
+                                <button class="btn btn-sm btn-secondary" id="prevPage" disabled>Prev</button>
+                                <button class="btn btn-sm btn-secondary" id="nextPage" disabled>Next</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+                        <!-- CALENDAR PAGE -->
+            <div id="p_calendar" class="page-container">
+                <div class="card h-full flex flex-col">
+                    <div class="card-head">
+                        <div class="flex items-center gap-4">
+                            <h2 class="card-title">Calendar</h2>
+                            <div class="flex items-center gap-2">
+                                <button class="btn btn-sm btn-ghost" id="calPrev"><i class="ph ph-caret-left"></i></button>
+                                <span class="text-sm font-semibold w-32 text-center" id="calMonthLabel">...</span>
+                                <button class="btn btn-sm btn-ghost" id="calNext"><i class="ph ph-caret-right"></i></button>
+                                <button class="btn btn-sm btn-secondary" id="calToday">Today</button>
+                            </div>
+                        </div>
+                        <div class="flex bg-slate-100 p-1 rounded-md">
+                            <button class="btn btn-sm btn-ghost" id="viewMonth">Month</button>
+                            <button class="btn btn-sm btn-ghost" id="viewWeek">Week</button>
+                            <button class="btn btn-sm btn-ghost" id="viewList">List</button>
+                        </div>
+                    </div>
+                    <div class="card-body p-0 flex-1 overflow-hidden" id="calendarGrid">
+                        <!-- Calendar Render Target -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- CREATE TASK PAGE -->
+            <div id="p_create_task" class="page-container">
+                <div class="card" style="max-width: 800px; margin: 0 auto;">
+                    <div class="card-head">
+                        <div class="card-title">Create New Task</div>
+                    </div>
+                    <div class="card-body">
+                        <!-- Step 1: Basic Info -->
+                        <div class="grid grid-cols-2">
+                            <div class="form-group span-2">
+                                <label class="label">Client</label>
+                                <div class="flex gap-2">
+                                    <select id="ctClientId" class="select flex-1"></select>
+                                    <input id="ctClientNameFallback" class="input flex-1 hidden" placeholder="Or type new client name">
+                                </div>
+                            </div>
+                            
+                            <div class="form-group span-2">
+                                <label class="label">Task Title</label>
+                                <input id="ctTitle" class="input" placeholder="e.g. GSTR-1 Filing - March">
+                            </div>
+
+                            <div class="form-group">
+                                <label class="label">Category</label>
+                                <select id="ctCategory" class="select">
+                                    <option>GST</option><option>Income Tax</option><option>TDS</option>
+                                    <option>ROC</option><option>Audit</option><option>Accounting</option>
+                                    <option>Other</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="label">Priority</label>
+                                <select id="ctPriority" class="select">
+                                    <option value="HIGH">High</option>
+                                    <option value="MEDIUM" selected>Medium</option>
+                                    <option value="LOW">Low</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="label">Due Date</label>
+                                <input type="date" id="ctDueDate" class="input">
+                            </div>
+
+                            <div class="form-group">
+                                <label class="label">Assign To</label>
+                                <input id="ctAssignEmail" class="input" placeholder="associate@firm.com (leave empty for self)">
+                            </div>
+                        </div>
+
+                        <!-- Step 2: Recurrence -->
+                        <div class="mt-6 border-t pt-6">
+                            <div class="flex justify-between items-center mb-4">
+                                <h3 class="text-base font-semibold">Recurrence</h3>
+                            </div>
+                            <div class="grid grid-cols-3">
+                                <div class="form-group">
+                                    <label class="label">Frequency</label>
+                                    <select id="ctRecurrence" class="select">
+                                        <option value="AD_HOC">One-time</option>
+                                        <option value="MONTHLY">Monthly</option>
+                                        <option value="QUARTERLY">Quarterly</option>
+                                        <option value="YEARLY">Yearly</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label class="label">Count</label>
+                                    <input type="number" id="ctCount" class="input" value="1" min="1" max="60">
+                                </div>
+                                <div class="form-group">
+                                    <label class="label">Trigger (Days Before)</label>
+                                    <input type="number" id="ctTrigger" class="input" value="15">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Step 3: Notifications -->
+                        <div class="mt-6 border-t pt-6">
+                            <div class="flex justify-between items-center mb-4">
+                                <h3 class="text-base font-semibold">Email Notifications</h3>
+                                <label class="checkbox-label">
+                                    <input type="checkbox" id="ctSendStartMail" checked> Send Start Email
+                                </label>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="label">Completion Recipients (Overrides)</label>
+                                <input id="ctCompTo" class="input" placeholder="To: (defaults to client/start list if empty)">
+                                <div class="flex gap-2 mt-2">
+                                    <input id="ctCompCc" class="input" placeholder="CC:">
+                                    <input id="ctCompBcc" class="input" placeholder="BCC:">
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-2">
+                                <label class="checkbox-label">
+                                    <input type="checkbox" id="ctCcAssigneeComp"> CC Assignee on Completion
+                                </label>
+                                <label class="checkbox-label">
+                                    <input type="checkbox" id="ctCcManagerComp"> CC Manager on Completion
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="mt-8 flex justify-end gap-3">
+                            <button class="btn btn-ghost" onclick="app.navTo('dashboard')">Cancel</button>
+                            <button class="btn btn-primary" id="btnCreateTaskSubmit">Create Task</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- IMPORT / EXPORT PAGE -->
+            <div id="p_import_export" class="page-container">
+                <div class="grid grid-cols-2">
+                    
+                    <!-- Import Section -->
+                    <div class="card">
+                        <div class="card-head"><div class="card-title">Import / Update Tasks</div></div>
+                        <div class="card-body">
+                            <div class="p-4 bg-slate-50 border rounded mb-4">
+                                <h4 class="font-semibold mb-2">Bulk Create (New Tasks)</h4>
+                                <p class="text-sm text-muted mb-3">Download the template, fill it in, and upload to create new tasks and clients.</p>
+                                <button class="btn btn-sm btn-secondary" id="btnDlImportTemp">
+                                    <i class="ph ph-download"></i> Download Creation Template
+                                </button>
+                            </div>
+
+                            <div class="p-4 bg-indigo-50 border border-indigo-100 rounded mb-4">
+                                <h4 class="font-semibold mb-2 text-indigo-900">Bulk Update (Offline Edit)</h4>
+                                <p class="text-sm text-indigo-700 mb-3">
+                                    Export existing tasks, edit them in Excel (status, notes, due dates), and re-upload to update them in bulk.
+                                </p>
+                                <div class="flex gap-2">
+                                    <button class="btn btn-sm btn-secondary" id="btnDlUpdateTemp">
+                                        <i class="ph ph-file-xls"></i> Get Update Template
+                                    </button>
+                                    <button class="btn btn-sm btn-secondary" id="btnExportForUpdate">
+                                        <i class="ph ph-export"></i> Export Live Tasks
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="form-group mt-6">
+                                <label class="label">Upload Excel File (.xlsx)</label>
+                                <input type="file" id="importFile" class="input" accept=".xlsx">
+                            </div>
+                            <div id="importPwdGroup" class="form-group hidden">
+                                <label class="label">Worker Password</label>
+                                <input type="password" id="importPwd" class="input">
+                            </div>
+                            
+                            <div class="flex gap-2 mt-4">
+                                <button class="btn btn-primary" id="btnRunImport">Import (Create)</button>
+                                <button class="btn btn-secondary" id="btnRunUpdate">Update (Edit)</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Export Reports Section -->
+                    <div class="card">
+                        <div class="card-head"><div class="card-title">Reports & Exports</div></div>
+                        <div class="card-body">
+                            <div class="form-group">
+                                <label class="label">Date Range</label>
+                                <div class="flex gap-2">
+                                    <input type="date" id="repStart" class="input">
+                                    <input type="date" id="repEnd" class="input">
+                                </div>
+                            </div>
+                            
+                            <h4 class="font-semibold mt-4 mb-2">Firm-wide Reports</h4>
+                            <div class="flex flex-col gap-2">
+                                <button class="btn btn-ghost justify-start" id="btnRepFirmXlsx">
+                                    <i class="ph ph-file-xls"></i> All Tasks (Excel)
+                                </button>
+                                <button class="btn btn-ghost justify-start" id="btnRepFirmPdf">
+                                    <i class="ph ph-file-pdf"></i> All Tasks (PDF)
+                                </button>
+                            </div>
+
+                            <h4 class="font-semibold mt-4 mb-2">Client Reports</h4>
+                            <div class="form-group">
+                                <select id="repClientId" class="select"></select>
+                            </div>
+                            <div class="flex flex-col gap-2">
+                                <button class="btn btn-ghost justify-start" id="btnRepClientXlsx">
+                                    <i class="ph ph-file-xls"></i> Client History (Excel)
+                                </button>
+                                <button class="btn btn-ghost justify-start" id="btnRepClientPdf">
+                                    <i class="ph ph-file-pdf"></i> Client History (PDF)
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- DRAFTS / TEMPLATES -->
+            <div id="p_drafts" class="page-container">
+                <div class="card h-full flex flex-col">
+                    <div class="card-head"><div class="card-title">Email Drafting Studio</div></div>
+                    <div class="draft-toolbar">
+                        <select id="draftTemplateSelect" class="select w-auto">
+                            <option value="">Load Template...</option>
+                            <option value="start">Task Started</option>
+                            <option value="comp">Task Completed</option>
+                        </select>
+                        <div class="flex-1"></div>
+                        <button class="btn btn-sm btn-secondary" id="btnInsertVar">Insert {{Variable}}</button>
+                    </div>
+                    <div class="flex-1 p-0 relative">
+                        <textarea id="draftArea" class="draft-textarea h-full" placeholder="Type your email template here..."></textarea>
+                    </div>
+                    <div class="card-body border-t bg-slate-50 flex justify-between">
+                        <div class="text-xs text-muted">Preview modes available in task view.</div>
+                        <button class="btn btn-primary btn-sm" id="btnCopyDraft">Copy to Clipboard</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ADMIN: CLIENTS -->
+            <div id="p_clients" class="page-container">
+                <div class="card">
+                    <div class="card-head">
+                        <div class="card-title">Client Management</div>
+                        <button class="btn btn-primary btn-sm" id="btnNewClient">+ Add Client</button>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-container">
+                            <table id="clientTableMain">
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Email</th>
+                                        <th>PAN</th>
+                                        <th>GSTIN</th>
+                                        <th>Status</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="clientTableBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ADMIN: TEAM -->
+            <div id="p_team" class="page-container">
+                <div class="card">
+                    <div class="card-head">
+                        <div class="card-title">Team Members</div>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-container">
+                            <table id="teamTableMain">
+                                <thead>
+                                    <tr>
+                                        <th>Email</th>
+                                        <th>Display Name</th>
+                                        <th>Role</th>
+                                        <th>Active</th>
+                                        <th>Reports To</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="teamTableBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+                        <!-- ADMIN: SETTINGS -->
+            <div id="p_settings" class="page-container">
+                <div class="grid grid-cols-2">
+                    <div class="card">
+                        <div class="card-head"><div class="card-title">Calendar Window</div></div>
+                        <div class="card-body">
+                            <div class="flex gap-4 mb-4">
+                                <div class="form-group flex-1">
+                                    <label class="label">Start Hour (0-23)</label>
+                                    <input type="number" id="setCalStart" class="input" min="0" max="23">
+                                </div>
+                                <div class="form-group flex-1">
+                                    <label class="label">End Hour (0-23)</label>
+                                    <input type="number" id="setCalEnd" class="input" min="0" max="23">
+                                </div>
+                            </div>
+                            <button class="btn btn-primary" id="btnSaveCalSettings">Update Window</button>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-head"><div class="card-title">Security</div></div>
+                        <div class="card-body">
+                            <div class="form-group">
+                                <label class="label">Associate Import Password</label>
+                                <input type="password" id="setWorkerPwd" class="input" placeholder="Set new password">
+                            </div>
+                            <button class="btn btn-primary" id="btnSaveWorkerPwd">Set Password</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </main> <!-- End Main Content -->
+
+        <!-- DRAWER: TASK DETAILS & EDIT -->
+        <div class="drawer-overlay" id="drawerOverlay"></div>
+        <div class="drawer" id="taskDrawer">
+            <div class="drawer-header">
+                <h3 class="drawer-title" id="drTitle">Task Details</h3>
+                <button class="btn-icon" id="drClose"><i class="ph ph-x"></i></button>
+            </div>
+            
+            <div class="drawer-body">
+                <!-- Status Banner -->
+                <div class="p-4 rounded-lg bg-slate-50 border mb-6 flex justify-between items-center" id="drStatusBanner">
+                    <div>
+                        <div class="text-xs text-muted uppercase font-bold tracking-wide">Current Status</div>
+                        <div class="text-lg font-bold mt-1" id="drStatusDisplay">PENDING</div>
+                    </div>
+                    <button class="btn btn-sm btn-primary" id="drBtnChangeStatus">Update Status</button>
+                </div>
+
+                <!-- Core Fields -->
+                <div class="grid grid-cols-2 gap-4 mb-6">
+                    <div>
+                        <div class="label">Client</div>
+                        <div class="font-medium" id="drClientName">-</div>
+                    </div>
+                    <div>
+                        <div class="label">Assignee</div>
+                        <div class="font-medium" id="drAssignee">-</div>
+                    </div>
+                    <div>
+                        <div class="label">Start Date</div>
+                        <div class="font-medium" id="drStart">-</div>
+                    </div>
+                    <div>
+                        <div class="label">Due Date</div>
+                        <div class="font-medium" id="drDue">-</div>
+                    </div>
+                </div>
+
+                <!-- Tabs -->
+                <div class="flex border-b mb-4">
+                    <button class="px-4 py-2 text-sm font-medium border-b-2 border-indigo-600 text-indigo-600" id="tabDetails">Details</button>
+                    <button class="px-4 py-2 text-sm font-medium border-b-2 border-transparent text-slate-500 hover:text-slate-800" id="tabComments">Comments</button>
+                    <button class="px-4 py-2 text-sm font-medium border-b-2 border-transparent text-slate-500 hover:text-slate-800" id="tabHistory">History</button>
+                </div>
+
+                <!-- Tab: Details (Edit Form) -->
+                <div id="panelDetails">
+                    <div class="form-group">
+                        <label class="label">Title</label>
+                        <input id="drEditTitle" class="input">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="label">Status Note</label>
+                        <textarea id="drStatusNote" class="textarea" style="min-height:80px"></textarea>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="form-group">
+                            <label class="label">Delay Reason</label>
+                            <select id="drDelayReason" class="select">
+                                <option value="">(None)</option>
+                                <option value="CLIENT_DELAY">Client Delay</option>
+                                <option value="INTERNAL_DELAY">Internal Delay</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="label">Delay Notes</label>
+                            <input id="drDelayNotes" class="input">
+                        </div>
+                    </div>
+
+                    <div class="border-t pt-4 mt-2">
+                        <h4 class="font-semibold mb-3">Email Settings</h4>
+                        <div class="form-group">
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="drSendStart"> Send Start Email
+                            </label>
+                        </div>
+                        <div class="form-group">
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="drSendComp"> Send Completion Email
+                            </label>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="label">Completion Recipients (Overrides)</label>
+                            <input id="drCompTo" class="input mb-2" placeholder="To...">
+                            <input id="drCompCc" class="input" placeholder="CC...">
+                        </div>
+                    </div>
+
+                    <div class="mt-6 flex gap-2">
+                        <button class="btn btn-primary w-full" id="drSaveDetails">Save Changes</button>
+                        <button class="btn btn-danger btn-icon" id="drDeleteTask"><i class="ph ph-trash"></i></button>
+                    </div>
+                    <div class="mt-2 text-center">
+                        <button class="btn btn-sm btn-ghost text-xs" id="drExportPdf">Download Task History PDF</button>
+                    </div>
+                </div>
+
+                <!-- Tab: Comments -->
+                <div id="panelComments" class="hidden">
+                    <div id="commentList" class="flex flex-col gap-4 mb-4" style="max-height:400px; overflow-y:auto;"></div>
+                    <div class="mt-auto">
+                        <textarea id="commentInput" class="textarea" placeholder="Write a comment... use @Name to mention" style="min-height:80px;"></textarea>
+                        <button class="btn btn-sm btn-primary mt-2" id="btnAddComment">Post Comment</button>
+                    </div>
+                </div>
+
+                <!-- Tab: History -->
+                <div id="panelHistory" class="hidden">
+                    <div id="auditList" class="flex flex-col gap-3 text-sm"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- DRAWER: CLIENT EDIT -->
+        <div class="drawer" id="clientDrawer">
+            <div class="drawer-header">
+                <h3 class="drawer-title">Edit Client</h3>
+                <button class="btn-icon" id="clClose"><i class="ph ph-x"></i></button>
+            </div>
+            <div class="drawer-body">
+                <div class="form-group">
+                    <label class="label">Client Name</label>
+                    <input id="clName" class="input">
+                </div>
+                <div class="form-group">
+                    <label class="label">Primary Email</label>
+                    <input id="clEmail" class="input">
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="form-group">
+                        <label class="label">PAN</label>
+                        <input id="clPan" class="input">
+                    </div>
+                    <div class="form-group">
+                        <label class="label">GSTIN</label>
+                        <input id="clGstin" class="input">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="label">CC Emails (semicolon sep)</label>
+                    <input id="clCc" class="input">
+                </div>
+                <div class="form-group">
+                    <label class="label">BCC Emails</label>
+                    <input id="clBcc" class="input">
+                </div>
+            </div>
+            <div class="drawer-footer">
+                <button class="btn btn-primary" id="clSave">Save Client</button>
+            </div>
+        </div>
+
+        <!-- COMMAND PALETTE OVERLAY -->
+        <div class="cmdk-overlay" id="cmdkOverlay">
+            <div class="cmdk-box">
+                <input class="cmdk-input" id="cmdkInput" placeholder="Type a command or search..." autofocus>
+                <div class="cmdk-results" id="cmdkList"></div>
+                <div class="p-2 border-t bg-slate-50 text-xs text-muted flex justify-between">
+                    <span><kbd class="font-mono">↑↓</kbd> to navigate</span>
+                    <span><kbd class="font-mono">↵</kbd> to select</span>
+                </div>
+            </div>
+        </div>
+
+    </div> <!-- End App -->
+
+    <!-- FIREBASE SDKs (Compat) -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+
+    <!-- MAIN APP SCRIPT -->
+    <script>
+        /**
+         * ====================================================================
+         *  ORBIT CLIENT APPLICATION (v2.0)
+         *  Production-Grade Logic: State, Routing, API, & UI Controller
+         * ====================================================================
+         */
+
+        const CONFIG = {
+            // Updated dynamically. Falls back to Cloudflare if not set in Firestore.
+            apiBase: localStorage.getItem('orbit_api_base') || "https://investigators-burlington-button-harvest.trycloudflare.com/.netlify/functions",
+            
+            firebase: {
+                apiKey: "AlzaSyCnWS-V96J6YDBVYKOeL5p8aa45GPTdSEg",
+                authDomain: "compliance-management-484405.firebaseapp.com",
+                projectId: "compliance-management-484405",
+                storageBucket: "compliance-management-484405.firebasestorage.app",
+                messagingSenderId: "4348274796",
+                appId: "1:4348274796:web:a9e1720c2ae223035bd049"
+            }
+        };
+
+        // --- STATE STORE ---
+        const state = {
+            user: null,
+            role: 'ASSOCIATE', // Default safe role
+            clients: [],
+            tasks: [],
+            team: [],
+            meta: { lastSync: null },
+            ui: { 
+                page: 'dashboard', 
+                theme: localStorage.getItem('orbit_theme') || 'light',
+                sidebarCollapsed: false 
+            }
+        };
+
+        // --- CORE UTILS ---
+        const el = (id) => document.getElementById(id);
+        const $$ = (sel) => document.querySelectorAll(sel);
+        
+        function formatDateTime(iso) {
+            if(!iso) return '-';
+            try { return new Date(iso).toLocaleString('en-IN'); } catch(e) { return iso; }
+        }
+        
+        function showToast(msg, type = 'neutral') {
+            const c = el('toastContainer');
+            const t = document.createElement('div');
+            t.className = `toast`;
+            // Add icon based on type
+            let icon = 'info';
+            if(type === 'success') icon = 'check-circle';
+            if(type === 'error') icon = 'warning-circle';
+            
+            t.innerHTML = `<i class="ph ph-${icon} text-lg"></i> <span>${msg}</span>`;
+            c.appendChild(t);
+            setTimeout(() => t.remove(), 4000);
+        }
+
+        function setLoading(active) {
+            if(active) document.body.classList.add('loading');
+            else document.body.classList.remove('loading');
+            el('loader').classList.toggle('hidden', !active);
+        }
+
+        // --- API CLIENT ---
+        async function api(endpoint, body = {}) {
+            if (!state.user) throw new Error("Not authenticated");
+            const token = await firebase.auth().currentUser.getIdToken();
+            
+            setLoading(true);
+            try {
+                const res = await fetch(`${CONFIG.apiBase}${endpoint}`, {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify(body)
+                });
+                
+                const data = await res.json();
+                if (!res.ok || !data.ok) throw new Error(data.error || "API Error");
+                return data;
+            } catch (err) {
+                console.error(err);
+                showToast(err.message, 'error');
+                throw err;
+            } finally {
+                setLoading(false);
+            }
+        }
+        
+        // Multi-part form upload
+        async function apiUpload(endpoint, formData) {
+            const token = await firebase.auth().currentUser.getIdToken();
+            setLoading(true);
+            try {
+                const res = await fetch(`${CONFIG.apiBase}${endpoint}`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}` },
+                    body: formData
+                });
+                const data = await res.json();
+                if (!res.ok || !data.ok) throw new Error(data.error || "Upload Error");
+                return data;
+            } finally { setLoading(false); }
+        }
+        
+        // Binary download (PDF/XLSX)
+        async function apiDownload(endpoint, body, filename) {
+            try {
+                const data = await api(endpoint, body); // returns { base64, fileName }
+                const bin = atob(data.base64);
+                const bytes = new Uint8Array(bin.length);
+                for (let i=0; i<bin.length; i++) bytes[i] = bin.charCodeAt(i);
+                
+                const blob = new Blob([bytes], { type: data.mime || 'application/octet-stream' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = filename || data.fileName || 'download';
+                a.click();
+                URL.revokeObjectURL(url);
+                showToast('Download started', 'success');
+            } catch (e) { /* handled in api() */ }
+        }
+                // --- AUTH & INIT ---
+        firebase.initializeApp(CONFIG.firebase);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        auth.onAuthStateChanged(async (u) => {
+            if (u) {
+                state.user = u;
+                
+                // Fetch Role
+                const snap = await db.collection('users').doc(u.uid).get();
+                state.role = (snap.exists ? snap.data().role : 'ASSOCIATE') || 'ASSOCIATE';
+                
+                // Role Rename Compat (UI only, backend handles data)
+                if (state.role === 'WORKER') state.role = 'ASSOCIATE';
+
+                initUI();
+                startSubscriptions();
+            } else {
+                state.user = null;
+                showPage('login');
+                setLoading(false);
+            }
+        });
+
+        function initUI() {
+            // Setup User Profile
+            el('userNameDisplay').textContent = state.user.email.split('@')[0];
+            el('userRoleDisplay').textContent = state.role.charAt(0) + state.role.slice(1).toLowerCase();
+            el('userAvatar').textContent = state.user.email[0].toUpperCase();
+
+            // Setup Nav based on Role
+            const isAdmin = ['PARTNER', 'MANAGER'].includes(state.role);
+            if (isAdmin) el('navGroupAdmin').classList.remove('hidden');
+            
+            showPage('dashboard');
+            setLoading(false);
+        }
+
+        // --- NAVIGATION CONTROLLER ---
+        function showPage(pageId) {
+            state.ui.page = pageId;
+            
+            // Sidebar Active State
+            $$('.nav-item').forEach(n => {
+                n.classList.toggle('active', n.dataset.page === pageId);
+            });
+
+            // View Switching
+            $$('.page-container').forEach(p => {
+                p.id === `p_${pageId}` ? p.classList.add('active') : p.classList.remove('active');
+            });
+
+            // Header Title
+            const titles = {
+                dashboard: 'Dashboard',
+                tasks: 'All Tasks',
+                calendar: 'Calendar',
+                create_task: 'Create Task',
+                import_export: 'Data Tools',
+                drafts: 'Drafting Studio',
+                clients: 'Client Database',
+                team: 'Team Management',
+                settings: 'System Settings'
+            };
+            el('pageTitle').textContent = titles[pageId] || 'Orbit';
+
+            // Mobile menu close
+            if(window.innerWidth < 768) el('sidebar').classList.remove('mobile-open');
+        }
+
+        // --- REALTIME SUBSCRIPTIONS ---
+        let unsubs = [];
+        
+        function startSubscriptions() {
+            // Clear old subs
+            unsubs.forEach(u => u());
+            unsubs = [];
+
+            // 1. Clients (All roles need this for dropdowns)
+            unsubs.push(db.collection('clients').onSnapshot(snap => {
+                state.clients = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+                renderClientDropdowns();
+                if(state.ui.page === 'clients') renderClientsTable();
+            }));
+
+            // 2. Tasks (Filtered by role)
+            let q = db.collection('tasks');
+            if (state.role === 'ASSOCIATE') {
+                q = q.where('assignedToUid', '==', state.user.uid);
+            }
+            // Limit to active/recent for performance (optional, keeping simple for now)
+            
+            unsubs.push(q.onSnapshot(snap => {
+                state.tasks = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+                updateKPIs();
+                renderDashboard();
+                renderTasksTable();
+                renderCalendar(); // simple re-render
+                el('lastSyncTime').textContent = new Date().toLocaleTimeString();
+            }));
+
+            // 3. Team (Admin only)
+            if (['PARTNER', 'MANAGER'].includes(state.role)) {
+                unsubs.push(db.collection('users').onSnapshot(snap => {
+                    state.team = snap.docs.map(d => ({ uid: d.id, ...d.data() }));
+                    if(state.ui.page === 'team') renderTeamTable();
+                }));
+            }
+        }
+
+        // --- RENDERERS ---
+
+        function renderClientDropdowns() {
+            const opts = state.clients
+                .sort((a,b) => (a.name||'').localeCompare(b.name||''))
+                .map(c => `<option value="${c.id}">${c.name}</option>`)
+                .join('');
+            
+            // Populate all client selects
+            el('ctClientId').innerHTML = `<option value="">Select Client...</option>${opts}`;
+            el('repClientId').innerHTML = `<option value="">Select Client...</option>${opts}`;
+        }
+
+        function updateKPIs() {
+            const tasks = state.tasks;
+            const pending = tasks.filter(t => t.status !== 'COMPLETED').length;
+            const approval = tasks.filter(t => t.status === 'APPROVAL_PENDING').length;
+            
+            // Date logic
+            const today = new Date().toISOString().slice(0,10);
+            const dueToday = tasks.filter(t => t.dueDateYmd === today && t.status !== 'COMPLETED').length;
+            const overdue = tasks.filter(t => t.dueDateYmd < today && t.status !== 'COMPLETED').length;
+
+            el('kpiPending').textContent = pending;
+            el('kpiApproval').textContent = approval;
+            el('kpiDueToday').textContent = dueToday;
+            el('kpiOverdue').textContent = overdue;
+        }
+
+        function renderDashboard() {
+            const urgent = state.tasks
+                .filter(t => t.status !== 'COMPLETED' && t.dueDateYmd <= new Date().toISOString().slice(0,10))
+                .sort((a,b) => a.dueDateYmd.localeCompare(b.dueDateYmd))
+                .slice(0, 10); // Top 10
+
+            const tbody = el('dashUrgentTable');
+            if (urgent.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" class="text-center text-muted py-8">All clear! No urgent tasks.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = urgent.map(t => {
+                const client = state.clients.find(c => c.id === t.clientId)?.name || 'Unknown';
+                const statusColor = t.status === 'PENDING' ? 'neutral' : 'warning';
+                
+                return `
+                <tr class="cursor-pointer hover:bg-slate-50" onclick="openTaskDrawer('${t.id}')">
+                    <td><span class="badge badge-${statusColor}">${t.status}</span></td>
+                    <td class="font-medium">${client}</td>
+                    <td>${t.title}</td>
+                    <td class="font-mono text-xs">${formatDate(t.dueDateYmd)}</td>
+                    <td><button class="btn-icon btn-sm"><i class="ph ph-caret-right"></i></button></td>
+                </tr>`;
+            }).join('');
+        }
+
+        function renderTasksTable() {
+            const tbody = el('taskTableMain');
+            // Filter logic
+            const statusFilter = el('taskFilterStatus').value;
+            const search = el('taskSearch').value.toLowerCase();
+            
+            let list = state.tasks.filter(t => {
+                if (statusFilter && t.status !== statusFilter) return false;
+                if (search) {
+                    const client = state.clients.find(c => c.id === t.clientId)?.name || '';
+                    const str = `${t.title} ${client} ${t.status}`.toLowerCase();
+                    if (!str.includes(search)) return false;
+                }
+                return true;
+            });
+
+            // Sort by due date desc
+            list.sort((a,b) => a.dueDateYmd.localeCompare(b.dueDateYmd));
+
+            el('taskCountDisplay').textContent = `Showing ${list.length} tasks`;
+
+            if (list.length === 0) {
+                el('taskTableBody').innerHTML = `<tr><td colspan="8" class="text-center py-12 text-muted">No tasks found matching filters.</td></tr>`;
+                return;
+            }
+
+            // Limit render to 50 for perf (simple virtual scroll replacement)
+            const view = list.slice(0, 50); 
+            
+            el('taskTableBody').innerHTML = view.map(t => {
+                const client = state.clients.find(c => c.id === t.clientId)?.name || '-';
+                
+                // Badges
+                let stClass = 'neutral';
+                if(t.status === 'COMPLETED') stClass = 'success';
+                if(t.status === 'IN_PROGRESS') stClass = 'brand';
+                if(t.status === 'APPROVAL_PENDING') stClass = 'warning';
+
+                return `
+                <tr onclick="openTaskDrawer('${t.id}')" class="cursor-pointer group">
+                    <td onclick="event.stopPropagation()"><input type="checkbox" class="task-chk" data-id="${t.id}"></td>
+                    <td><span class="badge badge-${stClass}">${t.status}</span></td>
+                    <td class="font-medium text-slate-700">${client}</td>
+                    <td>${t.title}</td>
+                    <td class="font-mono text-xs">${formatDate(t.dueDateYmd)}</td>
+                    <td>${t.assignedToEmail || '<span class="text-faint">Unassigned</span>'}</td>
+                    <td>${t.priority === 'HIGH' ? '<i class="ph ph-flag text-danger"></i>' : ''}</td>
+                    <td><button class="btn-icon opacity-0 group-hover:opacity-100"><i class="ph ph-pencil-simple"></i></button></td>
+                </tr>`;
+            }).join('');
+        }
+
+        // --- ACTIONS & HANDLERS ---
+
+        function formatDate(ymd) {
+            if(!ymd) return '-';
+            const [y, m, d] = ymd.split('-');
+            return `${d}/${m}/${y}`; // DD/MM/YYYY
+        }
+
+        // Login
+        el('doLogin').onclick = async () => {
+            const e = el('loginEmail').value;
+            const p = el('loginPass').value;
+            if(!e || !p) return showToast('Please enter credentials', 'error');
+            
+            setLoading(true);
+            try {
+                await auth.signInWithEmailAndPassword(e, p);
+                showToast('Welcome back!', 'success');
+            } catch(err) {
+                showToast(err.message, 'error');
+                setLoading(false);
+            }
+        };
+
+        el('logoutBtn').onclick = () => auth.signOut();
+
+        // Navigation
+        $$('.nav-item').forEach(btn => {
+            btn.onclick = () => showPage(btn.dataset.page);
+        });
+
+        // Task Drawer
+        window.openTaskDrawer = async (id) => {
+            const t = state.tasks.find(x => x.id === id);
+            if (!t) return;
+            
+            // Populate fields
+            el('drTitle').textContent = t.title;
+            el('drStatusDisplay').textContent = t.status;
+            
+            const client = state.clients.find(c => c.id === t.clientId);
+            el('drClientName').textContent = client ? client.name : 'Unknown';
+            el('drAssignee').textContent = t.assignedToEmail || 'Unassigned';
+            el('drStart').textContent = formatDate(t.startDateYmd);
+            el('drDue').textContent = formatDate(t.dueDateYmd);
+
+            // Edit Fields
+            el('drEditTitle').value = t.title;
+            el('drStatusNote').value = t.statusNote || '';
+            el('drDelayReason').value = t.delayReason || '';
+            el('drDelayNotes').value = t.delayNotes || '';
+            
+            // New Email Settings Fields
+            el('drSendStart').checked = (t.sendClientStartMail !== false);
+            el('drSendComp').checked = (t.sendClientCompletionMail !== false);
+            el('drCompTo').value = (t.completionToEmails || []).join('; ');
+            el('drCompCc').value = (t.completionCcEmails || []).join('; ');
+
+            // Store current ID on drawer
+            el('taskDrawer').dataset.tid = id;
+            
+            // Show drawer
+            el('drawerOverlay').classList.add('open');
+            el('taskDrawer').classList.add('open');
+
+            // Load extra data
+            loadComments(id);
+            loadHistory(id);
+        };
+
+        function closeDrawer() {
+            el('drawerOverlay').classList.remove('open');
+            el('taskDrawer').classList.remove('open');
+            el('clientDrawer').classList.remove('open');
+        }
+        el('drClose').onclick = closeDrawer;
+        el('drawerOverlay').onclick = closeDrawer;
+        el('clClose').onclick = closeDrawer;
+
+        // Save Task Changes
+        el('drSaveDetails').onclick = async () => {
+            const tid = el('taskDrawer').dataset.tid;
+            const body = {
+                taskId: tid,
+                newStatus: el('drStatusDisplay').textContent, // Keeping status same if not changed via status btn
+                statusNote: el('drStatusNote').value,
+                delayReason: el('drDelayReason').value,
+                delayNotes: el('drDelayNotes').value,
+                
+                // Updatable fields
+                title: el('drEditTitle').value,
+                sendClientStartMail: el('drSendStart').checked,
+                sendClientCompletionMail: el('drSendComp').checked,
+                completionToEmails: el('drCompTo').value.split(/[,;]/).map(s=>s.trim()).filter(Boolean),
+                completionCcEmails: el('drCompCc').value.split(/[,;]/).map(s=>s.trim()).filter(Boolean)
+            };
+
+            await api('/tasks_updatetask', body); // This calls the general update endpoint
+            showToast('Task updated', 'success');
+            closeDrawer();
+        };
+
+        // Status Update (Special Button)
+        el('drBtnChangeStatus').onclick = async () => {
+            const current = el('drStatusDisplay').textContent;
+            const next = prompt("Enter new status (PENDING, IN_PROGRESS, COMPLETED...):", current);
+            if(next && next !== current) {
+                // In a real UI, this would be a dropdown modal. For now, simple prompt.
+                const tid = el('taskDrawer').dataset.tid;
+                await api('/tasks_updatestatus', { taskId: tid, newStatus: next.toUpperCase() });
+                el('drStatusDisplay').textContent = next.toUpperCase();
+                showToast('Status updated', 'success');
+            }
+        };
+                // --- COMMENTS & HISTORY LOADERS ---
+        
+        async function loadComments(taskId) {
+            const list = el('commentList');
+            list.innerHTML = `<div class="p-4 text-center text-muted"><div class="loader-spinner w-6 h-6 mx-auto mb-2"></div>Loading...</div>`;
+            
+            // In a real app, use onSnapshot here. For now, fetch once.
+            try {
+                // We'll query Firestore directly for speed since we have the SDK loaded
+                const snap = await db.collection('tasks').doc(taskId).collection('comments')
+                    .orderBy('createdAt', 'desc')
+                    .limit(20)
+                    .get();
+                
+                if (snap.empty) {
+                    list.innerHTML = `<div class="text-sm text-center text-muted py-4">No comments yet.</div>`;
+                    return;
+                }
+
+                list.innerHTML = snap.docs.map(doc => {
+                    const c = doc.data();
+                    const initials = (c.authorName || c.authorEmail || '?')[0].toUpperCase();
+                    const date = c.createdAt ? c.createdAt.toDate().toLocaleString() : 'Just now';
+                    
+                    return `
+                    <div class="flex gap-3">
+                        <div class="avatar w-8 h-8 text-xs bg-slate-100">${initials}</div>
+                        <div class="flex-1 bg-slate-50 p-3 rounded-md border">
+                            <div class="flex justify-between items-center mb-1">
+                                <span class="font-semibold text-xs">${c.authorName || c.authorEmail}</span>
+                                <span class="text-xs text-muted">${date}</span>
+                            </div>
+                            <div class="text-sm text-slate-700 whitespace-pre-wrap">${c.text}</div>
+                        </div>
+                    </div>`;
+                }).join('');
+            } catch (e) {
+                list.innerHTML = `<div class="text-danger text-sm">Failed to load comments.</div>`;
+            }
+        }
+
+        el('btnAddComment').onclick = async () => {
+            const taskId = el('taskDrawer').dataset.tid;
+            const text = el('commentInput').value.trim();
+            if (!text) return;
+            
+            await api('/tasks_addcomment', { taskId, text });
+            el('commentInput').value = '';
+            showToast('Comment added');
+            loadComments(taskId); // Refresh list
+        };
+
+        // --- EXPORT & IMPORT HANDLERS ---
+
+        el('btnDlImportTemp').onclick = () => {
+            apiDownload('/exports_myClientsTemplateXlsx', {}, 'Create_Tasks_Template.xlsx');
+        };
+
+        el('btnDlUpdateTemp').onclick = () => {
+            apiDownload('/exports_tasksUpdateTemplateXlsx', {}, 'Update_Tasks_Template.xlsx');
+        };
+
+        el('btnExportForUpdate').onclick = () => {
+            apiDownload('/exports_tasksExportForUpdateXlsx', { limitTasks: 1000 }, 'Tasks_For_Update.xlsx');
+        };
+
+        el('btnRunImport').onclick = async () => {
+            const f = el('importFile').files[0];
+            if (!f) return showToast('Select a file first', 'error');
+            
+            const fd = new FormData();
+            fd.append('file', f);
+            
+            // Only ask password if Associate
+            if(state.role === 'ASSOCIATE') {
+                const p = prompt("Enter import password:");
+                if(!p) return;
+                fd.append('importPassword', p);
+            }
+
+            const res = await apiUpload('/tasks_bulkimportxlsx', fd);
+            showToast(`Imported ${res.created} tasks!`, 'success');
+            el('importFile').value = '';
+        };
+
+        el('btnRunUpdate').onclick = async () => {
+            const f = el('importFile').files[0];
+            if (!f) return showToast('Select a file first', 'error');
+            
+            const fd = new FormData();
+            fd.append('file', f);
+            
+            const res = await apiUpload('/tasks_bulkupdate_from_xlsx', fd);
+            showToast(`Updated ${res.updatedCount} tasks. Skipped ${res.skippedCount}.`, 'success');
+            
+            if(res.errors && res.errors.length > 0) {
+                alert(`Some rows failed:\n${JSON.stringify(res.errors, null, 2)}`);
+            }
+            el('importFile').value = '';
+        };
+
+        // --- PDF REPORTS ---
+        el('btnRepFirmPdf').onclick = () => {
+            const from = el('repStart').value || new Date().toISOString().slice(0,10);
+            const to = el('repEnd').value || from;
+            apiDownload('/reports_firmRangePdf', { fromYmd: from, toYmd: to }, `Firm_Report_${from}_${to}.pdf`);
+        };
+
+        el('btnRepClientPdf').onclick = () => {
+            const cid = el('repClientId').value;
+            if(!cid) return showToast('Select a client', 'warning');
+            const from = el('repStart').value || new Date().toISOString().slice(0,10);
+            const to = el('repEnd').value || from;
+            apiDownload('/reports_clientHistoryPdf', { clientId: cid, fromYmd: from, toYmd: to }, `Client_Report.pdf`);
+        };
+
+        // --- CALENDAR RENDERER (Simplified) ---
+        function renderCalendar() {
+            const grid = el('calendarGrid');
+            // For brevity, simple month view list
+            const today = new Date().toISOString().slice(0,7); // YYYY-MM
+            el('calMonthLabel').textContent = today;
+            
+            const events = state.tasks.filter(t => t.dueDateYmd.startsWith(today));
+            if(events.length === 0) {
+                grid.innerHTML = `<div class="flex h-full items-center justify-center text-muted">No tasks due this month.</div>`;
+                return;
+            }
+
+            // Group by date
+            const byDate = {};
+            events.forEach(t => {
+                if(!byDate[t.dueDateYmd]) byDate[t.dueDateYmd] = [];
+                byDate[t.dueDateYmd].push(t);
+            });
+
+            let html = `<div class="p-4 grid grid-cols-7 gap-2">`;
+            // Simplified grid rendering
+            Object.keys(byDate).sort().forEach(date => {
+                html += `
+                <div class="border rounded p-2 bg-slate-50" style="min-height:100px">
+                    <div class="text-xs font-bold mb-2">${date.slice(-2)}</div>
+                    <div class="flex flex-col gap-1">
+                        ${byDate[date].map(t => 
+                            `<div class="text-xs bg-white border p-1 rounded truncate cursor-pointer hover:bg-indigo-50" onclick="openTaskDrawer('${t.id}')">
+                                ${t.title}
+                            </div>`
+                        ).join('')}
+                    </div>
+                </div>`;
+            });
+            html += `</div>`;
+            grid.innerHTML = html;
+        }
+
+        // --- BULK ACTION HANDLERS ---
+        // (UI selection logic)
+        el('selectAllTasks').onchange = (e) => {
+            const checked = e.target.checked;
+            $$('.task-chk').forEach(c => c.checked = checked);
+            updateBulkBar();
+        };
+
+        // Event delegation for row checkboxes
+        el('taskTableBody').addEventListener('change', (e) => {
+            if (e.target.classList.contains('task-chk')) {
+                updateBulkBar();
+            }
+        });
+
+        function updateBulkBar() {
+            const checked = $$('.task-chk:checked');
+            const count = checked.length;
+            el('selectedCount').textContent = count;
+            el('bulkActionBar').classList.toggle('hidden', count === 0);
+        }
+
+        // Bulk Delete
+        el('btnBulkDelete').onclick = async () => {
+            const ids = Array.from($$('.task-chk:checked')).map(c => c.dataset.id);
+            if (!confirm(`Delete ${ids.length} tasks?`)) return;
+            
+            await api('/tasks_bulkUpdate', { op: 'DELETE', taskIds: ids });
+            showToast('Deleted');
+            // Uncheck all
+            el('selectAllTasks').checked = false;
+            updateBulkBar();
+        };
+
+        // --- COMMAND PALETTE (Search) ---
+        document.addEventListener('keydown', (e) => {
+            if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+                e.preventDefault();
+                const overlay = el('cmdkOverlay');
+                overlay.classList.toggle('open');
+                if (overlay.classList.contains('open')) el('cmdkInput').focus();
+            }
+            if (e.key === 'Escape') {
+                el('cmdkOverlay').classList.remove('open');
+                closeDrawer();
+            }
+        });
+
+        el('cmdkInput').addEventListener('input', (e) => {
+            const val = e.target.value.toLowerCase();
+            const res = el('cmdkList');
+            if(!val) { res.innerHTML = ''; return; }
+
+            // Search tasks & clients
+            const hitTasks = state.tasks.filter(t => t.title.toLowerCase().includes(val)).slice(0, 5);
+            const hitClients = state.clients.filter(c => c.name.toLowerCase().includes(val)).slice(0, 3);
+
+            let html = '';
+            if (hitClients.length) {
+                html += `<div class="text-xs font-bold text-muted px-3 py-2 uppercase">Clients</div>`;
+                html += hitClients.map(c => 
+                    `<div class="cmdk-item" onclick="alert('Client view coming soon')">
+                        <span>${c.name}</span> <span class="cmdk-meta">Client</span>
+                    </div>`
+                ).join('');
+            }
+            if (hitTasks.length) {
+                html += `<div class="text-xs font-bold text-muted px-3 py-2 uppercase mt-2">Tasks</div>`;
+                html += hitTasks.map(t => 
+                    `<div class="cmdk-item" onclick="openTaskDrawer('${t.id}'); el('cmdkOverlay').classList.remove('open')">
+                        <span>${t.title}</span> <span class="cmdk-meta">${t.status}</span>
+                    </div>`
+                ).join('');
+            }
+            res.innerHTML = html || `<div class="p-4 text-muted text-center text-sm">No results</div>`;
+        });
+
+        // Close CMDK on outside click
+        el('cmdkOverlay').onclick = (e) => {
+            if(e.target === el('cmdkOverlay')) el('cmdkOverlay').classList.remove('open');
+        };
+
+    </script>
+</body>
+</html>
