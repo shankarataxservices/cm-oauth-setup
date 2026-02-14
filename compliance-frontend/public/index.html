@@ -123,16 +123,16 @@ body[data-view="ops"]{ --accent:#ef4444; }
 body[data-view="help"]{ --accent:#a855f7; }
 
 /* Accent line on card headers (subsection clarity) */
-.cardHead{ position: relative; }
-.cardHead::after{
+/* Accent outline around the whole card (clear boundary) */
+.card{ position: relative; }
+
+.card::after{
   content:"";
   position:absolute;
-  left:0;
-  right:0;
-  top:0;
-  height: 3px;
-  background: linear-gradient(90deg, color-mix(in srgb, var(--accent) 78%, transparent), transparent 70%);
+  inset: 0;                 /* all around */
+  border-radius: inherit;   /* matches rounded corners */
   pointer-events:none;
+  border: 2px solid color-mix(in srgb, var(--accent) 45%, transparent);
 }
 
 /* Global loading overlay + spinner */
